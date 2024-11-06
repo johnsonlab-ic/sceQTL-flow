@@ -2,8 +2,7 @@
 
 params.outdir="./"
 params.gds_file=""
-singularity.enabled = true
-params.container = "/rds/general/user/ah3918/home/CONTAINERS/genotype_cont_latest.sif"
+
 
 process create_genotype{
 
@@ -17,11 +16,11 @@ process create_genotype{
     path "snp_chromlocations.csv", emit: snplocs 
     path "MAF_mat.csv", emit: mafmat
 
-    container "params.container"
+    container "${baseDir}.container"
 
    script:
     """
-    Rscript -e 'source("${baseDir}/genotype_functions.r"); get_genotype_matrix(gds_file="${params.genofile}")'
+    Rscript -e 'source("${baseDir}/../genotype_functions/genotype_functions.r"); get_genotype_matrix(gds_file="${params.genofile}")'
     """
 
 
