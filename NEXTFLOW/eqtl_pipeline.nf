@@ -23,7 +23,7 @@ process create_genotype{
     // Rscript -e 'source("${baseDir}/../genotype_functions/genotype_functions.r"); get_genotype_matrix(gds_file="${params.genofile}")'
     // """
     """
-    Rscript -e 'library(tidyverse)'
+    Rscript -e 'library(SeqArray)'
     """
 
 }
