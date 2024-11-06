@@ -244,17 +244,12 @@ chrpos_to_rsid=function(chromlocs,build=c("hg37","hg38")){
 
 
   if(build=="hg37"){
-    
 
-    snp<-SNPlocs.Hsapiens.dbSNP144.GRCh37::SNPlocs.Hsapiens.dbSNP144.GRCh37
+    snp<-SNPlocs.Hsapiens.dbSNP155.GRCh37::SNPlocs.Hsapiens.dbSNP155.GRCh37
+
   } else if(build=="hg38"){
 
-    check_version=grep("155",system.file(package="SNPlocs.Hsapiens.dbSNP155.GRCh38"))
-    if(length(check_version)==1){
       snp<-SNPlocs.Hsapiens.dbSNP155.GRCh38::SNPlocs.Hsapiens.dbSNP155.GRCh38
-    }else{
-      snp<-SNPlocs.Hsapiens.dbSNP151.GRCh38::SNPlocs.Hsapiens.dbSNP151.GRCh38
-    }
   }
 
   rsids<-BSgenome::snpsByOverlaps(snp,grSNPS)

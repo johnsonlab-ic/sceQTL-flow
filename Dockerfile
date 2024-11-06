@@ -13,7 +13,7 @@ RUN R -e 'if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages
 RUN R -e 'install.packages(c("dplyr","data.table"))'
 
 # Install the required R packages
-RUN R -e 'BiocManager::install(c("seqArray", "SNPRelate", "GenomicRanges", "BSgenome", "SNPlocs.Hsapiens.dbSNP155.GRCh38","SNPlocs.Hsapiens.dbSNP155.GRCh37","GenomeInfoDb"))'
+RUN R -e 'BiocManager::install(c("SeqArray", "SNPRelate", "GenomicRanges", "BSgenome", "SNPlocs.Hsapiens.dbSNP155.GRCh38","SNPlocs.Hsapiens.dbSNP155.GRCh37","GenomeInfoDb"))'
 
 # Set the working directory
 WORKDIR /usr/local/src
