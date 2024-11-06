@@ -1,35 +1,32 @@
 
 
 params.outdir="./"
-params.gds_file=""
+params.gds_file="/rds/general/user/ah3918/projects/roche/live/ALEX//PROCESSED_DATA/PROCESSED_GENOTYPE/FINAL/final_geno_440samples.gds"
 
 
 process create_genotype{
 
-    // publishDir "${params.outdir}/MatrixEQTL_IO", mode: "copy"
+    publishDir "${params.outdir}/MatrixEQTL_IO", mode: "copy"
 
     // input:
     // path genofile
 
-    // output:
-    // path "genotype_012mat.csv", emit: genomat
-    // path "snp_chromlocations.csv", emit: snplocs 
-    // path "MAF_mat.csv", emit: mafmat
+    output:
+    path "*"
 
     // container "${baseDir}.container"
 
    script:
-    // """
-    // Rscript -e 'source("${baseDir}/../genotype_functions/genotype_functions.r"); get_genotype_matrix(gds_file="${params.genofile}")'
-    // """
     """
-    Rscript -e 'library(GenomicRanges)'
+    Rscript -e 'source("${baseDir}/../genotype_functions/genotype_functions.r"); get_genotype_matrix(gds_file="${params.genofile}")'
     """
+    // """
+    // Rscript -e 'library(GenomicRanges)'
+    // """
 
 }
 
 
 workflow{
     create_genotype()
-
 }
