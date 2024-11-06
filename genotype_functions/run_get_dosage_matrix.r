@@ -1,20 +1,20 @@
-get_genotype_matrix=function(vcfs,
-  gds_file="merge_test_seqArray.gds",
-  outdir=".",
-  parallel=FALSE,
-  preprocess=FALSE,
-  autosomalonly=TRUE,
-  minmaf=0.05){
+generate_genotype_matrix=function(vcfs,
+                                  gds_file="merge_test_seqArray.gds",
+                                  outdir=".",
+                                  parallel=FALSE,
+                                  preprocess=FALSE,
+                                  autosomalonly=TRUE,
+                                  minmaf=0.05){
 
 
 
-  if(preprocess==TRUE){
+  if (preprocess) {
     SeqArray::seqVCF2GDS(vcfs, gds_file,parallel=parallel)
   }
 
-  genofile<<-SeqArray::seqOpen(gds_file)
+  genofile <- SeqArray::seqOpen(gds_file)
 
-  if(autosomalonly==TRUE){
+  if (autosomalonly) {
     SeqArray::seqSetFilterChrom(genofile,1:22)
   }
 
