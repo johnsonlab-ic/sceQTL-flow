@@ -108,33 +108,33 @@ generate_genotype_matrix=function(vcfs,
 
 
 
-genofile=SeqArray::seqOpen(gds_file)
-SeqArray::seqSetFilterCond(genofile,maf=minmaf)
+# genofile=SeqArray::seqOpen(gds_file)
+# SeqArray::seqSetFilterCond(genofile,maf=minmaf)
 
 
 
-## extract data
-message("Extracting SNP info..")
+# ## extract data
+# message("Extracting SNP info..")
 
-#get snp info
-annot<-SeqArray::seqGetData(genofile,"annotation/id")
-sample.id<-SeqArray::seqGetData(genofile,"sample.id")
-geno_mat<-t(SeqArray::seqGetData(genofile,"$dosage"))
-position<-SeqArray::seqGetData(genofile,"position")
-chrom<-SeqArray::seqGetData(genofile,"chromosome")
+# #get snp info
+# annot<-SeqArray::seqGetData(genofile,"annotation/id")
+# sample.id<-SeqArray::seqGetData(genofile,"sample.id")
+# geno_mat<-t(SeqArray::seqGetData(genofile,"$dosage"))
+# position<-SeqArray::seqGetData(genofile,"position")
+# chrom<-SeqArray::seqGetData(genofile,"chromosome")
 
-#create data frames
+# #create data frames
 
 
-chrompos_mat <- data.frame(annot, chrom, position) %>%
-    distinct(annot, .keep_all = TRUE)
+# chrompos_mat <- data.frame(annot, chrom, position) %>%
+#     distinct(annot, .keep_all = TRUE)
 
-geno_mat <- t(geno_mat) %>%
-    as.data.frame() %>%
-    setNames(sample.id) %>%
-    mutate(snp = annot) %>%
-    distinct(snp, .keep_all = TRUE) %>%
-    column_to_rownames(var = "snp")
+# geno_mat <- t(geno_mat) %>%
+#     as.data.frame() %>%
+#     setNames(sample.id) %>%
+#     mutate(snp = annot) %>%
+#     distinct(snp, .keep_all = TRUE) %>%
+#     column_to_rownames(var = "snp")
 
 
 

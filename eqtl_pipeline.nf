@@ -2,7 +2,8 @@
 
 params.outdir="./"
 params.gds_file=""
-
+singularity.enabled = true
+params.container = "/rds/general/user/ah3918/home/CONTAINERS/genotype_cont_latest.sif"
 
 process create_genotype{
 
@@ -16,17 +17,11 @@ process create_genotype{
     path "snp_chromlocations.csv", emit: snplocs 
     path "MAF_mat.csv", emit: mafmat
 
+    container "params.container"
 
-
+   script:
     """
-    #!/rds/general/user/ah3918/home/anaconda3/envs/OSIRIS/bin/Rscript
-
-    source("/rds/general/user/ah3918/projects/roche/live/ALEX/SCRIPTS/GITHUB/eQTL_scripts/nextflow_pipelines/singlecell/qtl_pipeline/cellQTL_source.r")
-    
-    get_genotype_matrix(gds_file="${params.genofile}")
-
-
-
+    Rscript -e 'source("${baseDir}/genotype_functions.r"); get_genotype_matrix(gds_file="${params.genofile}")'
     """
 
 
