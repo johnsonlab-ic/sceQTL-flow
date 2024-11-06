@@ -1,0 +1,8 @@
+seqArray
+SNPRelate
+GenomicRanges
+BSgenome
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("SNPlocs.Hsapiens.dbSNP155.GRCh38")
