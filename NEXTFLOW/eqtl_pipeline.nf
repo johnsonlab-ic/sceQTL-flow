@@ -1,6 +1,6 @@
 
 
-params.outdir="./"
+params.outdir="/rds/general/user/ah3918/projects/puklandmarkproject/ephemeral/tmp/"
 params.gds_file="/rds/general/user/ah3918/projects/roche/live/ALEX//PROCESSED_DATA/PROCESSED_GENOTYPE/FINAL/final_geno_440samples.gds"
 
 
@@ -26,6 +26,9 @@ params.gds_file="/rds/general/user/ah3918/projects/roche/live/ALEX//PROCESSED_DA
 // }
 
 process print_dir {
+
+    publishDir "${params.outdir}/", mode: "copy"
+
     output:
     path "dir_structure.txt"
 
