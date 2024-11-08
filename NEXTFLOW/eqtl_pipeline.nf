@@ -25,20 +25,24 @@ params.gds_file="/rds/general/user/ah3918/projects/roche/live/ALEX//PROCESSED_DA
 
 // }
 
-process print_dir {
+
+process double_file_length {
 
     publishDir "${params.outdir}/", mode: "copy"
 
+    input:
+    path input_file
+
     output:
-    path "dir_structure.txt"
+    path "doubled_${input_file.name}"
 
     script:
     """
-    ls > dir_structure.txt
+    cat ${input_file} ${input_file} > doubled_${input_file.name}
     """
 }
 
 workflow{
     // create_genotype()
-    print_dir()
+    double_file_length(input_file=params.inputfile)
 }
