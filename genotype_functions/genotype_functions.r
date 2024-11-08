@@ -46,14 +46,14 @@ generate_genotype_matrix=function(vcfs,
   chrompos_mat$chrom<-paste0("chr",chrompos_mat$chrom)
   snpnumber<-length(rownames(geno_mat))
 
-  message("Checking snps for build and converting to rsids..")
+#   message("Checking snps for build and converting to rsids..")
 
   
   chrompos_mat=check_snps(chrompos_mat)
   geno_mat=geno_mat[match(chrompos_mat$old_snp,geno_mat$snp),]
   geno_mat$snp=chrompos_mat$annot
   rownames(geno_mat)=geno_mat$snp
-  message(paste0("A total of ",snpnumber," snps were kept."))
+#   message(paste0("A total of ",snpnumber," snps were kept."))
 
   data.table::fwrite(geno_mat,"genotype_012mat.csv")
   
