@@ -11,6 +11,7 @@ process create_genotype{
     // input:
     // path genofile
 
+    singularity.runOptions = "--bind ${baseDir}:/mnt --bind ${params.gds_file}:${params.gds_file}"
     output:
     path "*"
 
@@ -18,7 +19,7 @@ process create_genotype{
 
    script:
     """
-    Rscript -e 'source("/mnt/genotype_functions/genotype_functions.r"); generate_genotype_matrix(gds_file="${params.genofile}")'
+    Rscript -e 'source("/mnt/genotype_functions/genotype_functions.r"); generate_genotype_matrix(gds_file="${params.gds_file}")'
     """
     // """
     // Rscript -e 'library(GenomicRanges)'
