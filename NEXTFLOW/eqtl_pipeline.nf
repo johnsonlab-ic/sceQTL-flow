@@ -2,8 +2,7 @@ nextflow.enable.dsl=2
 
 params.outdir="/rds/general/user/ah3918/projects/puklandmarkproject/ephemeral/tmp/"
 params.gds_file="/rds/general/user/ah3918/projects/roche/live/ALEX//PROCESSED_DATA/PROCESSED_GENOTYPE/FINAL/final_geno_440samples.gds"
-params.inputfile=null
-
+params.inputfile="/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/eqtl_pipeline_dev/eQTL_PIPELINE/testfile.txt"
 // process create_genotype{
 
 //     publishDir "${params.outdir}/MatrixEQTL_IO", mode: "copy"
