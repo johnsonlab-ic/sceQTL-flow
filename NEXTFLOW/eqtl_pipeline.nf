@@ -2,7 +2,7 @@
 
 params.outdir="/rds/general/user/ah3918/projects/puklandmarkproject/ephemeral/tmp/"
 params.gds_file="/rds/general/user/ah3918/projects/roche/live/ALEX//PROCESSED_DATA/PROCESSED_GENOTYPE/FINAL/final_geno_440samples.gds"
-
+params.inputfile=null
 
 // process create_genotype{
 
@@ -31,7 +31,7 @@ process double_file_length {
     publishDir "${params.outdir}/", mode: "copy"
 
     input:
-    path input_file
+    path input_file from file(params.inputfile)
 
     output:
     path "doubled_${input_file.name}"
@@ -44,5 +44,5 @@ process double_file_length {
 
 workflow{
     // create_genotype()
-    double_file_length(input_file=params.inputfile)
+    double_file_length()
 }
