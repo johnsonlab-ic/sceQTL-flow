@@ -34,7 +34,7 @@ process print_dir {
 
     script:
     """
-    ls -R > dir_structure.txt
+    ls > dir_structure.txt
     """
 }
 
