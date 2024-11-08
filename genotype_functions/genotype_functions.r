@@ -156,15 +156,10 @@ check_snps=function(chrompos_mat){
 
   #check hg19 and hg38 and see which overlaps. If low overlap with hg38, liftover.
 
-  hg19snp<-SNPlocs.Hsapiens.dbSNP144.GRCh37::SNPlocs.Hsapiens.dbSNP144.GRCh37    
+  hg19snp<-SNPlocs.Hsapiens.dbSNP155.GRCh37::SNPlocs.Hsapiens.dbSNP155.GRCh37    
   hg19rsids<-BSgenome::snpsByOverlaps(hg19snp,chromlocs_GR)
-  check_version=grep("155",system.file(package="SNPlocs.Hsapiens.dbSNP155.GRCh38"))
-    if(length(check_version)==1){
-      hg38snp<-SNPlocs.Hsapiens.dbSNP155.GRCh38::SNPlocs.Hsapiens.dbSNP155.GRCh38
-    }else{
-      hg38snp<-SNPlocs.Hsapiens.dbSNP151.GRCh38::SNPlocs.Hsapiens.dbSNP151.GRCh38
-    }
 
+  hg38snp<-SNPlocs.Hsapiens.dbSNP155.GRCh38::SNPlocs.Hsapiens.dbSNP155.GRCh38
   hg38rsids<-BSgenome::snpsByOverlaps(hg38snp,chromlocs_GR)
 
   if(nrow(as.data.frame(hg19rsids))>nrow(as.data.frame(hg38rsids))){
