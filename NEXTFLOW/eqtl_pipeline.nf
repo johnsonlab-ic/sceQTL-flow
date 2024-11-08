@@ -11,12 +11,6 @@ process create_genotype{
     // input:
     // path genofile
 
-     singularity {
-        enabled = true
-        autoMounts = true
-        runOptions = "--bind ${baseDir}:/mnt --bind ${params.gds_file}:${params.gds_file}"
-    }
-
     output:
     path "*"
 
