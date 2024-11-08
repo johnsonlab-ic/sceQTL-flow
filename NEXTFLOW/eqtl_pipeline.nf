@@ -41,8 +41,10 @@ params.inputfile="/rds/general/user/ah3918/projects/puklandmarkproject/live/User
 //     """
 // }
 
-process genotype{
- publishDir "${params.outdir}/", mode: "copy"
+process genotype {
+
+    publishDir "${params.outdir}/", mode: "copy"
+
     input:
 
     path gds_file
