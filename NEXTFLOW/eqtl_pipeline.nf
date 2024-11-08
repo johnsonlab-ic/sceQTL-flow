@@ -25,21 +25,21 @@ params.inputfile="/rds/general/user/ah3918/projects/puklandmarkproject/live/User
 // }
 
 
-// process double_file_length {
+process double_file_length {
 
-//     publishDir "${params.outdir}/", mode: "copy"
+    publishDir "${params.outdir}/", mode: "copy"
 
-//     input:
-//     path input_file
+    input:
+    path input_file
 
-//     output:
-//     path "doubled_${input_file.name}"
+    output:
+    path "doubled_${input_file.name}"
 
-//     script:
-//     """
-//     cat ${input_file} ${input_file} > doubled_${input_file.name}
-//     """
-// }
+    script:
+    """
+    cat ${input_file} ${input_file} > doubled_${input_file.name}
+    """
+}
 
 process genotype {
 
@@ -50,6 +50,12 @@ process genotype {
 
     output:
     path "*"
+
+    singularity {
+            enabled = true
+            autoMounts = true
+            runOptions = "--bind ${baseDir}:/mnt --bind ${params.gds_file}:${params.gds_file}"
+        }
 
     script:
     """
