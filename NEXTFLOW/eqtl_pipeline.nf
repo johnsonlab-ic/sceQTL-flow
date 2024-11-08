@@ -17,7 +17,7 @@ process create_genotype{
     // container "${baseDir}.container"
    script:
     """
-    Rscript -e 'source("/mnt/genotype_functions/genotype_functions.r"); generate_genotype_matrix(gds_file="${params.gds_file}")'
+    Rscript -e 'source("..//genotype_functions/genotype_functions.r"); generate_genotype_matrix(gds_file="${params.gds_file}")'
     """
     // """
     // Rscript -e 'library(GenomicRanges)'
