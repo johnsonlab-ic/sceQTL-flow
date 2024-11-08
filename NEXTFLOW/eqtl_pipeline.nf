@@ -49,7 +49,7 @@ process genotype {
     path gds_file
 
     output:
-    path *
+    path "*"
 
     script:
     """
