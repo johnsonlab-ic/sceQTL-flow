@@ -53,8 +53,12 @@ process genotype {
 
     script:
     """
+    #!/usr/bin/env R
 
-    echo $gds_file > "gdspath.txt"
+    genofile=seqArray::seqOpen($gdsfile)
+    sample.id<-SeqArray::seqGetData(genofile,"sample.id")
+    writeLines(sample.id,"samples.txt")
+
 
     """
 
