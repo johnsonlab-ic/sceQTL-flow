@@ -25,23 +25,48 @@ params.inputfile="/rds/general/user/ah3918/projects/puklandmarkproject/live/User
 // }
 
 
-process double_file_length {
+// process double_file_length {
 
-    publishDir "${params.outdir}/", mode: "copy"
+//     publishDir "${params.outdir}/", mode: "copy"
+
+//     input:
+//     path input_file
+
+//     output:
+//     path "doubled_${input_file.name}"
+
+//     script:
+//     """
+//     cat ${input_file} ${input_file} > doubled_${input_file.name}
+//     """
+// }
+
+process genotype{
 
     input:
-    path input_file
+
+    path gds_file
 
     output:
-    path "doubled_${input_file.name}"
+
+    path *
 
     script:
+
     """
-    cat ${input_file} ${input_file} > doubled_${input_file.name}
+    #!/usr/bin/env R
+
+    genofile=seqArray::seqOpen($gdsfile)
+    sample.id<-SeqArray::seqGetData(genofile,"sample.id")
+    writeLines(sample.id,"samples.txt")
+
+
     """
+
 }
 
 workflow{
     // create_genotype()
-    double_file_length(input_file=params.inputfile)
+    // double_file_length(input_file=params.inputfile)
+    genotype(gds_file=params.gds_file)
 }
