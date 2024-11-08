@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y \
 # Install BiocManager
 RUN R -e 'if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")'
 
-RUN R -e 'install.packages(c("dplyr","data.table"))'
+RUN R -e 'install.packages(c("dplyr","data.table","lobstr"))'
 
 # Install the required R packages
 RUN R -e 'BiocManager::install(c("SeqArray", "SNPRelate", "GenomicRanges", "BSgenome", "SNPlocs.Hsapiens.dbSNP155.GRCh38","SNPlocs.Hsapiens.dbSNP155.GRCh37","GenomeInfoDb"))'
