@@ -46,22 +46,18 @@ process genotype {
     publishDir "${params.outdir}/", mode: "copy"
 
     input:
-
     path gds_file
 
     output:
-
     path *
 
     script:
-
     """
     #!/usr/bin/env R
 
     genofile=seqArray::seqOpen($gdsfile)
     sample.id<-SeqArray::seqGetData(genofile,"sample.id")
     writeLines(sample.id,"samples.txt")
-
 
     """
 
