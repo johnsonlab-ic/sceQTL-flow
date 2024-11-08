@@ -53,7 +53,7 @@ process genotype {
 
     script:
     """
-    #!/usr/bin/env R
+    #!/usr/bin/env Rscript
 
     genofile=seqArray::seqOpen($gds_file)
     sample.id<-SeqArray::seqGetData(genofile,"sample.id")
