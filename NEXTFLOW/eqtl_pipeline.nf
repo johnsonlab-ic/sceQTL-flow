@@ -51,11 +51,6 @@ process genotype {
     output:
     path "*"
 
-    singularity {
-            enabled = true
-            autoMounts = true
-            runOptions = "--bind ${baseDir}:/mnt --bind ${params.gds_file}:${params.gds_file}"
-        }
 
     script:
     """
