@@ -15,7 +15,6 @@ process create_genotype{
     path "*"
 
     // container "${baseDir}.container"
-
    script:
     """
     Rscript -e 'source("/mnt/genotype_functions/genotype_functions.r"); generate_genotype_matrix(gds_file="${params.gds_file}")'
@@ -25,7 +24,6 @@ process create_genotype{
     // """
 
 }
-
 
 workflow{
     create_genotype()
