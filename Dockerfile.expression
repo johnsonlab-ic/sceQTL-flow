@@ -1,0 +1,27 @@
+# Use the official R base image
+FROM r-base:4.4.0
+
+# Install necessary system dependencies
+RUN apt-get update && apt-get install -y \
+    libcurl4-openssl-dev \
+    libssl-dev \
+    libxml2-dev
+
+# Install BiocManager
+RUN R -e 'if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")'
+
+RUN R -e 'install.packages(c("dplyr","data.table","Seurat","BPCells", "presto", "glmGamPoi"))'
+
+# Install the required R packages
+RUN R -e 'BiocManager::install(c("TxDb.Hsapiens.UCSC.hg38.knownGene","org.Hs.eg.db","edgeR"))'
+
+RUN R -e 'install.packages("lobstr")'
+
+# Set the working directory
+WORKDIR /usr/local/src
+
+# Copy any additional scripts or files if needed
+# COPY . .
+
+# Set the default command to R
+CMD ["R"]
