@@ -59,6 +59,18 @@ process create_genotype {
 
 }
 
+process pseudobulk_singlecell{
+
+   script:
+    """
+    #!/usr/bin/env Rscript
+    print("Hello")
+
+
+    """
+
+}
+
 workflow{
 
     if(params.local){
