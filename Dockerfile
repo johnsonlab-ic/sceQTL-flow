@@ -1,5 +1,5 @@
 # Use the official R base image
-FROM r-base:latest
+FROM r-base:4.4.0
 
 # Install necessary system dependencies
 RUN apt-get update && apt-get install -y \
@@ -10,10 +10,12 @@ RUN apt-get update && apt-get install -y \
 # Install BiocManager
 RUN R -e 'if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")'
 
-RUN R -e 'install.packages(c("dplyr","data.table","lobstr"))'
+RUN R -e 'install.packages(c("dplyr","data.table"))'
 
 # Install the required R packages
 RUN R -e 'BiocManager::install(c("SeqArray", "SNPRelate", "GenomicRanges", "BSgenome", "SNPlocs.Hsapiens.dbSNP155.GRCh38","SNPlocs.Hsapiens.dbSNP155.GRCh37","GenomeInfoDb"))'
+
+RUN R -e 'install.packages("lobstr")'
 
 # Set the working directory
 WORKDIR /usr/local/src
