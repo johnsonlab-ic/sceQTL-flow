@@ -5,7 +5,7 @@ params.gds_file="/rds/general/user/ah3918/projects/roche/live/ALEX//PROCESSED_DA
 params.inputfile="/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/eqtl_pipeline_dev/eQTL_PIPELINE/testfile.txt"
 params.local=true
 params.genotype_source_functions="${baseDir}/../genotype_functions/genotype_functions.r"
-
+params.single_cell_file=""
 
 
 process create_genotype_qsub {
@@ -19,7 +19,9 @@ process create_genotype_qsub {
     path genotype_source_functions
 
     output:
-    path "*"
+    path "genotype_mat.csv"
+    path "snp_chromlocations.csv"
+    path "MAF_mat.csv"
 
 
     script:
@@ -40,11 +42,13 @@ process create_genotype {
     publishDir "${params.outdir}/", mode: "copy"
 
     input:
-    path gds_file
+    path gds_file from file(params.gds_file)
     path genotype_source_functions
 
     output:
-    path "*"
+    path "genotype_mat.csv"
+    path "snp_chromlocations.csv"
+    path "MAF_mat.csv"
 
 
     script:
@@ -59,18 +63,41 @@ process create_genotype {
 
 }
 
-process pseudobulk_singlecell{
+process count_snps{
 
-   script:
+    input:
+    path genotype_mat from create_genotype.out
+
+    output:
+    stdout 
+
+    script:
     """
     #!/usr/bin/env Rscript
     
-    library(Seurat)
+    geno_mat=data.table::fread("$genotype_mat")
+    print(nrow(geno_mat))
 
 
     """
 
+
 }
+
+// process pseudobulk_singlecell{
+
+//     input: rds_file from file(params.singlecell_file)
+
+//    script:
+//     """
+//     #!/usr/bin/env Rscript
+    
+//     library(Seurat)
+
+
+//     """
+
+// }
 
 workflow{
 
@@ -79,5 +106,6 @@ workflow{
     }else{
         create_genotype_qsub(gds_file=params.gds_file,genotype_source_functions=params.genotype_source_functions)
     }
-    pseudobulk_singlecell()
+    
+    count_snps()
 }
