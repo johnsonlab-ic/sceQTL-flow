@@ -46,9 +46,9 @@ process create_genotype {
     path genotype_source_functions
 
     output:
-    path "genotype_mat.csv"
-    path "snp_chromlocations.csv"
-    path "MAF_mat.csv"
+    path "genotype_mat.csv", emit: genotype_mat
+    path "snp_chromlocations.csv", emit: snp_chromlocations
+    path "MAF_mat.csv", emit: maf_mat
 
 
     script:
@@ -107,5 +107,5 @@ workflow{
         create_genotype_qsub(gds_file=params.gds_file,genotype_source_functions=params.genotype_source_functions)
     }
     
-    count_snps(genotype_mat=create_genotype.out.file("genotype_mat.csv"))
+    count_snps(genotype_mat=create_genotype.out.genotype_mat)
 }
