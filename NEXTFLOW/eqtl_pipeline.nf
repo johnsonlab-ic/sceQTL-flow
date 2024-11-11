@@ -62,9 +62,9 @@ process create_genotype {
 workflow{
 
     if(params.local){
-        genotype(gds_file=params.gds_file,genotype_source_functions=params.genotype_source_functions)
+        create_genotype(gds_file=params.gds_file,genotype_source_functions=params.genotype_source_functions)
     }else{
-        genotype_qsub(gds_file=params.gds_file,genotype_source_functions=params.genotype_source_functions)
+        create_genotype_qsub(gds_file=params.gds_file,genotype_source_functions=params.genotype_source_functions)
     }
     
 }
