@@ -19,7 +19,7 @@ process create_genotype_qsub {
     path genotype_source_functions
 
     output:
-    path "genotype_mat.csv"
+    path "genotype_012mat.csv"
     path "snp_chromlocations.csv"
     path "MAF_mat.csv"
 
@@ -46,7 +46,7 @@ process create_genotype {
     path genotype_source_functions
 
     output:
-    path "genotype_mat.csv", emit: genotype_mat
+    path "genotype_012mat.csv", emit: genotype_mat
     path "snp_chromlocations.csv", emit: snp_chromlocations
     path "MAF_mat.csv", emit: maf_mat
 
