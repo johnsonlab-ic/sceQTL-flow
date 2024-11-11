@@ -107,5 +107,5 @@ workflow{
         create_genotype_qsub(gds_file=params.gds_file,genotype_source_functions=params.genotype_source_functions)
     }
     
-    count_snps(genotype_mat=create_genotype.genotype_mat)
+    count_snps(genotype_mat=create_genotype.out.file("genotype_mat.csv"))
 }
