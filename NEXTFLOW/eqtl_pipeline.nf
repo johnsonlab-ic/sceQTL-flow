@@ -25,7 +25,7 @@ process create_genotype_qsub {
     script:
     """
     #!/usr/bin/env Rscript
-    
+    library(dplyr)
     source("$genotype_source_functions")
     generate_genotype_matrix(gds_file="$gds_file")
 
@@ -64,7 +64,8 @@ process pseudobulk_singlecell{
    script:
     """
     #!/usr/bin/env Rscript
-    print("Hello")
+    
+    library(Seurat)
 
 
     """
@@ -78,5 +79,5 @@ workflow{
     }else{
         create_genotype_qsub(gds_file=params.gds_file,genotype_source_functions=params.genotype_source_functions)
     }
-    
+    pseudobulk_singlecell()
 }
