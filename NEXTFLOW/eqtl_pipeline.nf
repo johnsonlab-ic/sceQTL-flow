@@ -42,7 +42,7 @@ process create_genotype {
     publishDir "${params.outdir}/", mode: "copy"
 
     input:
-    path gds_file from file(params.gds_file)
+    path gds_file 
     path genotype_source_functions
 
     output:
