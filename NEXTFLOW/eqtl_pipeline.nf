@@ -25,7 +25,7 @@ process create_genotype_qsub {
     script:
     """
     #!/usr/bin/env Rscript
-    library(dplyr)
+    
     source("$genotype_source_functions")
     generate_genotype_matrix(gds_file="$gds_file")
 
