@@ -66,7 +66,7 @@ process create_genotype {
 process count_snps{
 
     input:
-    path genotype_mat from create_genotype.out
+    path genotype_mat 
 
     output:
     stdout 
@@ -107,5 +107,5 @@ workflow{
         create_genotype_qsub(gds_file=params.gds_file,genotype_source_functions=params.genotype_source_functions)
     }
     
-    count_snps()
+    count_snps(genotype_mat=create_genotype.genotype_mat)
 }
