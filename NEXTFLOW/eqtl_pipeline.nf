@@ -71,7 +71,7 @@ process count_snps{
 
     input:
     path genotype_mat
-    path genotype_source_functions
+    
 
     output:
     stdout 
@@ -142,7 +142,7 @@ workflow{
     
     count_snps(genotype_mat=create_genotype.out.genotype_mat)
 
-    
+
     pseudobulk_singlecell(single_cell_file=params.single_cell_file,pseudobulk_source_functions=params.pseudobulk_source_functions)
 
 }
