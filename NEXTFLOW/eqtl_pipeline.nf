@@ -7,7 +7,7 @@ params.local=true
 
 
 params.genotype_source_functions="${baseDir}/../genotype_functions/genotype_functions.r"
-params.pseudobulk_source_functions="${baseDir}/../pseudobulk_functions/pseudobulk_functions.r"
+params.pseudobulk_source_functions="${baseDir}/../expression_functions/pseudobulk_functions.r"
 
 params.single_cell_file="/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/TEST_DATA/roche_ms_decontx.rds"
 
