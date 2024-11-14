@@ -109,7 +109,7 @@ process pseudobulk_singlecell{
     source("$pseudobulk_source_functions")
 
     seuratobj=readRDS("$single_cell_file")
-    celltypelist=Seurat::SplitObject(seuratobj,split.by=celltype_colname)
+    celltypelist=Seurat::SplitObject(seuratobj,split.by="CellType")
 
     aggregated_counts_list=pseudobulk_counts(celltypelist,
     min.cells=10,
