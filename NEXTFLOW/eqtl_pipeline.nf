@@ -106,6 +106,7 @@ process pseudobulk_singlecell{
     
     library(Seurat)
     library(BPCells)
+    library(dplyr)
     source("$pseudobulk_source_functions")
 
     seuratobj=readRDS("$single_cell_file")
