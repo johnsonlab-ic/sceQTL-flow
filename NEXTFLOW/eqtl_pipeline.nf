@@ -139,6 +139,7 @@ workflow{
     GDS File: ${params.gds_file}
     Input Seurat File: ${params.single_cell_file}
     Local Execution: ${params.local}
+    WorkDir: ${workflow.workDir}
     ========================================
     """
 
