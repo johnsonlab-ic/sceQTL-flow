@@ -67,27 +67,6 @@ process create_genotype {
 
 }
 
-process count_snps{
-
-    input:
-    path genotype_mat
-    
-
-    output:
-    stdout 
-
-    script:
-    """
-    #!/usr/bin/env Rscript
-    
-    geno_mat=data.table::fread("$genotype_mat")
-    print(nrow(geno_mat))
-
-
-    """
-
-
-}
 
 process pseudobulk_singlecell{
 
@@ -98,7 +77,8 @@ process pseudobulk_singlecell{
    path pseudobulk_source_functions
 
    output:
-   path "*_aggregated_counts.csv"
+   path "*_aggregated_counts.csv", emit: aggregated_counts
+   path "gene_locations.csv", emit: gene_locations
 
    script:
     """
@@ -118,9 +98,32 @@ process pseudobulk_singlecell{
     assay="decontXcounts")
 
     for(i in 1:length(aggregated_counts_list)){
-        write.table(aggregated_counts_list[[i]],paste0(names(aggregated_counts_list[i]),"_aggregated_counts.csv"))
+        write.csv(aggregated_counts_list[[i]],paste0(names(aggregated_counts_list[i]),"_aggregated_counts.csv"))
     }
 
+    gene_locations=get_gene_locations(aggregated_counts_list[[1]])
+    write.csv(gene_locations,"gene_locations.csv")
+
+
+    """
+
+}
+
+
+process run_matrixeQTL{
+    
+    input:
+    path genotype_mat
+    path snp_locations
+    path expression_mat
+    path gene_locations 
+
+    output:
+    path "*"
+
+
+    script:
+    """
 
     """
 
@@ -141,9 +144,22 @@ workflow{
 
     create_genotype(gds_file=params.gds_file,genotype_source_functions=params.genotype_source_functions)
     
-    count_snps(genotype_mat=create_genotype.out.genotype_mat)
-
-
     pseudobulk_singlecell(single_cell_file=params.single_cell_file,pseudobulk_source_functions=params.pseudobulk_source_functions)
 
+}
+
+workflow.onComplete {
+
+    def msg = """\
+        Pipeline execution summary
+        ---------------------------
+        Completed at: ${workflow.complete}
+        Duration    : ${workflow.duration}
+        Success     : ${workflow.success}
+        workDir     : ${workflow.workDir}
+        exit status : ${workflow.exitStatus}
+        """
+        .stripIndent()
+
+    sendMail(to: 'a.haglund@outlook.com', subject: 'My pipeline execution', body: msg)
 }
