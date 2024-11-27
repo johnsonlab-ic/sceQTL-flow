@@ -149,18 +149,18 @@ workflow{
 
 }
 
-workflow.onComplete {
+// workflow.onComplete {
 
-    def msg = """\
-        Pipeline execution summary
-        ---------------------------
-        Completed at: ${workflow.complete}
-        Duration    : ${workflow.duration}
-        Success     : ${workflow.success}
-        workDir     : ${workflow.workDir}
-        exit status : ${workflow.exitStatus}
-        """
-        .stripIndent()
+//     def msg = """\
+//         Pipeline execution summary
+//         ---------------------------
+//         Completed at: ${workflow.complete}
+//         Duration    : ${workflow.duration}
+//         Success     : ${workflow.success}
+//         workDir     : ${workflow.workDir}
+//         exit status : ${workflow.exitStatus}
+//         """
+//         .stripIndent()
 
-    sendMail(to: 'a.haglund@outlook.com', subject: 'My pipeline execution', body: msg)
-}
+//     sendMail(to: 'a.haglund@outlook.com', subject: 'My pipeline execution', body: msg)
+// }
