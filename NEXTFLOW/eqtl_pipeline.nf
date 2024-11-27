@@ -110,24 +110,24 @@ process pseudobulk_singlecell{
 }
 
 
-// process run_matrixeQTL{
+process run_matrixeQTL{
     
-//     input:
-//     path genotype_mat
-//     path snp_locations
-//     path expression_mat
-//     path gene_locations 
+    input:
+    path genotype_mat
+    path snp_locations
+    path expression_mat
+    path gene_locations 
 
-//     output:
-//     path "*"
+    output:
+    path "*"
 
 
-//     script:
-//     """
+    script:
+    """
 
-//     """
+    """
 
-// }
+}
 
 workflow{
 
@@ -151,18 +151,18 @@ workflow{
 
 }
 
-// workflow.onComplete {
+workflow.onComplete {
 
-//     def msg = """\
-//         Pipeline execution summary
-//         ---------------------------
-//         Completed at: ${workflow.complete}
-//         Duration    : ${workflow.duration}
-//         Success     : ${workflow.success}
-//         workDir     : ${workflow.workDir}
-//         exit status : ${workflow.exitStatus}
-//         """
-//         .stripIndent()
+    def msg = """\
+        Pipeline execution summary
+        ---------------------------
+        Completed at: ${workflow.complete}
+        Duration    : ${workflow.duration}
+        Success     : ${workflow.success}
+        workDir     : ${workflow.workDir}
+        exit status : ${workflow.exitStatus}
+        """
+        .stripIndent()
 
-//     sendMail(to: 'a.haglund@outlook.com', subject: 'My pipeline execution', body: msg)
-// }
+    sendMail(to: 'a.haglund@outlook.com', subject: 'My pipeline execution', body: msg)
+}
