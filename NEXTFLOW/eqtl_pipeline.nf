@@ -110,24 +110,24 @@ process pseudobulk_singlecell{
 }
 
 
-process run_matrixeQTL{
+// process run_matrixeQTL{
     
-    input:
-    path genotype_mat
-    path snp_locations
-    path expression_mat
-    path gene_locations 
+//     input:
+//     path genotype_mat
+//     path snp_locations
+//     path expression_mat
+//     path gene_locations 
 
-    output:
-    path "*"
+//     output:
+//     path "*"
 
 
-    script:
-    """
+//     script:
+//     """
 
-    """
+//     """
 
-}
+// }
 
 workflow{
 
@@ -143,9 +143,11 @@ workflow{
     ========================================
     """
 
-    create_genotype(gds_file=params.gds_file,genotype_source_functions=params.genotype_source_functions)
+    create_genotype(gds_file=params.gds_file,
+    genotype_source_functions=params.genotype_source_functions)
     
-    pseudobulk_singlecell(single_cell_file=params.single_cell_file,pseudobulk_source_functions=params.pseudobulk_source_functions)
+    pseudobulk_singlecell(single_cell_file=params.single_cell_file,
+    pseudobulk_source_functions=params.pseudobulk_source_functions)
 
 }
 
