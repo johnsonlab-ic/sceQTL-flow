@@ -1,5 +1,5 @@
 # Use the official R base image
-FROM r-base:4.4.0
+FROM r-base:4.3.3
 
 # Install necessary system dependencies
 RUN apt-get update && apt-get install -y \
