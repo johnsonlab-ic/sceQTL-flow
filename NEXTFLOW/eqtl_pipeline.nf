@@ -143,9 +143,7 @@ workflow{
     Local Execution: ${params.local}
     WorkDir: ${workflow.workDir}
     ========================================
-
-    !! WARNING !!
-    This is the DEV version of the pipeline.
+    
     """
 
     // create_genotype(gds_file=params.gds_file,
