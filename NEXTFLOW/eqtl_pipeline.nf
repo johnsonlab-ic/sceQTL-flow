@@ -148,17 +148,27 @@ workflow{
     This is the DEV version of the pipeline.
     """
 
-    create_genotype(gds_file=params.gds_file,
-    genotype_source_functions=params.genotype_source_functions)
+    // create_genotype(gds_file=params.gds_file,
+    // genotype_source_functions=params.genotype_source_functions)
     
-    pseudobulk_singlecell(single_cell_file=params.single_cell_file,
-    pseudobulk_source_functions=params.pseudobulk_source_functions)
+    // pseudobulk_singlecell(single_cell_file=params.single_cell_file,
+    // pseudobulk_source_functions=params.pseudobulk_source_functions)
 
 }
 
 
 workflow.onComplete {
-    log.info("""
-    OnComplete: Ending Workflow
-    """)
+
+    def msg = """\
+        Pipeline execution summary
+        ---------------------------
+        Completed at: ${workflow.complete}
+        Duration    : ${workflow.duration}
+        Success     : ${workflow.success}
+        workDir     : ${workflow.workDir}
+        exit status : ${workflow.exitStatus}
+        """
+        .stripIndent()
+
+    sendMail(to: 'a.haglund@outlook.com', subject: 'My pipeline execution', body: msg)
 }
