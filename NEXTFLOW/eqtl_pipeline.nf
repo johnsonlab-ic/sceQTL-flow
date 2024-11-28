@@ -145,7 +145,7 @@ workflow{
     ========================================
 
     !! WARNING !!
-    This is the DEV version of the pipeline.
+    This is the DEV version of the pipeline. Hello!
     """
 
     // create_genotype(gds_file=params.gds_file,
