@@ -143,14 +143,14 @@ workflow{
     Local Execution: ${params.local}
     WorkDir: ${workflow.workDir}
     ========================================
-    
+
     """
 
-    // create_genotype(gds_file=params.gds_file,
-    // genotype_source_functions=params.genotype_source_functions)
+    create_genotype(gds_file=params.gds_file,
+    genotype_source_functions=params.genotype_source_functions)
     
-    // pseudobulk_singlecell(single_cell_file=params.single_cell_file,
-    // pseudobulk_source_functions=params.pseudobulk_source_functions)
+    pseudobulk_singlecell(single_cell_file=params.single_cell_file,
+    pseudobulk_source_functions=params.pseudobulk_source_functions)
 
 }
 
