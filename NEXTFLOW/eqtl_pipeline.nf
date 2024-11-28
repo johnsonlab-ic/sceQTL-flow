@@ -159,16 +159,10 @@ workflow{
 
 workflow.onComplete {
 
-    def msg = """\
-        Pipeline execution summary
-        ---------------------------
-        Completed at: ${workflow.complete}
-        Duration    : ${workflow.duration}
-        Success     : ${workflow.success}
-        workDir     : ${workflow.workDir}
-        exit status : ${workflow.exitStatus}
-        """
-        .stripIndent()
+    println """
+    ========================================
+    Pipeline Completed!! 
+    ========================================
 
-    sendMail(to: 'a.haglund@outlook.com', subject: 'My pipeline execution', body: msg)
+    """
 }
