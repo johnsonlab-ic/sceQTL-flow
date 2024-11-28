@@ -129,6 +129,22 @@ process run_matrixeQTL{
 
 }
 
+workflow.onComplete {
+
+    def msg = """\
+        Pipeline execution summary
+        ---------------------------
+        Completed at: ${workflow.complete}
+        Duration    : ${workflow.duration}
+        Success     : ${workflow.success}
+        workDir     : ${workflow.workDir}
+        exit status : ${workflow.exitStatus}
+        """
+        .stripIndent()
+
+    sendMail(to: 'a.haglund@outlook.com', subject: 'My pipeline execution', body: msg)
+}
+
 workflow{
 
   println """
@@ -149,20 +165,4 @@ workflow{
     pseudobulk_singlecell(single_cell_file=params.single_cell_file,
     pseudobulk_source_functions=params.pseudobulk_source_functions)
 
-}
-
-workflow.onComplete {
-
-    def msg = """\
-        Pipeline execution summary
-        ---------------------------
-        Completed at: ${workflow.complete}
-        Duration    : ${workflow.duration}
-        Success     : ${workflow.success}
-        workDir     : ${workflow.workDir}
-        exit status : ${workflow.exitStatus}
-        """
-        .stripIndent()
-
-    sendMail(to: 'a.haglund@outlook.com', subject: 'My pipeline execution', body: msg)
 }

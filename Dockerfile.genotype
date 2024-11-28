@@ -5,8 +5,11 @@ FROM r-base:4.4.0
 RUN apt-get update && apt-get install -y \
     libcurl4-openssl-dev \
     libssl-dev \
-    libxml2-dev
-
+    libxml2-dev \
+    libhdf5-dev \
+    procps \
+    pkg-config
+    
 # Install BiocManager
 RUN R -e 'if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")'
 
