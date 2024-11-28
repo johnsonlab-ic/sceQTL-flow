@@ -129,21 +129,7 @@ process run_matrixeQTL{
 
 }
 
-workflow.onComplete {
 
-    def msg = """\
-        Pipeline execution summary
-        ---------------------------
-        Completed at: ${workflow.complete}
-        Duration    : ${workflow.duration}
-        Success     : ${workflow.success}
-        workDir     : ${workflow.workDir}
-        exit status : ${workflow.exitStatus}
-        """
-        .stripIndent()
-
-    sendMail(to: 'a.haglund@outlook.com', subject: 'My pipeline execution', body: msg)
-}
 
 workflow{
 
@@ -171,3 +157,8 @@ workflow{
 }
 
 
+workflow.onComplete {
+    log.info("""
+    OnComplete: Ending Workflow
+    """)
+}
