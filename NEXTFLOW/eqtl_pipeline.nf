@@ -145,7 +145,7 @@ workflow.onComplete {
     println "Workflow completed successfully!"
     // Send email notification
     sendMail {
-        from = "a.haglund@outlook.com"
+        from = "a.haglund19@imperial.ac.uk"
         to = 'ah3918@ic.ac.uk'
         subject = "Nextflow Pipeline Completed"
         body = "The Nextflow pipeline has completed successfully."
