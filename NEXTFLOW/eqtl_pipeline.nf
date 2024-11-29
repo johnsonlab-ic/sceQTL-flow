@@ -19,7 +19,6 @@ process create_genotype {
 
     input:
     path gds_file 
-    path genotype_source_functions
 
     output:
     path "genotype_012mat.csv", emit: genotype_mat
@@ -31,7 +30,7 @@ process create_genotype {
     """
     #!/usr/bin/env Rscript
     library(dplyr)
-    source("$genotype_source_functions")
+    source("$${params.genotype_source_functions}")
     generate_genotype_matrix(gds_file="$gds_file")
 
 
@@ -46,7 +45,6 @@ process pseudobulk_singlecell{
 
    input: 
    path single_cell_file
-   path pseudobulk_source_functions
 
    output:
    path "*_aggregated_counts.csv", emit: aggregated_counts
@@ -59,7 +57,7 @@ process pseudobulk_singlecell{
     library(Seurat)
     library(BPCells)
     library(dplyr)
-    source("$pseudobulk_source_functions")
+    source("${params.pseudobulk_source_functions}")
 
     seuratobj=readRDS("$single_cell_file")
     celltypelist=Seurat::SplitObject(seuratobj,split.by="CellType")
@@ -122,11 +120,9 @@ workflow{
 
     """
 
-    // create_genotype(gds_file=params.gds_file,
-    // genotype_source_functions=params.genotype_source_functions)
+    create_genotype(gds_file=params.gds_file)
     
-    // pseudobulk_singlecell(single_cell_file=params.single_cell_file,
-    // pseudobulk_source_functions=params.pseudobulk_source_functions)
+    pseudobulk_singlecell(single_cell_file=params.single_cell_file)
 
 }
 
