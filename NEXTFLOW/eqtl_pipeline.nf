@@ -39,26 +39,6 @@ process create_genotype {
 }
 
 
-process create_dataframe {
-    publishDir "${params.outdir}", mode: 'copy'
-
-
-    output:
-    path "dataframe.txt"
-
-    script:
-    """
-    #!/usr/bin/env Rscript
-    df <- data.frame(
-        x = 1:10,
-        y = rnorm(10)
-    )
-    write.table(df, file="dataframe.txt", row.names=FALSE, col.names=TRUE, sep="\t")
-    """
-}
-
-
-
 process pseudobulk_singlecell{
 
    publishDir "${params.outdir}/", mode: "copy"
@@ -67,7 +47,7 @@ process pseudobulk_singlecell{
    path single_cell_file
 
    output:
-   path "*pseudobulk.csv", emit: aggregated_counts
+   path "*pseudobulk.csv", emit: pseudobulk_counts
    path "gene_locations.csv", emit: gene_locations
 
    script:
@@ -124,7 +104,25 @@ process run_matrixeQTL{
 
 }
 
+process find_top_genes {
+    publishDir "${params.outdir}", mode: 'copy'
 
+    input:
+    path pseudobulk_file
+
+    output:
+    path "top_genes_list.txt"
+
+    script:
+    """
+    #!/usr/bin/env Rscript
+    library(data.table)
+    pseudobulk_data <- fread("$pseudobulk_file")
+    top_genes <- pseudobulk_data[order(-V2), ][1:10, V1]
+    celltype <- gsub("_pseudobulk.csv", "", basename("$pseudobulk_file"))
+    write.table(data.frame(celltype=celltype, top_genes=top_genes), file=paste0(celltype,"top_genes_list.txt"), row.names=FALSE, col.names=TRUE, sep="\t", append=TRUE)
+    """
+}
 
 workflow{
 
@@ -144,10 +142,9 @@ workflow{
     This is the dev version. Testing again.
 
     """
-    create_dataframe()
     create_genotype(gds_file=params.gds_file)
-    
     pseudobulk_singlecell(single_cell_file=params.single_cell_file)
+    find_top_genes(pseudobulk_singlecell.out.pseudobulk_counts)
     
 
 }
@@ -163,13 +160,3 @@ workflow.onComplete {
     """
 }
 
-// workflow.onComplete {
-//     println "Workflow completed successfully!"
-//     // Send email notification with attachment
-//     sendMail {
-//         to params.email
-//         subject "Nextflow Pipeline Completed"
-//         body "The Nextflow pipeline has completed successfully. Please find the execution report attached."
-//         attach '${baseDir}/pipeline_report.html'
-//     }
-// }
