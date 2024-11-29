@@ -6,7 +6,6 @@ params.inputfile="/rds/general/user/ah3918/projects/puklandmarkproject/live/User
 params.local=true
 params.email="ah3918@ic.ac.uk"
 
-
 params.genotype_source_functions="${baseDir}/../genotype_functions/genotype_functions.r"
 params.pseudobulk_source_functions="${baseDir}/../expression_functions/pseudobulk_functions.r"
 
@@ -139,14 +138,13 @@ workflow.onComplete {
     """
 }
 
-workflow.onComplete {
-    println "Workflow completed successfully!"
-    // Send email notification
-    sendMail {
-        from = "johnsonlabgithub@outlook.com"
-        to = params.email
-        subject = "Nextflow Pipeline Completed"
-        body = "The Nextflow pipeline has completed successfully."
-        attach = "${baseDir}/pipeline_report.html"
-    }
-}
+// workflow.onComplete {
+//     println "Workflow completed successfully!"
+//     // Send email notification with attachment
+//     sendMail {
+//         to params.email
+//         subject "Nextflow Pipeline Completed"
+//         body "The Nextflow pipeline has completed successfully. Please find the execution report attached."
+//         attach '${baseDir}/pipeline_report.html'
+//     }
+// }
