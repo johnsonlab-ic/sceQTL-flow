@@ -144,6 +144,8 @@ workflow{
     WorkDir: ${workflow.workDir}
     ========================================
 
+    This is the dev version
+
     """
 
     create_genotype(gds_file=params.gds_file,
