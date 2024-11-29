@@ -39,6 +39,26 @@ process create_genotype {
 }
 
 
+process create_dataframe {
+    publishDir "${params.outdir}", mode: 'copy'
+
+
+    output:
+    path "dataframe.txt"
+
+    script:
+    """
+    #!/usr/bin/env Rscript
+    df <- data.frame(
+        x = 1:10,
+        y = rnorm(10)
+    )
+    write.table(df, file="dataframe.txt", row.names=FALSE, col.names=TRUE, sep="\t")
+    """
+}
+
+
+
 process pseudobulk_singlecell{
 
    publishDir "${params.outdir}/", mode: "copy"
@@ -128,6 +148,8 @@ workflow{
     create_genotype(gds_file=params.gds_file)
     
     pseudobulk_singlecell(single_cell_file=params.single_cell_file)
+    
+    create_dataframe()
 
 }
 
