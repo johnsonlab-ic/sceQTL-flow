@@ -141,13 +141,13 @@ workflow.onComplete {
     """
 }
 
-workflow.onComplete {
-    println "Workflow completed successfully!"
-    // Send email notification with attachment
-    sendMail {
-        to params.email
-        subject "Nextflow Pipeline Completed"
-        body "The Nextflow pipeline has completed successfully. Please find the execution report attached."
-        attach '${workDir}/pipeline_report.html'
-    }
-}
+// workflow.onComplete {
+//     println "Workflow completed successfully!"
+//     // Send email notification with attachment
+//     sendMail {
+//         to params.email
+//         subject "Nextflow Pipeline Completed"
+//         body "The Nextflow pipeline has completed successfully. Please find the execution report attached."
+//         attach '${baseDir}/pipeline_report.html'
+//     }
+// }
