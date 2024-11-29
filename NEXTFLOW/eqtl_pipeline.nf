@@ -144,12 +144,11 @@ workflow{
     This is the dev version. Testing again.
 
     """
-
+    create_dataframe()
     create_genotype(gds_file=params.gds_file)
     
     pseudobulk_singlecell(single_cell_file=params.single_cell_file)
     
-    create_dataframe()
 
 }
 
