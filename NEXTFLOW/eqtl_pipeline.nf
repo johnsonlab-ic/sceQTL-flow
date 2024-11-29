@@ -144,7 +144,7 @@ workflow{
     WorkDir: ${workflow.workDir}
     ========================================
 
-
+    This is the stable pipeline version. 
     """
 
     create_genotype(gds_file=params.gds_file,
