@@ -12,34 +12,6 @@ params.pseudobulk_source_functions="${baseDir}/../expression_functions/pseudobul
 params.single_cell_file="/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/TEST_DATA/roche_ms_decontx.rds"
 
 
-// process create_genotype_qsub {
-
-//     publishDir "${params.outdir}/", mode: "copy"
-//     executor="pbspro"
-//     clusterOptions = "-lselect=1:ncpus=20:mem=240gb -l walltime=04:00:00"
-
-//     input:
-//     path gds_file
-//     path genotype_source_functions
-
-//     output:
-//     path "genotype_012mat.csv"
-//     path "snp_chromlocations.csv"
-//     path "MAF_mat.csv"
-
-
-//     script:
-//     """
-//     #!/usr/bin/env Rscript
-//     library(dplyr)
-//     source("$genotype_source_functions")
-//     generate_genotype_matrix(gds_file="$gds_file")
-
-
-//     """
-
-
-// }
 
 process create_genotype {
 
