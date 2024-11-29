@@ -111,7 +111,7 @@ process find_top_genes {
     path pseudobulk_file
 
     output:
-    path "top_genes_list.txt"
+    path "*top_genes_list.txt"
 
     script:
     """
@@ -120,7 +120,8 @@ process find_top_genes {
     pseudobulk_data <- fread("$pseudobulk_file")
     top_genes <- pseudobulk_data[order(-V2), ][1:10, V1]
     celltype <- gsub("_pseudobulk.csv", "", basename("$pseudobulk_file"))
-    write.table(data.frame(celltype=celltype, top_genes=top_genes), file=paste0(celltype,"top_genes_list.txt"), row.names=FALSE, col.names=TRUE, sep="\t", append=TRUE)
+    write.table(data.frame(celltype=celltype, top_genes=top_genes), 
+    file=paste0(celltype,"top_genes_list.txt"), row.names=FALSE, col.names=TRUE, sep="\t", append=TRUE)
     """
 }
 
