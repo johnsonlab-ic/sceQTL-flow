@@ -4,7 +4,7 @@ params.outdir="/rds/general/user/ah3918/projects/puklandmarkproject/ephemeral/tm
 params.gds_file="/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/TEST_DATA/test_geno.gds"
 params.inputfile="/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/eqtl_pipeline_dev/eQTL_PIPELINE/testfile.txt"
 params.local=true
-
+params.email="ah3918@ic.ac.uk"
 
 params.genotype_source_functions="${baseDir}/../genotype_functions/genotype_functions.r"
 params.pseudobulk_source_functions="${baseDir}/../expression_functions/pseudobulk_functions.r"
@@ -146,8 +146,9 @@ workflow.onComplete {
     // Send email notification
     sendMail {
         from = "johnsonlabgithub@outlook.com"
-        to = 'ah3918@ic.ac.uk'
+        to = params.email
         subject = "Nextflow Pipeline Completed"
         body = "The Nextflow pipeline has completed successfully."
+        attach = "${baseDir}/pipeline_report.html"
     }
 }
