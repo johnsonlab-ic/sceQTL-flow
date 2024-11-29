@@ -145,9 +145,9 @@ workflow.onComplete {
     println "Workflow completed successfully!"
     // Send email notification with attachment
     sendMail {
-        to = params.email
-        subject = "Nextflow Pipeline Completed"
-        body = "The Nextflow pipeline has completed successfully. Please find the execution report attached."
-        attach = /rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/eQTL_PIPELINE/testfile.txt
+        to params.email
+        subject "Nextflow Pipeline Completed"
+        body "The Nextflow pipeline has completed successfully. Please find the execution report attached."
+        attach '/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/eQTL_PIPELINE/testfile.txt'
     }
 }
