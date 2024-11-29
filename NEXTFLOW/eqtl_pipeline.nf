@@ -144,6 +144,9 @@ workflow{
     WorkDir: ${workflow.workDir}
     ========================================
 
+    !! WARNING !!
+
+    This is the dev version
 
     """
 
