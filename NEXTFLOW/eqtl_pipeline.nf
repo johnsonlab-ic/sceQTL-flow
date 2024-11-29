@@ -146,7 +146,7 @@ workflow{
     """
     // create_genotype(gds_file=params.gds_file)
     pseudobulk_singlecell(single_cell_file=params.single_cell_file)
-    find_top_genes(Channel.fromPath("*pseudobulk.csv"))
+    find_top_genes(pseudobulk_singlecell.out.pseudobulk_counts)
     
 
 }
