@@ -119,11 +119,11 @@ workflow{
     This is the stable pipeline version. 
     """
 
-    create_genotype(gds_file=params.gds_file,
-    genotype_source_functions=params.genotype_source_functions)
+    // create_genotype(gds_file=params.gds_file,
+    // genotype_source_functions=params.genotype_source_functions)
     
-    pseudobulk_singlecell(single_cell_file=params.single_cell_file,
-    pseudobulk_source_functions=params.pseudobulk_source_functions)
+    // pseudobulk_singlecell(single_cell_file=params.single_cell_file,
+    // pseudobulk_source_functions=params.pseudobulk_source_functions)
 
 }
 
@@ -136,4 +136,15 @@ workflow.onComplete {
     ========================================
 
     """
+}
+
+workflow.onComplete {
+    println "Workflow completed successfully!"
+    // Send email notification
+    sendMail {
+        from = "johnsonlabgithub@outlook.com"
+        to = 'ah3918@ic.ac.uk'
+        subject = "Nextflow Pipeline Completed"
+        body = "The Nextflow pipeline has completed successfully."
+    }
 }
