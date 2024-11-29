@@ -148,6 +148,6 @@ workflow.onComplete {
         to = params.email
         subject = "Nextflow Pipeline Completed"
         body = "The Nextflow pipeline has completed successfully. Please find the execution report attached."
-        attach = ${baseDir}/pipeline_report.html
+        attach = /rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/eQTL_PIPELINE/testfile.txt
     }
 }
