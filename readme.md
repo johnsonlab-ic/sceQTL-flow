@@ -10,6 +10,6 @@ git pull; nextflow run -c NEXTFLOW/nextflow.config NEXTFLOW/eqtl_pipeline.nf
 
 
 eval "$(~/anaconda3/bin/conda shell.bash hook)"
-source activate CONDA_ENV
+source activate DEV_CONDA
 
 cd /rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/eQTL_PIPELINE
