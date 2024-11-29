@@ -118,7 +118,8 @@ process find_top_genes {
     #!/usr/bin/env Rscript
     library(data.table)
     pseudobulk_data <- fread("$pseudobulk_file")
-    top_genes <- pseudobulk_data[order(-V2), ][1:10, V1]
+    gene_sums <- rowSums(pseudobulk_data[, -1, with=FALSE])
+    top_genes <- head(order(gene_sums, decreasing=TRUE), 10)
     celltype <- gsub("_pseudobulk.csv", "", basename("$pseudobulk_file"))
     write.table(data.frame(celltype=celltype, top_genes=top_genes), 
     file=paste0(celltype,"top_genes_list.txt"), row.names=FALSE, col.names=TRUE, sep="\t", append=TRUE)
