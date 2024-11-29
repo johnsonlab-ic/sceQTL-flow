@@ -147,6 +147,7 @@ workflow.onComplete {
     sendMail {
         from = "nextflowjohnsonlab@gmail.com"
         to = 'a.haglund@outlook.com'
+        replyTo = "nextflowjohnsonlab@gmail.com"
         subject = "Nextflow Pipeline Completed"
         body = "The Nextflow pipeline has completed successfully."
     }
