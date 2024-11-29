@@ -47,7 +47,7 @@ process pseudobulk_singlecell{
    path single_cell_file
 
    output:
-   path "*_aggregated_counts.csv", emit: aggregated_counts
+   path "*pseudobulk.csv", emit: aggregated_counts
    path "gene_locations.csv", emit: gene_locations
 
    script:
@@ -66,13 +66,18 @@ process pseudobulk_singlecell{
     min.cells=10,
     indiv_col="Individual_ID",
     assay="decontXcounts")
+    
+    aggregated_counts_list=lapply(aggregated_counts_list,function(x){
+        x=log2(edgeR::cpm(x)+1)
+        return(x)
+    })
 
     for(i in 1:length(aggregated_counts_list)){
-        write.csv(aggregated_counts_list[[i]],paste0(names(aggregated_counts_list[i]),"_aggregated_counts.csv"))
+        data.table::fwrite(aggregated_counts_list[[i]],paste0(names(aggregated_counts_list[i]),"_pseudobulk.csv"))
     }
 
     gene_locations=get_gene_locations(aggregated_counts_list[[1]])
-    write.csv(gene_locations,"gene_locations.csv")
+    data.table::fwrite(gene_locations,"gene_locations.csv")
 
 
     """
