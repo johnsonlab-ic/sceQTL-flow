@@ -107,7 +107,6 @@ generate_genotype_matrix=function(vcfs,
 }
 
 
-
 # genofile=SeqArray::seqOpen(gds_file)
 # SeqArray::seqSetFilterCond(genofile,maf=minmaf)
 
