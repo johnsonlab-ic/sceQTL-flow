@@ -158,6 +158,8 @@ workflow{
     // create_genotype(gds_file=params.gds_file)
     pseudobulk_singlecell(single_cell_file=params.single_cell_file)
     find_top_genes(pseudobulk_file=pseudobulk_singlecell.out.pseudobulk_counts.flatten())
+
+
     
 
 }
@@ -167,7 +169,7 @@ workflow.onComplete {
 
     println """
     ========================================
-    Pipeline Completed!! 
+    Pipeline Completed!! Hello!
     ========================================
 
     """
