@@ -8,6 +8,7 @@ params.email="ah3918@ic.ac.uk"
 
 params.genotype_source_functions="${baseDir}/../genotype_functions/genotype_functions.r"
 params.pseudobulk_source_functions="${baseDir}/../expression_functions/pseudobulk_functions.r"
+params.eqtl_source_functions="${baseDir}/../MatrixEQTL_functions/matrixeqtl_source.r"
 
 params.single_cell_file="/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/TEST_DATA/roche_ms_decontx.rds"
 
@@ -19,7 +20,6 @@ process create_genotype {
 
     input:
     path gds_file 
-    path genotype_source_functions
 
     output:
     path "genotype_012mat.csv", emit: genotype_mat
@@ -31,7 +31,7 @@ process create_genotype {
     """
     #!/usr/bin/env Rscript
     library(dplyr)
-    source("$genotype_source_functions")
+    source("${params.genotype_source_functions}")
     generate_genotype_matrix(gds_file="$gds_file")
 
 
@@ -46,10 +46,9 @@ process pseudobulk_singlecell{
 
    input: 
    path single_cell_file
-   path pseudobulk_source_functions
 
    output:
-   path "*_aggregated_counts.csv", emit: aggregated_counts
+   path "*pseudobulk.csv", emit: pseudobulk_counts
    path "gene_locations.csv", emit: gene_locations
 
    script:
@@ -59,7 +58,7 @@ process pseudobulk_singlecell{
     library(Seurat)
     library(BPCells)
     library(dplyr)
-    source("$pseudobulk_source_functions")
+    source("${params.pseudobulk_source_functions}")
 
     seuratobj=readRDS("$single_cell_file")
     celltypelist=Seurat::SplitObject(seuratobj,split.by="CellType")
@@ -68,13 +67,18 @@ process pseudobulk_singlecell{
     min.cells=10,
     indiv_col="Individual_ID",
     assay="decontXcounts")
+    
+    aggregated_counts_list=lapply(aggregated_counts_list,function(x){
+        x=log2(edgeR::cpm(x)+1)
+        return(x)
+    })
 
     for(i in 1:length(aggregated_counts_list)){
-        write.csv(aggregated_counts_list[[i]],paste0(names(aggregated_counts_list[i]),"_aggregated_counts.csv"))
+        data.table::fwrite(aggregated_counts_list[[i]],paste0(names(aggregated_counts_list[i]),"_pseudobulk.csv"))
     }
 
     gene_locations=get_gene_locations(aggregated_counts_list[[1]])
-    write.csv(gene_locations,"gene_locations.csv")
+    data.table::fwrite(gene_locations,"gene_locations.csv")
 
 
     """
@@ -96,12 +100,42 @@ process run_matrixeQTL{
 
     script:
     """
+    #!/usr/bin/env Rscript
+    
+    source("${params.eqtl_source_functions}")
+    
+    pseudobulk_data=fread("$expression_mat")
+    genotype_data=fread("$genotype_mat")
+    snp_locations=fread("$snp_locations")
+    gene_locations=fread("$gene_locations")
+
+
 
     """
 
 }
 
+process find_top_genes {
+    publishDir "${params.outdir}", mode: 'copy'
 
+    input:
+    path pseudobulk_file
+
+    output:
+    path "*top_genes_list.txt"
+
+    script:
+    """
+    #!/usr/bin/env Rscript
+    library(data.table)
+    pseudobulk_data <- fread("$pseudobulk_file")
+    gene_sums <- rowSums(pseudobulk_data[, -1, with=FALSE])
+    top_genes <- head(order(gene_sums, decreasing=TRUE), 10)
+    celltype <- gsub("_pseudobulk.csv", "", basename("$pseudobulk_file"))
+    write.table(data.frame(celltype=celltype, top_genes=top_genes), 
+    file=paste0(celltype,"top_genes_list.txt"), row.names=FALSE, col.names=TRUE, sep="\t", append=TRUE)
+    """
+}
 
 workflow{
 
@@ -118,12 +152,10 @@ workflow{
 
     This is the stable pipeline version. 
     """
-
-    // create_genotype(gds_file=params.gds_file,
-    // genotype_source_functions=params.genotype_source_functions)
+    // create_genotype(gds_file=params.gds_file)
+    pseudobulk_singlecell(single_cell_file=params.single_cell_file)
+    find_top_genes(pseudobulk_file=pseudobulk_singlecell.out.pseudobulk_counts.flatten())
     
-    // pseudobulk_singlecell(single_cell_file=params.single_cell_file,
-    // pseudobulk_source_functions=params.pseudobulk_source_functions)
 
 }
 
@@ -138,13 +170,3 @@ workflow.onComplete {
     """
 }
 
-// workflow.onComplete {
-//     println "Workflow completed successfully!"
-//     // Send email notification with attachment
-//     sendMail {
-//         to params.email
-//         subject "Nextflow Pipeline Completed"
-//         body "The Nextflow pipeline has completed successfully. Please find the execution report attached."
-//         attach '${baseDir}/pipeline_report.html'
-//     }
-// }

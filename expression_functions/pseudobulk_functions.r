@@ -85,17 +85,11 @@ pseudobulk_counts=function(seuratlist,min.cells=100,indiv_col="Sample_ID",assay=
 }
 
 ##this function takes a list of pseudobulk counts and normalizes them
-normalize_pseudobulk=function(agg_count_list){
-    agg_count_list<-lapply(agg_count_list,function(x){
-    if(length(x)==0){
-        return(NULL)
-    }
-    norm_x<-log2(edgeR::cpm(x)+1)
-    return(norm_x)
-  })
+# normalize_pseudobulk=function(count_data){
 
-  return(agg_count_list)
+#   count_data=log2(edgeR::cpm(count_data)+1)
+#   return(count_data)
 
-}
+# }
 
 
