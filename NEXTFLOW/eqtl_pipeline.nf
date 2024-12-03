@@ -8,6 +8,7 @@ params.email="ah3918@ic.ac.uk"
 
 params.genotype_source_functions="${baseDir}/../genotype_functions/genotype_functions.r"
 params.pseudobulk_source_functions="${baseDir}/../expression_functions/pseudobulk_functions.r"
+params.eqtl_source_functions="${baseDir}/../MatrixEQTL_functions/matrixeqtl_source.r"
 
 params.single_cell_file="/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/TEST_DATA/roche_ms_decontx.rds"
 
@@ -99,6 +100,16 @@ process run_matrixeQTL{
 
     script:
     """
+    #!/usr/bin/env Rscript
+    
+    source("${params.eqtl_source_functions}")
+    
+    pseudobulk_data=fread("$expression_mat")
+    genotype_data=fread("$genotype_mat")
+    snp_locations=fread("$snp_locations")
+    gene_locations=fread("$gene_locations")
+
+
 
     """
 
