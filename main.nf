@@ -3,11 +3,10 @@ nextflow.enable.dsl=2
 params.outdir="/rds/general/user/ah3918/projects/puklandmarkproject/ephemeral/tmp/"
 params.gds_file="/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/TEST_DATA/test_geno.gds"
 params.inputfile="/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/eqtl_pipeline_dev/eQTL_PIPELINE/testfile.txt"
-params.email="ah3918@ic.ac.uk"
 
-params.genotype_source_functions="${baseDir}/../R/genotype_functions/genotype_functions.r"
-params.pseudobulk_source_functions="${baseDir}/../R/expression_functions/pseudobulk_functions.r"
-params.eqtl_source_functions="${baseDir}/../R/MatrixEQTL_functions/matrixeqtl_source.r"
+params.genotype_source_functions="${baseDir}/R/genotype_functions/genotype_functions.r"
+params.pseudobulk_source_functions="${baseDir}/R/expression_functions/pseudobulk_functions.r"
+params.eqtl_source_functions="${baseDir}/R/MatrixEQTL_functions/matrixeqtl_source.r"
 
 params.single_cell_file="/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/TEST_DATA/roche_ms_decontx.rds"
 
