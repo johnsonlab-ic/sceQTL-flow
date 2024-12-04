@@ -1,204 +1,142 @@
-Dec-04 11:45:12.145 [main] DEBUG nextflow.cli.Launcher - $> nextflow run ./NEXTFLOW/eqtl_pipeline.nf --gds_file /../data/inputs/test_geno.ds --single_cell_file /../data/inputs/roche_ms_decontx.rds -w /Users/ah3918/Dropbox/LANDMARK/PROJECTS/eQTL_PIPELINE/data/outputs/nextflow_workdir --outdir /../data/outputs --profile offline --log /Users/ah3918/Dropbox/LANDMARK/PROJECTS/eQTL_PIPELINE/data/outputs/nextflow_workdir/nextflow.log
-Dec-04 11:45:12.188 [main] DEBUG nextflow.cli.CmdRun - N E X T F L O W  ~  version 24.10.2
-Dec-04 11:45:12.197 [main] DEBUG nextflow.plugin.PluginsFacade - Setting up plugin manager > mode=prod; embedded=false; plugins-dir=/Users/ah3918/.nextflow/plugins; core-plugins: nf-amazon@2.9.2,nf-azure@1.10.2,nf-cloudcache@0.4.2,nf-codecommit@0.2.2,nf-console@1.1.4,nf-google@1.15.2,nf-tower@1.9.3,nf-wave@1.7.4
-Dec-04 11:45:12.207 [main] INFO  o.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
-Dec-04 11:45:12.207 [main] INFO  o.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
-Dec-04 11:45:12.208 [main] INFO  org.pf4j.DefaultPluginManager - PF4J version 3.12.0 in 'deployment' mode
-Dec-04 11:45:12.215 [main] INFO  org.pf4j.AbstractPluginManager - No plugins
-Dec-04 11:45:12.225 [main] DEBUG nextflow.config.ConfigBuilder - Found config base: /Users/ah3918/Dropbox/LANDMARK/PROJECTS/eQTL_PIPELINE/NEXTFLOW/nextflow.config
-Dec-04 11:45:12.226 [main] DEBUG nextflow.config.ConfigBuilder - Parsing config file: /Users/ah3918/Dropbox/LANDMARK/PROJECTS/eQTL_PIPELINE/NEXTFLOW/nextflow.config
-Dec-04 11:45:12.237 [main] DEBUG n.secret.LocalSecretsProvider - Secrets store: /Users/ah3918/.nextflow/secrets/store.json
-Dec-04 11:45:12.238 [main] DEBUG nextflow.secret.SecretsLoader - Discovered secrets providers: [nextflow.secret.LocalSecretsProvider@4a3be6a5] - activable => nextflow.secret.LocalSecretsProvider@4a3be6a5
-Dec-04 11:45:12.243 [main] DEBUG nextflow.config.ConfigBuilder - Applying config profile: `standard`
-Dec-04 11:45:12.521 [main] DEBUG nextflow.cli.CmdRun - Applied DSL=2 from script declaration
-Dec-04 11:45:12.528 [main] DEBUG nextflow.cli.CmdRun - Launching `./NEXTFLOW/eqtl_pipeline.nf` [sharp_easley] DSL2 - revision: 8379fd15af
-Dec-04 11:45:12.529 [main] DEBUG nextflow.plugin.PluginsFacade - Plugins default=[]
-Dec-04 11:45:12.529 [main] DEBUG nextflow.plugin.PluginsFacade - Plugins resolved requirement=[]
-Dec-04 11:45:12.552 [main] DEBUG nextflow.Session - Session UUID: a4bbd4fa-6e3e-4b62-8d50-46ca8ef99047
-Dec-04 11:45:12.552 [main] DEBUG nextflow.Session - Run name: sharp_easley
-Dec-04 11:45:12.552 [main] DEBUG nextflow.Session - Executor pool size: 14
-Dec-04 11:45:12.556 [main] DEBUG nextflow.file.FilePorter - File porter settings maxRetries=3; maxTransfers=50; pollTimeout=null
-Dec-04 11:45:12.558 [main] DEBUG nextflow.util.ThreadPoolBuilder - Creating thread pool 'FileTransfer' minSize=10; maxSize=42; workQueue=LinkedBlockingQueue[10000]; allowCoreThreadTimeout=false
-Dec-04 11:45:17.591 [main] DEBUG nextflow.cli.CmdRun - 
-  Version: 24.10.2 build 5932
-  Created: 27-11-2024 21:23 UTC (21:23 BST)
-  System: Mac OS X 15.1.1
-  Runtime: Groovy 4.0.23 on OpenJDK 64-Bit Server VM 11.0.25+0
-  Encoding: UTF-8 (UTF-8)
-  Process: 41607@IC-HCWJ5H2MTP [192.168.1.95]
-  CPUs: 14 - Mem: 48 GB (519.5 MB) - Swap: 0 (0)
-Dec-04 11:45:17.608 [main] DEBUG nextflow.Session - Work-dir: /Users/ah3918/Dropbox/LANDMARK/PROJECTS/eQTL_PIPELINE/data/outputs/nextflow_workdir [Mac OS X]
-Dec-04 11:45:17.608 [main] DEBUG nextflow.Session - Script base path does not exist or is not a directory: /Users/ah3918/Dropbox/LANDMARK/PROJECTS/eQTL_PIPELINE/NEXTFLOW/bin
-Dec-04 11:45:17.614 [main] DEBUG nextflow.executor.ExecutorFactory - Extension executors providers=[]
-Dec-04 11:45:17.619 [main] DEBUG nextflow.Session - Observer factory: DefaultObserverFactory
-Dec-04 11:45:17.640 [main] DEBUG nextflow.cache.CacheFactory - Using Nextflow cache factory: nextflow.cache.DefaultCacheFactory
-Dec-04 11:45:17.645 [main] DEBUG nextflow.util.CustomThreadPool - Creating default thread pool > poolSize: 15; maxThreads: 1000
-Dec-04 11:45:17.681 [main] DEBUG nextflow.Session - Session start
-Dec-04 11:45:17.861 [SIGINT handler] DEBUG nextflow.Session - Session aborted -- Cause: SIGINT
-Dec-04 11:45:17.865 [SIGINT handler] DEBUG nextflow.Session - 
-Thread[Signal Dispatcher,9,system]
+Dec-04 12:15:23.361 [main] DEBUG nextflow.cli.Launcher - $> nextflow run -c /Users/ah3918/Dropbox/LANDMARK/PROJECTS/eQTL_PIPELINE/NEXTFLOW/nextflow_local.config /Users/ah3918/Dropbox/LANDMARK/PROJECTS/eQTL_PIPELINE/NEXTFLOW/eqtl_pipeline.nf -profile offline -w /Users/ah3918/Dropbox/LANDMARK/PROJECTS/eQTL_PIPELINE/data/outputs/nextflow_workdir --gds_file /../data/inputs/test_geno.gds --single_cell_file /../data/inputs/roche_ms_decontx.rds --outdir /../data/outputs
+Dec-04 12:15:23.412 [main] DEBUG nextflow.cli.CmdRun - N E X T F L O W  ~  version 24.10.2
+Dec-04 12:15:23.422 [main] DEBUG nextflow.plugin.PluginsFacade - Setting up plugin manager > mode=prod; embedded=false; plugins-dir=/Users/ah3918/.nextflow/plugins; core-plugins: nf-amazon@2.9.2,nf-azure@1.10.2,nf-cloudcache@0.4.2,nf-codecommit@0.2.2,nf-console@1.1.4,nf-google@1.15.2,nf-tower@1.9.3,nf-wave@1.7.4
+Dec-04 12:15:23.431 [main] INFO  o.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+Dec-04 12:15:23.431 [main] INFO  o.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+Dec-04 12:15:23.433 [main] INFO  org.pf4j.DefaultPluginManager - PF4J version 3.12.0 in 'deployment' mode
+Dec-04 12:15:23.440 [main] INFO  org.pf4j.AbstractPluginManager - No plugins
+Dec-04 12:15:23.450 [main] DEBUG nextflow.config.ConfigBuilder - Found config base: /Users/ah3918/Dropbox/LANDMARK/PROJECTS/eQTL_PIPELINE/NEXTFLOW/nextflow.config
+Dec-04 12:15:23.452 [main] DEBUG nextflow.config.ConfigBuilder - User config file: /Users/ah3918/Dropbox/LANDMARK/PROJECTS/eQTL_PIPELINE/NEXTFLOW/nextflow_local.config
+Dec-04 12:15:23.453 [main] DEBUG nextflow.config.ConfigBuilder - Parsing config file: /Users/ah3918/Dropbox/LANDMARK/PROJECTS/eQTL_PIPELINE/NEXTFLOW/nextflow.config
+Dec-04 12:15:23.453 [main] DEBUG nextflow.config.ConfigBuilder - Parsing config file: /Users/ah3918/Dropbox/LANDMARK/PROJECTS/eQTL_PIPELINE/NEXTFLOW/nextflow_local.config
+Dec-04 12:15:23.465 [main] DEBUG n.secret.LocalSecretsProvider - Secrets store: /Users/ah3918/.nextflow/secrets/store.json
+Dec-04 12:15:23.467 [main] DEBUG nextflow.secret.SecretsLoader - Discovered secrets providers: [nextflow.secret.LocalSecretsProvider@62e7dffa] - activable => nextflow.secret.LocalSecretsProvider@62e7dffa
+Dec-04 12:15:23.472 [main] DEBUG nextflow.config.ConfigBuilder - Applying config profile: `offline`
+Dec-04 12:15:23.748 [main] DEBUG nextflow.config.ConfigBuilder - Applying config profile: `offline`
+Dec-04 12:15:23.758 [main] ERROR nextflow.cli.Launcher - Unable to parse config file: '/Users/ah3918/Dropbox/LANDMARK/PROJECTS/eQTL_PIPELINE/NEXTFLOW/nextflow_local.config'
 
-Thread[Thread-1,5,main]
-  java.base@11.0.25/jdk.internal.misc.Unsafe.park(Native Method)
-  java.base@11.0.25/java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:234)
-  java.base@11.0.25/java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.awaitNanos(AbstractQueuedSynchronizer.java:2123)
-  java.base@11.0.25/java.util.concurrent.LinkedBlockingDeque.pollFirst(LinkedBlockingDeque.java:513)
-  java.base@11.0.25/java.util.concurrent.LinkedBlockingDeque.poll(LinkedBlockingDeque.java:675)
-  app//nextflow.util.SimpleAgent.run(SimpleAgent.groovy:89)
-  java.base@11.0.25/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
-  java.base@11.0.25/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
-  java.base@11.0.25/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
-  java.base@11.0.25/java.lang.reflect.Method.invoke(Method.java:566)
-  app//org.codehaus.groovy.reflection.CachedMethod.invoke(CachedMethod.java:343)
-  app//groovy.lang.MetaMethod.doMethodInvoke(MetaMethod.java:328)
-  app//groovy.lang.MetaClassImpl.doInvokeMethod(MetaClassImpl.java:1333)
-  app//groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1088)
-  app//groovy.lang.MetaClassImpl.invokeMethodClosure(MetaClassImpl.java:1017)
-  app//groovy.lang.MetaClassImpl.doInvokeMethod(MetaClassImpl.java:1207)
-  app//groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1088)
-  app//groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1007)
-  app//groovy.lang.Closure.call(Closure.java:433)
-  app//groovy.lang.Closure.call(Closure.java:412)
-  app//groovy.lang.Closure.run(Closure.java:505)
-  java.base@11.0.25/java.lang.Thread.run(Thread.java:829)
+  Compile failed for sources FixedSetSources[name='/groovy/script/ScriptA04B1115339B0009DF26D9F26757F571/_nf_config_6e6e90e5']. Cause: org.codehaus.groovy.control.MultipleCompilationErrorsException: startup failed:
+  /groovy/script/ScriptA04B1115339B0009DF26D9F26757F571/_nf_config_6e6e90e5: 1: The LHS of an assignment should be a variable or a field accessing expression @ line 1, column 17.
+     workDir =/Users/ah3918/NEXTFLOW/
+                     ^
+  
+  1 error
 
-Thread[SIGINT handler,9,system]
-  java.base@11.0.25/java.lang.Thread.dumpThreads(Native Method)
-  java.base@11.0.25/java.lang.Thread.getAllStackTraces(Thread.java:1653)
-  app//nextflow.util.SysHelper.dumpThreads(SysHelper.groovy:188)
-  app//nextflow.Session.abort(Session.groovy:800)
-  app//nextflow.Session$_registerSignalHandlers_closure17.doCall(Session.groovy:489)
-  java.base@11.0.25/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
-  java.base@11.0.25/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
-  java.base@11.0.25/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
-  java.base@11.0.25/java.lang.reflect.Method.invoke(Method.java:566)
-  app//org.codehaus.groovy.reflection.CachedMethod.invoke(CachedMethod.java:343)
-  app//groovy.lang.MetaMethod.doMethodInvoke(MetaMethod.java:328)
-  app//org.codehaus.groovy.runtime.metaclass.ClosureMetaClass.invokeMethod(ClosureMetaClass.java:279)
-  app//groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1007)
-  app//groovy.lang.Closure.call(Closure.java:433)
-  app//org.codehaus.groovy.runtime.ConvertedClosure.invokeCustom(ConvertedClosure.java:52)
-  app//org.codehaus.groovy.runtime.ConversionHandler.invoke(ConversionHandler.java:113)
-  com.sun.proxy.$Proxy26.handle(Unknown Source)
-  jdk.unsupported@11.0.25/sun.misc.Signal$InternalMiscHandler.handle(Signal.java:198)
-  java.base@11.0.25/jdk.internal.misc.Signal$1.run(Signal.java:220)
-  java.base@11.0.25/java.lang.Thread.run(Thread.java:829)
+ch.artecat.grengine.except.CompileException: Compile failed for sources FixedSetSources[name='/groovy/script/ScriptA04B1115339B0009DF26D9F26757F571/_nf_config_6e6e90e5']. Cause: org.codehaus.groovy.control.MultipleCompilationErrorsException: startup failed:
+/groovy/script/ScriptA04B1115339B0009DF26D9F26757F571/_nf_config_6e6e90e5: 1: The LHS of an assignment should be a variable or a field accessing expression @ line 1, column 17.
+   workDir =/Users/ah3918/NEXTFLOW/
+                   ^
 
-Thread[AnsiLogObserver,5,main]
-  java.base@11.0.25/java.lang.Object.wait(Native Method)
-  app//nextflow.trace.AnsiLogObserver.render0(AnsiLogObserver.groovy:185)
-  java.base@11.0.25/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
-  java.base@11.0.25/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
-  java.base@11.0.25/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
-  java.base@11.0.25/java.lang.reflect.Method.invoke(Method.java:566)
-  app//org.codehaus.groovy.reflection.CachedMethod.invoke(CachedMethod.java:343)
-  app//groovy.lang.MetaMethod.doMethodInvoke(MetaMethod.java:328)
-  app//groovy.lang.MetaClassImpl.doInvokeMethod(MetaClassImpl.java:1333)
-  app//groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1088)
-  app//groovy.lang.MetaClassImpl.invokeMethodClosure(MetaClassImpl.java:1017)
-  app//groovy.lang.MetaClassImpl.doInvokeMethod(MetaClassImpl.java:1207)
-  app//groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1088)
-  app//groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1007)
-  app//groovy.lang.Closure.call(Closure.java:433)
-  app//groovy.lang.Closure.call(Closure.java:412)
-  app//groovy.lang.Closure.run(Closure.java:505)
-  java.base@11.0.25/java.lang.Thread.run(Thread.java:829)
+1 error
 
-Thread[Common-Cleaner,8,InnocuousThreadGroup]
-  java.base@11.0.25/java.lang.Object.wait(Native Method)
-  java.base@11.0.25/java.lang.ref.ReferenceQueue.remove(ReferenceQueue.java:155)
-  java.base@11.0.25/jdk.internal.ref.CleanerImpl.run(CleanerImpl.java:148)
-  java.base@11.0.25/java.lang.Thread.run(Thread.java:829)
-  java.base@11.0.25/jdk.internal.misc.InnocuousThread.run(InnocuousThread.java:161)
+	at ch.artecat.grengine.code.groovy.DefaultGroovyCompiler.compile(DefaultGroovyCompiler.java:260)
+	at ch.artecat.grengine.load.DefaultTopCodeCache.getUpToDateCode(DefaultTopCodeCache.java:80)
+	at ch.artecat.grengine.load.LayeredClassLoader.getTopLoader(LayeredClassLoader.java:251)
+	at ch.artecat.grengine.load.LayeredClassLoader.loadMainClass(LayeredClassLoader.java:202)
+	at ch.artecat.grengine.engine.LayeredEngine.loadMainClass(LayeredEngine.java:198)
+	at ch.artecat.grengine.Grengine.loadMainClass(Grengine.java:679)
+	at ch.artecat.grengine.BaseGrengine.load(BaseGrengine.java:538)
+	at ch.artecat.grengine.BaseGrengine.load(BaseGrengine.java:421)
+	at org.codehaus.groovy.vmplugin.v8.IndyInterface.selectMethod(IndyInterface.java:355)
+	at org.codehaus.groovy.vmplugin.v8.IndyInterface.fromCache(IndyInterface.java:321)
+	at nextflow.config.ConfigParser.loadScript(ConfigParser.groovy:231)
+	at org.codehaus.groovy.vmplugin.v8.IndyInterface.selectMethod(IndyInterface.java:355)
+	at org.codehaus.groovy.vmplugin.v8.IndyInterface.fromCache(IndyInterface.java:321)
+	at nextflow.config.ConfigParser.parse(ConfigParser.groovy:312)
+	at org.codehaus.groovy.vmplugin.v8.IndyInterface.selectMethod(IndyInterface.java:355)
+	at org.codehaus.groovy.vmplugin.v8.IndyInterface.fromCache(IndyInterface.java:321)
+	at nextflow.config.ConfigBuilder.parse0(ConfigBuilder.groovy:439)
+	at org.codehaus.groovy.vmplugin.v8.IndyInterface.selectMethod(IndyInterface.java:355)
+	at org.codehaus.groovy.vmplugin.v8.IndyInterface.fromCache(IndyInterface.java:321)
+	at nextflow.config.ConfigBuilder.merge0(ConfigBuilder.groovy:425)
+	at org.codehaus.groovy.vmplugin.v8.IndyInterface.selectMethod(IndyInterface.java:355)
+	at org.codehaus.groovy.vmplugin.v8.IndyInterface.fromCache(IndyInterface.java:321)
+	at nextflow.config.ConfigBuilder.buildConfig0(ConfigBuilder.groovy:375)
+	at org.codehaus.groovy.vmplugin.v8.IndyInterface.fromCache(IndyInterface.java:321)
+	at nextflow.config.ConfigBuilder.buildGivenFiles(ConfigBuilder.groovy:320)
+	at org.codehaus.groovy.vmplugin.v8.IndyInterface.fromCache(IndyInterface.java:321)
+	at nextflow.config.ConfigBuilder.buildConfigObject(ConfigBuilder.groovy:818)
+	at org.codehaus.groovy.vmplugin.v8.IndyInterface.fromCache(IndyInterface.java:321)
+	at nextflow.config.ConfigBuilder.build(ConfigBuilder.groovy:831)
+	at nextflow.cli.CmdRun.run(CmdRun.groovy:332)
+	at nextflow.cli.Launcher.run(Launcher.groovy:503)
+	at nextflow.cli.Launcher.main(Launcher.groovy:658)
+Caused by: org.codehaus.groovy.control.MultipleCompilationErrorsException: startup failed:
+/groovy/script/ScriptA04B1115339B0009DF26D9F26757F571/_nf_config_6e6e90e5: 1: The LHS of an assignment should be a variable or a field accessing expression @ line 1, column 17.
+   workDir =/Users/ah3918/NEXTFLOW/
+                   ^
 
-Thread[Finalizer,8,system]
-  java.base@11.0.25/java.lang.Object.wait(Native Method)
-  java.base@11.0.25/java.lang.ref.ReferenceQueue.remove(ReferenceQueue.java:155)
-  java.base@11.0.25/java.lang.ref.ReferenceQueue.remove(ReferenceQueue.java:176)
-  java.base@11.0.25/java.lang.ref.Finalizer$FinalizerThread.run(Finalizer.java:170)
+1 error
 
-Thread[main,5,main]
-  java.base@11.0.25/java.io.FileOutputStream.open0(Native Method)
-  java.base@11.0.25/java.io.FileOutputStream.open(FileOutputStream.java:298)
-  java.base@11.0.25/java.io.FileOutputStream.<init>(FileOutputStream.java:237)
-  java.base@11.0.25/java.io.FileOutputStream.<init>(FileOutputStream.java:187)
-  app//org.codehaus.groovy.control.CompilationUnit.lambda$addPhaseOperations$12(CompilationUnit.java:318)
-  app//org.codehaus.groovy.control.CompilationUnit$$Lambda$271/0x00000008002f9840.call(Unknown Source)
-  app//org.codehaus.groovy.control.CompilationUnit$IGroovyClassOperation.doPhaseOperation(CompilationUnit.java:1000)
-  app//org.codehaus.groovy.control.CompilationUnit.processPhaseOperations(CompilationUnit.java:692)
-  app//org.codehaus.groovy.control.CompilationUnit.compile(CompilationUnit.java:666)
-  app//groovy.lang.GroovyClassLoader.doParseClass(GroovyClassLoader.java:373)
-  app//groovy.lang.GroovyClassLoader.lambda$parseClass$2(GroovyClassLoader.java:316)
-  app//groovy.lang.GroovyClassLoader$$Lambda$383/0x0000000800437440.provide(Unknown Source)
-  app//org.codehaus.groovy.runtime.memoize.StampedCommonCache.compute(StampedCommonCache.java:163)
-  app//org.codehaus.groovy.runtime.memoize.StampedCommonCache.getAndPut(StampedCommonCache.java:154)
-  app//groovy.lang.GroovyClassLoader.parseClass(GroovyClassLoader.java:314)
-  app//groovy.lang.GroovyShell.parseClass(GroovyShell.java:572)
-  app//groovy.lang.GroovyShell.parse(GroovyShell.java:585)
-  app//groovy.lang.GroovyShell.parse(GroovyShell.java:639)
-  app//groovy.lang.GroovyShell.parse(GroovyShell.java:643)
-  app//nextflow.script.ScriptParser.parse0(ScriptParser.groovy:175)
-  app//nextflow.script.ScriptParser.parse(ScriptParser.groovy:206)
-  app//nextflow.script.ScriptRunner.parseScript(ScriptRunner.groovy:229)
-  app//nextflow.script.ScriptRunner.execute(ScriptRunner.groovy:136)
-  app//nextflow.cli.CmdRun.run(CmdRun.groovy:376)
-  app//nextflow.cli.Launcher.run(Launcher.groovy:503)
-  app//nextflow.cli.Launcher.main(Launcher.groovy:658)
-
-Thread[Reference Handler,10,system]
-  java.base@11.0.25/java.lang.ref.Reference.waitForReferencePendingList(Native Method)
-  java.base@11.0.25/java.lang.ref.Reference.processPendingReferences(Reference.java:241)
-  java.base@11.0.25/java.lang.ref.Reference$ReferenceHandler.run(Reference.java:213)
-
-Dec-04 11:45:17.871 [main] DEBUG nextflow.script.ScriptRunner - > Launching execution
-Dec-04 11:45:17.887 [main] INFO  nextflow.script.BaseScript - 
-    ========================================
-    Welcome to the Nextflow eQTL pipeline
-    ========================================
-    Output Directory: /../data/outputs
-    GDS File: /../data/inputs/test_geno.ds
-    Input Seurat File: /../data/inputs/roche_ms_decontx.rds
-    Local Execution: true
-    WorkDir: /Users/ah3918/Dropbox/LANDMARK/PROJECTS/eQTL_PIPELINE/data/outputs/nextflow_workdir
-    ========================================
-
-    !WARNING - This pipeline is still in development and may not work as expected!
-
-    println "Running with profile: offline"
-    
-Dec-04 11:45:17.914 [main] DEBUG nextflow.script.ProcessConfig - Config settings `withName:create_genotype|create_genotype_qsub` matches process create_genotype
-Dec-04 11:45:17.927 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
-Dec-04 11:45:17.927 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
-Dec-04 11:45:17.929 [main] DEBUG nextflow.executor.Executor - [warm up] executor > local
-Dec-04 11:45:17.932 [main] DEBUG n.processor.LocalPollingMonitor - Creating local task monitor for executor 'local' > cpus=2; memory=6 GB; capacity=1; pollInterval=100ms; dumpInterval=5m
-Dec-04 11:45:17.933 [main] DEBUG n.processor.TaskPollingMonitor - >>> barrier register (monitor: local)
-Dec-04 11:45:17.935 [Task monitor] DEBUG n.processor.TaskPollingMonitor - <<< barrier arrives (monitor: local) - terminating tasks monitor poll loop
-Dec-04 11:45:17.958 [main] DEBUG nextflow.script.ProcessConfig - Config settings `withName:pseudobulk_singlecell` matches process pseudobulk_singlecell
-Dec-04 11:45:17.959 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
-Dec-04 11:45:17.959 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
-Dec-04 11:45:17.967 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
-Dec-04 11:45:17.967 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
-Dec-04 11:45:17.968 [main] DEBUG nextflow.Session - Workflow process names [dsl2]: pseudobulk_singlecell, find_top_genes, create_genotype, run_matrixeQTL
-Dec-04 11:45:17.969 [main] DEBUG nextflow.Session - Igniting dataflow network (3)
-Dec-04 11:45:17.969 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > create_genotype
-Dec-04 11:45:17.969 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > pseudobulk_singlecell
-Dec-04 11:45:17.969 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > find_top_genes
-Dec-04 11:45:17.970 [main] DEBUG nextflow.script.ScriptRunner - Parsed script files:
-  Script_40ff7c6169e2ae5a: /Users/ah3918/Dropbox/LANDMARK/PROJECTS/eQTL_PIPELINE/NEXTFLOW/eqtl_pipeline.nf
-Dec-04 11:45:17.970 [main] DEBUG nextflow.script.ScriptRunner - > Awaiting termination 
-Dec-04 11:45:17.971 [main] DEBUG nextflow.Session - Session await
-Dec-04 11:45:17.971 [main] DEBUG nextflow.Session - Session await > all processes finished
-Dec-04 11:45:17.971 [main] DEBUG nextflow.Session - Session await > all barriers passed
-Dec-04 11:45:17.973 [main] INFO  nextflow.script.BaseScript - 
-    ========================================
-    Pipeline Completed!! Hello!
-    ========================================
-
-    
-Dec-04 11:45:17.976 [main] DEBUG n.trace.WorkflowStatsObserver - Workflow completed > WorkflowStats[succeededCount=0; failedCount=0; ignoredCount=0; cachedCount=0; pendingCount=0; submittedCount=0; runningCount=0; retriesCount=0; abortedCount=0; succeedDuration=0ms; failedDuration=0ms; cachedDuration=0ms;loadCpus=0; loadMemory=0; peakRunning=0; peakCpus=0; peakMemory=0; ]
-Dec-04 11:45:17.977 [main] DEBUG nextflow.trace.ReportObserver - Workflow completed -- rendering execution report
-Dec-04 11:45:18.030 [Actor Thread 7] DEBUG nextflow.util.HashBuilder - Unable to get file attributes file: /../data/inputs/test_geno.ds -- Cause: java.nio.file.NoSuchFileException: /../data/inputs/test_geno.ds
-Dec-04 11:45:18.030 [Actor Thread 8] DEBUG nextflow.util.HashBuilder - Unable to get file attributes file: /../data/inputs/roche_ms_decontx.rds -- Cause: java.nio.file.NoSuchFileException: /../data/inputs/roche_ms_decontx.rds
-Dec-04 11:45:18.496 [main] DEBUG nextflow.trace.TimelineObserver - Workflow completed -- rendering execution timeline
-Dec-04 11:45:18.557 [main] DEBUG nextflow.cache.CacheDB - Closing CacheDB done
-Dec-04 11:45:18.567 [main] DEBUG nextflow.script.ScriptRunner - > Execution complete -- Goodbye
+	at org.codehaus.groovy.control.ErrorCollector.failIfErrors(ErrorCollector.java:292)
+	at org.codehaus.groovy.control.ErrorCollector.addFatalError(ErrorCollector.java:148)
+	at org.apache.groovy.parser.antlr4.AstBuilder.collectSyntaxError(AstBuilder.java:4753)
+	at org.apache.groovy.parser.antlr4.AstBuilder.createParsingFailedException(AstBuilder.java:4732)
+	at org.apache.groovy.parser.antlr4.AstBuilder.createParsingFailedException(AstBuilder.java:4689)
+	at org.apache.groovy.parser.antlr4.AstBuilder.visitAssignmentExprAlt(AstBuilder.java:3222)
+	at org.apache.groovy.parser.antlr4.AstBuilder.visitAssignmentExprAlt(AstBuilder.java:169)
+	at org.apache.groovy.parser.antlr4.GroovyParser$AssignmentExprAltContext.accept(GroovyParser.java:9020)
+	at groovyjarjarantlr4.v4.runtime.tree.AbstractParseTreeVisitor.visit(AbstractParseTreeVisitor.java:20)
+	at org.apache.groovy.parser.antlr4.AstBuilder.visit(AstBuilder.java:4406)
+	at org.apache.groovy.parser.antlr4.AstBuilder.visitExpressionListElement(AstBuilder.java:3587)
+	at org.apache.groovy.parser.antlr4.AstBuilder.visitEnhancedArgumentListElement(AstBuilder.java:2824)
+	at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:195)
+	at java.base/java.util.ArrayList$ArrayListSpliterator.forEachRemaining(ArrayList.java:1655)
+	at java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:484)
+	at java.base/java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:474)
+	at java.base/java.util.stream.ForEachOps$ForEachOp.evaluateSequential(ForEachOps.java:150)
+	at java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.evaluateSequential(ForEachOps.java:173)
+	at java.base/java.util.stream.AbstractPipeline.evaluate(AbstractPipeline.java:234)
+	at java.base/java.util.stream.ReferencePipeline.forEach(ReferencePipeline.java:497)
+	at org.apache.groovy.parser.antlr4.AstBuilder.visitEnhancedArgumentListInPar(AstBuilder.java:2769)
+	at org.apache.groovy.parser.antlr4.AstBuilder.visitCommandExpression(AstBuilder.java:2285)
+	at org.apache.groovy.parser.antlr4.AstBuilder.visitCommandExprAlt(AstBuilder.java:2260)
+	at org.apache.groovy.parser.antlr4.AstBuilder.visitCommandExprAlt(AstBuilder.java:169)
+	at org.apache.groovy.parser.antlr4.GroovyParser$CommandExprAltContext.accept(GroovyParser.java:8221)
+	at groovyjarjarantlr4.v4.runtime.tree.AbstractParseTreeVisitor.visit(AbstractParseTreeVisitor.java:20)
+	at org.apache.groovy.parser.antlr4.AstBuilder.visit(AstBuilder.java:4406)
+	at org.apache.groovy.parser.antlr4.AstBuilder.visitEnhancedStatementExpression(AstBuilder.java:2447)
+	at org.apache.groovy.parser.antlr4.AstBuilder.visitEnhancedStatementExpression(AstBuilder.java:169)
+	at org.apache.groovy.parser.antlr4.GroovyParser$EnhancedStatementExpressionContext.accept(GroovyParser.java:8163)
+	at groovyjarjarantlr4.v4.runtime.tree.AbstractParseTreeVisitor.visit(AbstractParseTreeVisitor.java:20)
+	at org.apache.groovy.parser.antlr4.AstBuilder.visit(AstBuilder.java:4406)
+	at org.apache.groovy.parser.antlr4.AstBuilder.visitAssignmentExprAlt(AstBuilder.java:3229)
+	at org.apache.groovy.parser.antlr4.AstBuilder.visitAssignmentExprAlt(AstBuilder.java:169)
+	at org.apache.groovy.parser.antlr4.GroovyParser$AssignmentExprAltContext.accept(GroovyParser.java:9020)
+	at groovyjarjarantlr4.v4.runtime.tree.AbstractParseTreeVisitor.visit(AbstractParseTreeVisitor.java:20)
+	at org.apache.groovy.parser.antlr4.AstBuilder.visit(AstBuilder.java:4406)
+	at org.apache.groovy.parser.antlr4.AstBuilder.visitCommandExpression(AstBuilder.java:2275)
+	at org.apache.groovy.parser.antlr4.AstBuilder.visitCommandExprAlt(AstBuilder.java:2260)
+	at org.apache.groovy.parser.antlr4.AstBuilder.visitCommandExprAlt(AstBuilder.java:169)
+	at org.apache.groovy.parser.antlr4.GroovyParser$CommandExprAltContext.accept(GroovyParser.java:8221)
+	at groovyjarjarantlr4.v4.runtime.tree.AbstractParseTreeVisitor.visitChildren(AbstractParseTreeVisitor.java:48)
+	at org.apache.groovy.parser.antlr4.GroovyParserBaseVisitor.visitExpressionStmtAlt(GroovyParserBaseVisitor.java:369)
+	at org.apache.groovy.parser.antlr4.GroovyParser$ExpressionStmtAltContext.accept(GroovyParser.java:6923)
+	at groovyjarjarantlr4.v4.runtime.tree.AbstractParseTreeVisitor.visitChildren(AbstractParseTreeVisitor.java:48)
+	at org.apache.groovy.parser.antlr4.GroovyParserBaseVisitor.visitScriptStatement(GroovyParserBaseVisitor.java:425)
+	at org.apache.groovy.parser.antlr4.GroovyParser$ScriptStatementContext.accept(GroovyParser.java:477)
+	at groovyjarjarantlr4.v4.runtime.tree.AbstractParseTreeVisitor.visit(AbstractParseTreeVisitor.java:20)
+	at org.apache.groovy.parser.antlr4.AstBuilder.visit(AstBuilder.java:4406)
+	at org.apache.groovy.parser.antlr4.AstBuilder.lambda$visitScriptStatements$0(AstBuilder.java:314)
+	at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:195)
+	at java.base/java.util.ArrayList$ArrayListSpliterator.forEachRemaining(ArrayList.java:1655)
+	at java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:484)
+	at java.base/java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:474)
+	at java.base/java.util.stream.ReduceOps$ReduceOp.evaluateSequential(ReduceOps.java:913)
+	at java.base/java.util.stream.AbstractPipeline.evaluate(AbstractPipeline.java:234)
+	at java.base/java.util.stream.ReferencePipeline.collect(ReferencePipeline.java:578)
+	at org.apache.groovy.parser.antlr4.AstBuilder.visitScriptStatements(AstBuilder.java:315)
+	at org.apache.groovy.parser.antlr4.AstBuilder.visitCompilationUnit(AstBuilder.java:272)
+	at org.apache.groovy.parser.antlr4.AstBuilder.visitCompilationUnit(AstBuilder.java:169)
+	at org.apache.groovy.parser.antlr4.GroovyParser$CompilationUnitContext.accept(GroovyParser.java:323)
+	at groovyjarjarantlr4.v4.runtime.tree.AbstractParseTreeVisitor.visit(AbstractParseTreeVisitor.java:20)
+	at org.apache.groovy.parser.antlr4.AstBuilder.visit(AstBuilder.java:4406)
+	at org.apache.groovy.parser.antlr4.AstBuilder.buildAST(AstBuilder.java:262)
+	at org.apache.groovy.parser.antlr4.Antlr4ParserPlugin.buildAST(Antlr4ParserPlugin.java:58)
+	at org.codehaus.groovy.control.SourceUnit.buildAST(SourceUnit.java:256)
+	at java.base/java.util.Iterator.forEachRemaining(Iterator.java:133)
+	at java.base/java.util.Spliterators$IteratorSpliterator.forEachRemaining(Spliterators.java:1801)
+	at java.base/java.util.stream.ReferencePipeline$Head.forEach(ReferencePipeline.java:658)
+	at org.codehaus.groovy.control.CompilationUnit.compile(CompilationUnit.java:663)
+	at ch.artecat.grengine.code.groovy.DefaultGroovyCompiler.compile(DefaultGroovyCompiler.java:229)
+	... 31 common frames omitted

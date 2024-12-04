@@ -1,0 +1,85 @@
+Dec-04 12:15:01.182 [main] DEBUG nextflow.cli.Launcher - $> nextflow run -c /Users/ah3918/Dropbox/LANDMARK/PROJECTS/eQTL_PIPELINE/NEXTFLOW/nextflow_local.config /Users/ah3918/Dropbox/LANDMARK/PROJECTS/eQTL_PIPELINE/NEXTFLOW/eqtl_pipeline.nf -profile offline -w /Users/ah3918/Dropbox/LANDMARK/PROJECTS/eQTL_PIPELINE/data/outputs/nextflow_workdir --gds_file /../data/inputs/test_geno.gds --single_cell_file /../data/inputs/roche_ms_decontx.rds --outdir /../data/outputs
+Dec-04 12:15:01.240 [main] DEBUG nextflow.cli.CmdRun - N E X T F L O W  ~  version 24.10.2
+Dec-04 12:15:01.251 [main] DEBUG nextflow.plugin.PluginsFacade - Setting up plugin manager > mode=prod; embedded=false; plugins-dir=/Users/ah3918/.nextflow/plugins; core-plugins: nf-amazon@2.9.2,nf-azure@1.10.2,nf-cloudcache@0.4.2,nf-codecommit@0.2.2,nf-console@1.1.4,nf-google@1.15.2,nf-tower@1.9.3,nf-wave@1.7.4
+Dec-04 12:15:01.260 [main] INFO  o.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+Dec-04 12:15:01.261 [main] INFO  o.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+Dec-04 12:15:01.262 [main] INFO  org.pf4j.DefaultPluginManager - PF4J version 3.12.0 in 'deployment' mode
+Dec-04 12:15:01.268 [main] INFO  org.pf4j.AbstractPluginManager - No plugins
+Dec-04 12:15:01.280 [main] DEBUG nextflow.config.ConfigBuilder - Found config base: /Users/ah3918/Dropbox/LANDMARK/PROJECTS/eQTL_PIPELINE/NEXTFLOW/nextflow.config
+Dec-04 12:15:01.282 [main] DEBUG nextflow.config.ConfigBuilder - User config file: /Users/ah3918/Dropbox/LANDMARK/PROJECTS/eQTL_PIPELINE/NEXTFLOW/nextflow_local.config
+Dec-04 12:15:01.284 [main] DEBUG nextflow.config.ConfigBuilder - Parsing config file: /Users/ah3918/Dropbox/LANDMARK/PROJECTS/eQTL_PIPELINE/NEXTFLOW/nextflow.config
+Dec-04 12:15:01.285 [main] DEBUG nextflow.config.ConfigBuilder - Parsing config file: /Users/ah3918/Dropbox/LANDMARK/PROJECTS/eQTL_PIPELINE/NEXTFLOW/nextflow_local.config
+Dec-04 12:15:01.297 [main] DEBUG n.secret.LocalSecretsProvider - Secrets store: /Users/ah3918/.nextflow/secrets/store.json
+Dec-04 12:15:01.298 [main] DEBUG nextflow.secret.SecretsLoader - Discovered secrets providers: [nextflow.secret.LocalSecretsProvider@62e7dffa] - activable => nextflow.secret.LocalSecretsProvider@62e7dffa
+Dec-04 12:15:01.306 [main] DEBUG nextflow.config.ConfigBuilder - Applying config profile: `offline`
+Dec-04 12:15:01.578 [main] DEBUG nextflow.config.ConfigBuilder - Applying config profile: `offline`
+Dec-04 12:15:01.583 [main] ERROR nextflow.cli.Launcher - Unable to parse config file: '/Users/ah3918/Dropbox/LANDMARK/PROJECTS/eQTL_PIPELINE/NEXTFLOW/nextflow_local.config'
+
+  Compile failed for sources FixedSetSources[name='/groovy/script/Script0D88939FFB399E3D3EDBFC5440D4B5FA/_nf_config_e313796e']. Cause: org.codehaus.groovy.control.MultipleCompilationErrorsException: startup failed:
+  /groovy/script/Script0D88939FFB399E3D3EDBFC5440D4B5FA/_nf_config_e313796e: 1: Unexpected character: '\'' @ line 1, column 11.
+     workDir = '/Users/ah3918/NEXTFLOW/
+               ^
+  
+  1 error
+
+ch.artecat.grengine.except.CompileException: Compile failed for sources FixedSetSources[name='/groovy/script/Script0D88939FFB399E3D3EDBFC5440D4B5FA/_nf_config_e313796e']. Cause: org.codehaus.groovy.control.MultipleCompilationErrorsException: startup failed:
+/groovy/script/Script0D88939FFB399E3D3EDBFC5440D4B5FA/_nf_config_e313796e: 1: Unexpected character: '\'' @ line 1, column 11.
+   workDir = '/Users/ah3918/NEXTFLOW/
+             ^
+
+1 error
+
+	at ch.artecat.grengine.code.groovy.DefaultGroovyCompiler.compile(DefaultGroovyCompiler.java:260)
+	at ch.artecat.grengine.load.DefaultTopCodeCache.getUpToDateCode(DefaultTopCodeCache.java:80)
+	at ch.artecat.grengine.load.LayeredClassLoader.getTopLoader(LayeredClassLoader.java:251)
+	at ch.artecat.grengine.load.LayeredClassLoader.loadMainClass(LayeredClassLoader.java:202)
+	at ch.artecat.grengine.engine.LayeredEngine.loadMainClass(LayeredEngine.java:198)
+	at ch.artecat.grengine.Grengine.loadMainClass(Grengine.java:679)
+	at ch.artecat.grengine.BaseGrengine.load(BaseGrengine.java:538)
+	at ch.artecat.grengine.BaseGrengine.load(BaseGrengine.java:421)
+	at org.codehaus.groovy.vmplugin.v8.IndyInterface.selectMethod(IndyInterface.java:355)
+	at org.codehaus.groovy.vmplugin.v8.IndyInterface.fromCache(IndyInterface.java:321)
+	at nextflow.config.ConfigParser.loadScript(ConfigParser.groovy:231)
+	at org.codehaus.groovy.vmplugin.v8.IndyInterface.selectMethod(IndyInterface.java:355)
+	at org.codehaus.groovy.vmplugin.v8.IndyInterface.fromCache(IndyInterface.java:321)
+	at nextflow.config.ConfigParser.parse(ConfigParser.groovy:312)
+	at org.codehaus.groovy.vmplugin.v8.IndyInterface.selectMethod(IndyInterface.java:355)
+	at org.codehaus.groovy.vmplugin.v8.IndyInterface.fromCache(IndyInterface.java:321)
+	at nextflow.config.ConfigBuilder.parse0(ConfigBuilder.groovy:439)
+	at org.codehaus.groovy.vmplugin.v8.IndyInterface.selectMethod(IndyInterface.java:355)
+	at org.codehaus.groovy.vmplugin.v8.IndyInterface.fromCache(IndyInterface.java:321)
+	at nextflow.config.ConfigBuilder.merge0(ConfigBuilder.groovy:425)
+	at org.codehaus.groovy.vmplugin.v8.IndyInterface.selectMethod(IndyInterface.java:355)
+	at org.codehaus.groovy.vmplugin.v8.IndyInterface.fromCache(IndyInterface.java:321)
+	at nextflow.config.ConfigBuilder.buildConfig0(ConfigBuilder.groovy:375)
+	at org.codehaus.groovy.vmplugin.v8.IndyInterface.fromCache(IndyInterface.java:321)
+	at nextflow.config.ConfigBuilder.buildGivenFiles(ConfigBuilder.groovy:320)
+	at org.codehaus.groovy.vmplugin.v8.IndyInterface.fromCache(IndyInterface.java:321)
+	at nextflow.config.ConfigBuilder.buildConfigObject(ConfigBuilder.groovy:818)
+	at org.codehaus.groovy.vmplugin.v8.IndyInterface.fromCache(IndyInterface.java:321)
+	at nextflow.config.ConfigBuilder.build(ConfigBuilder.groovy:831)
+	at nextflow.cli.CmdRun.run(CmdRun.groovy:332)
+	at nextflow.cli.Launcher.run(Launcher.groovy:503)
+	at nextflow.cli.Launcher.main(Launcher.groovy:658)
+Caused by: org.codehaus.groovy.control.MultipleCompilationErrorsException: startup failed:
+/groovy/script/Script0D88939FFB399E3D3EDBFC5440D4B5FA/_nf_config_e313796e: 1: Unexpected character: '\'' @ line 1, column 11.
+   workDir = '/Users/ah3918/NEXTFLOW/
+             ^
+
+1 error
+
+	at org.codehaus.groovy.control.ErrorCollector.failIfErrors(ErrorCollector.java:292)
+	at org.codehaus.groovy.control.ErrorCollector.addFatalError(ErrorCollector.java:148)
+	at org.apache.groovy.parser.antlr4.AstBuilder.collectSyntaxError(AstBuilder.java:4753)
+	at org.apache.groovy.parser.antlr4.AstBuilder.createParsingFailedException(AstBuilder.java:4736)
+	at org.apache.groovy.parser.antlr4.AstBuilder.convertException(AstBuilder.java:254)
+	at org.apache.groovy.parser.antlr4.AstBuilder.buildCST(AstBuilder.java:228)
+	at org.apache.groovy.parser.antlr4.AstBuilder.buildAST(AstBuilder.java:262)
+	at org.apache.groovy.parser.antlr4.Antlr4ParserPlugin.buildAST(Antlr4ParserPlugin.java:58)
+	at org.codehaus.groovy.control.SourceUnit.buildAST(SourceUnit.java:256)
+	at java.base/java.util.Iterator.forEachRemaining(Iterator.java:133)
+	at java.base/java.util.Spliterators$IteratorSpliterator.forEachRemaining(Spliterators.java:1801)
+	at java.base/java.util.stream.ReferencePipeline$Head.forEach(ReferencePipeline.java:658)
+	at org.codehaus.groovy.control.CompilationUnit.compile(CompilationUnit.java:663)
+	at ch.artecat.grengine.code.groovy.DefaultGroovyCompiler.compile(DefaultGroovyCompiler.java:229)
+	... 31 common frames omitted
