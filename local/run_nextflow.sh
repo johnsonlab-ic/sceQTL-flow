@@ -6,3 +6,9 @@ nextflow run -c /Users/ah3918/Dropbox/LANDMARK/PROJECTS/eQTL_PIPELINE/NEXTFLOW/n
 --gds_file /Users/ah3918/Dropbox/LANDMARK/PROJECTS/eQTL_PIPELINE/data/inputs/test_geno.gds \
 --single_cell_file /Users/ah3918/Dropbox/LANDMARK/PROJECTS/eQTL_PIPELINE/data/inputs/roche_ms_decontx.rds \
 --outdir /Users/ah3918/Dropbox/LANDMARK/PROJECTS/eQTL_PIPELINE/data/outputs
+
+
+### on the HPC 
+
+cd /rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/eQTL_PIPELINE
+
