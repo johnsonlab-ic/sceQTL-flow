@@ -148,7 +148,7 @@ workflow{
     WorkDir: ${workflow.workDir}
     ========================================
 
-    !WARNING - This pipeline is still in development and may not work as expected!
+    This is the stable pipeline. 
 
     """
     create_genotype(gds_file=params.gds_file)
