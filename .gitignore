@@ -2,4 +2,7 @@
 
 data/
 local_runs/
-
+pipeline_dag.html
+pipeline_report.html
+pipeline_timeline.html
+build.log

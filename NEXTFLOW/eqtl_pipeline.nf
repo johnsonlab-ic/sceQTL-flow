@@ -152,7 +152,7 @@ workflow{
 
     This is the stable pipeline version. 
     """
-    // create_genotype(gds_file=params.gds_file)
+    create_genotype(gds_file=params.gds_file)
     pseudobulk_singlecell(single_cell_file=params.single_cell_file)
     find_top_genes(pseudobulk_file=pseudobulk_singlecell.out.pseudobulk_counts.flatten())
 
