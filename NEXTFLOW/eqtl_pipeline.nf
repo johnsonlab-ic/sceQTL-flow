@@ -3,12 +3,11 @@ nextflow.enable.dsl=2
 params.outdir="/rds/general/user/ah3918/projects/puklandmarkproject/ephemeral/tmp/"
 params.gds_file="/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/TEST_DATA/test_geno.gds"
 params.inputfile="/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/eqtl_pipeline_dev/eQTL_PIPELINE/testfile.txt"
-params.local=true
 params.email="ah3918@ic.ac.uk"
 
-params.genotype_source_functions="${baseDir}/../genotype_functions/genotype_functions.r"
-params.pseudobulk_source_functions="${baseDir}/../expression_functions/pseudobulk_functions.r"
-params.eqtl_source_functions="${baseDir}/../MatrixEQTL_functions/matrixeqtl_source.r"
+params.genotype_source_functions="${baseDir}/../R/genotype_functions/genotype_functions.r"
+params.pseudobulk_source_functions="${baseDir}/../R/expression_functions/pseudobulk_functions.r"
+params.eqtl_source_functions="${baseDir}/../R/MatrixEQTL_functions/matrixeqtl_source.r"
 
 params.single_cell_file="/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/TEST_DATA/roche_ms_decontx.rds"
 
@@ -146,13 +145,11 @@ workflow{
     Output Directory: ${params.outdir}
     GDS File: ${params.gds_file}
     Input Seurat File: ${params.single_cell_file}
-    Local Execution: ${params.local}
     WorkDir: ${workflow.workDir}
     ========================================
 
     !WARNING - This pipeline is still in development and may not work as expected!
 
-    println "Running with profile: ${params.profile}"    docker run --rm -it -v /Users/ah3918/Dropbox/LANDMARK/PROJECTS/eQTL_PIPELINE/data/inputs:/mnt -v /Users/ah3918/Dropbox/LANDMARK/PROJECTS/eQTL_PIPELINE/data/outputs:/output alpine /bin/sh
     """
     create_genotype(gds_file=params.gds_file)
     pseudobulk_singlecell(single_cell_file=params.single_cell_file)
