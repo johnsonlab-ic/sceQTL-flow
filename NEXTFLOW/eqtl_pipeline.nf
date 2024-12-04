@@ -150,7 +150,9 @@ workflow{
     WorkDir: ${workflow.workDir}
     ========================================
 
-    This is the stable pipeline version. 
+    !WARNING - This pipeline is still in development and may not work as expected!
+
+    println "Running with profile: ${params.profile}"
     """
     create_genotype(gds_file=params.gds_file)
     pseudobulk_singlecell(single_cell_file=params.single_cell_file)
