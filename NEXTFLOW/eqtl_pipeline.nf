@@ -152,7 +152,7 @@ workflow{
 
     !WARNING - This pipeline is still in development and may not work as expected!
 
-    println "Running with profile: ${params.profile}"
+    println "Running with profile: ${params.profile}"    docker run --rm -it -v /Users/ah3918/Dropbox/LANDMARK/PROJECTS/eQTL_PIPELINE/data/inputs:/mnt -v /Users/ah3918/Dropbox/LANDMARK/PROJECTS/eQTL_PIPELINE/data/outputs:/output alpine /bin/sh
     """
     create_genotype(gds_file=params.gds_file)
     pseudobulk_singlecell(single_cell_file=params.single_cell_file)
