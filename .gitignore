@@ -7,3 +7,4 @@ pipeline_report.html
 pipeline_timeline.html
 build.log
 .nextflow/
+.nextflow.log*
