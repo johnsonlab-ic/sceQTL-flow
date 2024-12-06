@@ -9,3 +9,4 @@ build.log
 .nextflow/
 .nextflow.log*
 jupyter_dev/
+build.log
