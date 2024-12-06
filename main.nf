@@ -130,8 +130,7 @@ process qc_expression{
     min_individuals <- min_percentage * ncol(pseudobulk_data)
     pseudobulk_data <- pseudobulk_data[rowSums(pseudobulk_data > 0) >= min_individuals, ]
 
-    file_name <- basename("$pseudobulk_file")
-    cell_type_name <- sub("_pseudobulk.csv$", "", file_name)
+    cell_type_name <- gsub("_pseudobulk.csv", "", "$pseudobulk_file")
 
     pseudobulk_data=log2(edgeR::cpm(pseudobulk_data)+1)
 
