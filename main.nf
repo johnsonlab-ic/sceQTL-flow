@@ -66,15 +66,6 @@ process pseudobulk_singlecell{
     indiv_col="Individual_ID",
     assay="decontXcounts")
     
-    aggregated_counts_list=lapply(aggregated_counts_list,function(x){
-        x=log2(edgeR::cpm(x)+1)
-        return(x)
-    })
-
-    for(i in 1:length(aggregated_counts_list)){
-        data.table::fwrite(aggregated_counts_list[[i]],paste0(names(aggregated_counts_list[i]),"_pseudobulk.csv"))
-    }
-
     gene_locations=get_gene_locations(aggregated_counts_list[[1]])
     data.table::fwrite(gene_locations,"gene_locations.csv")
 
@@ -113,25 +104,31 @@ process run_matrixeQTL{
 
 }
 
-process find_top_genes {
+process qc_expression{
     publishDir "${params.outdir}", mode: 'copy'
 
     input:
     path pseudobulk_file
+    val min_expression
 
     output:
-    path "*top_genes_list.txt"
+    path "*pseudobulk_normalised.csv" , emit: pseudobulk_normalised
 
     script:
     """
     #!/usr/bin/env Rscript
     library(data.table)
     pseudobulk_data <- fread("$pseudobulk_file")
-    gene_sums <- rowSums(pseudobulk_data[, -1, with=FALSE])
-    top_genes <- head(order(gene_sums, decreasing=TRUE), 10)
-    celltype <- gsub("_pseudobulk.csv", "", basename("$pseudobulk_file"))
-    write.table(data.frame(celltype=celltype, top_genes=top_genes), 
-    file=paste0(celltype,"top_genes_list.txt"), row.names=FALSE, col.names=TRUE, sep="\t", append=TRUE)
+
+    min_percentage <- $min_expression
+    min_individuals <- min_percentage * ncol(pseudobulk_data)
+    pseudobulk_data <- pseudobulk_data[rowSums(pseudobulk_data > 0) >= min_individuals, ]
+
+    pseudobulk_data=log2(edgeR::cpm(pseudobulk_data)+1)
+    fwrite(pseudobulk_data,"pseudobulk_normalised.csv")
+
+
+
     """
 }
 
@@ -159,7 +156,16 @@ workflow{
 
 }
 
+workflow_expression{
 
+    //aggregate counts
+    pseudobulk_singlecell(single_cell_file=params.single_cell_file)
+
+    //QC and normalisation
+    find_top_genes(pseudobulk_file=pseudobulk_singlecell.out.pseudobulk_counts.flatten())
+    
+
+}
 
 workflow.onComplete {
 
