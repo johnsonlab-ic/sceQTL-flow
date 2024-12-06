@@ -142,7 +142,7 @@ process qc_expression{
 }
 
 process final_report{
-    
+
     publishDir "${params.outdir}", mode: 'copy'
 
     input: 
@@ -158,7 +158,7 @@ process final_report{
 
 
     """
-    #!/usr/bin/env/bash
+    #!/bin/bash
 
     quarto render ${params.quarto_report} --output report.html \
     --params pseudobulk_files=$pseudobulk_file_list \
@@ -185,6 +185,7 @@ workflow{
     ========================================
 
     Expression QC metrics:
+
     Min cells for pseudobulking: ${params.min_cells}
     Min percentage for genes: ${params.min_expression}
 
