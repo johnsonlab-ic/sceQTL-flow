@@ -10,6 +10,9 @@ params.eqtl_source_functions="${baseDir}/R/MatrixEQTL_functions/matrixeqtl_sourc
 
 params.single_cell_file="/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/TEST_DATA/roche_ms_decontx.rds"
 
+/// Expression metrics
+params.min_cells=10
+params.min_expression=0.1
 
 
 process create_genotype {
@@ -62,10 +65,14 @@ process pseudobulk_singlecell{
     celltypelist=Seurat::SplitObject(seuratobj,split.by="CellType")
 
     aggregated_counts_list=pseudobulk_counts(celltypelist,
-    min.cells=10,
+    min.cells=as.numeric(${params.min_cells}),
     indiv_col="Individual_ID",
     assay="decontXcounts")
-    
+
+    for(i in 1:length(aggregated_counts_list)){
+        data.table::fwrite(aggregated_counts_list[[i]],paste0(names(aggregated_counts_list[i]),"_pseudobulk.csv"))
+    }
+
     gene_locations=get_gene_locations(aggregated_counts_list[[1]])
     data.table::fwrite(gene_locations,"gene_locations.csv")
 
@@ -109,7 +116,6 @@ process qc_expression{
 
     input:
     path pseudobulk_file
-    val min_expression
 
     output:
     path "*pseudobulk_normalised.csv" , emit: pseudobulk_normalised
@@ -120,16 +126,30 @@ process qc_expression{
     library(data.table)
     pseudobulk_data <- fread("$pseudobulk_file")
 
-    min_percentage <- $min_expression
+    min_percentage <- as.numeric(${params.min_expression})
     min_individuals <- min_percentage * ncol(pseudobulk_data)
     pseudobulk_data <- pseudobulk_data[rowSums(pseudobulk_data > 0) >= min_individuals, ]
 
+    file_name <- basename("$pseudobulk_file")
+    cell_type_name <- sub("_pseudobulk.csv$", "", file_name)
+
     pseudobulk_data=log2(edgeR::cpm(pseudobulk_data)+1)
-    fwrite(pseudobulk_data,"pseudobulk_normalised.csv")
 
-
-
+    # Save the normalized data
+    fwrite(pseudobulk_data, paste0(cell_type_name, "_pseudobulk_normalised.csv"))
     """
+}
+
+
+workflow_expression{
+
+    //aggregate counts
+    pseudobulk_singlecell(single_cell_file=params.single_cell_file)
+
+    //QC and normalisation
+    qc_expression(pseudobulk_file=pseudobulk_singlecell.out.pseudobulk_counts.flatten())
+    
+
 }
 
 workflow{
@@ -138,40 +158,41 @@ workflow{
     ========================================
     Welcome to the Nextflow eQTL pipeline
     ========================================
+    
+    File inputs:
+
     Output Directory: ${params.outdir}
     GDS File: ${params.gds_file}
     Input Seurat File: ${params.single_cell_file}
     WorkDir: ${workflow.workDir}
+
+    ========================================
+
+    Expression QC metrics:
+    Min cells for pseudobulking: ${params.min_cells}
+    Min percentage for genes: ${params.min_expression}
+
     ========================================
 
     !WARNING - This pipeline is still in development and may not work as expected!
 
     """
     create_genotype(gds_file=params.gds_file)
-    pseudobulk_singlecell(single_cell_file=params.single_cell_file)
-    find_top_genes(pseudobulk_file=pseudobulk_singlecell.out.pseudobulk_counts.flatten())
+
+    workflow_expression()
 
 
     
 
 }
 
-workflow_expression{
-
-    //aggregate counts
-    pseudobulk_singlecell(single_cell_file=params.single_cell_file)
-
-    //QC and normalisation
-    find_top_genes(pseudobulk_file=pseudobulk_singlecell.out.pseudobulk_counts.flatten())
-    
-
-}
 
 workflow.onComplete {
 
     println """
     ========================================
-    Pipeline Completed!! Hello!
+    Pipeline Completed!
+    Resource usage: ${task.resourceUsage}
     ========================================
 
     """
