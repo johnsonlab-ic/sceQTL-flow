@@ -140,7 +140,7 @@ process qc_expression{
 }
 
 
-workflow_expression{
+workflow expression{
 
     //aggregate counts
     pseudobulk_singlecell(single_cell_file=params.single_cell_file)
