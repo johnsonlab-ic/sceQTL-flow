@@ -142,6 +142,8 @@ process qc_expression{
 }
 
 process final_report{
+    
+    publishDir "${params.outdir}", mode: 'copy'
 
     input: 
     path pseudobulk_file_list
