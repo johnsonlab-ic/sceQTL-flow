@@ -191,7 +191,6 @@ workflow.onComplete {
     println """
     ========================================
     Pipeline Completed!
-    Resource usage: ${task.resourceUsage}
     ========================================
 
     """
