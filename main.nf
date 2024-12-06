@@ -194,7 +194,7 @@ workflow{
     !WARNING - This pipeline is still in development and may not work as expected!
 
     """
-    // create_genotype(gds_file=params.gds_file)
+    create_genotype(gds_file=params.gds_file)
 
     //aggregate counts
     pseudobulk_singlecell(single_cell_file=params.single_cell_file)
