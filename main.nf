@@ -166,18 +166,6 @@ process final_report{
 
 }
 
-workflow expression{
-
-    //aggregate counts
-    pseudobulk_singlecell(single_cell_file=params.single_cell_file)
-
-    //QC and normalisation
-    qc_expression(pseudobulk_file=pseudobulk_singlecell.out.pseudobulk_counts.flatten())
-    
-
-}
-
-
 workflow{
 
   println """
@@ -205,8 +193,13 @@ workflow{
     """
     create_genotype(gds_file=params.gds_file)
 
-    expression()
-    final_report(pseudobulk_file_list=expression.out.pseudobulk_normalised,
+    //aggregate counts
+    pseudobulk_singlecell(single_cell_file=params.single_cell_file)
+
+    //QC and normalisation
+    qc_expression(pseudobulk_file=pseudobulk_singlecell.out.pseudobulk_counts.flatten())
+    
+    final_report(pseudobulk_file_list=qc_expression.out.pseudobulk_normalised,
     genotype_file=create_genotype.out.genotype_mat)
 
 
