@@ -140,7 +140,7 @@ process qc_expression{
 }
 
 
-workflow qc_expression{
+workflow expression{
 
     //aggregate counts
     pseudobulk_singlecell(single_cell_file=params.single_cell_file)
@@ -178,7 +178,7 @@ workflow{
     """
     create_genotype(gds_file=params.gds_file)
 
-    qc_expression()
+    expression()
 
 
     
