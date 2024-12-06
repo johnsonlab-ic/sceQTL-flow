@@ -1,0 +1,31 @@
+# Use the official R base image
+FROM r-base:4.4.0
+
+# Install necessary system dependencies
+RUN apt-get update && apt-get install -y \
+    libcurl4-openssl-dev \
+    libssl-dev \
+    libxml2-dev \
+    libhdf5-dev \
+    procps \
+    pkg-config \
+    pandoc \
+    libxt-dev \
+    libfontconfig1-dev \
+    wget && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install Quarto
+RUN wget https://github.com/quarto-dev/quarto-cli/releases/download/v1.6.39/quarto-1.6.39-linux-arm64.deb && \
+    dpkg -i quarto-1.6.39-linux-arm64.deb && \
+    rm quarto-1.6.39-linux-arm64.deb
+
+# Install required R packages
+RUN R -e 'install.packages(c("dplyr", "data.table", "ggplot2", "cowplot", "patchwork", "ggrepel", "tidyverse", "gridExtra"))'
+
+# Set the working directory
+WORKDIR /usr/local/src
+
+# Set the default command to R
+CMD ["R"]docker run --rm -it -v /Users/ah3918/Dropbox/LANDMARK/PROJECTS/eQTL_PIPELINE:/workspace ah3918/report_image:latest /bin/bash

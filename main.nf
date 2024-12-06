@@ -7,8 +7,10 @@ params.inputfile="/rds/general/user/ah3918/projects/puklandmarkproject/live/User
 params.genotype_source_functions="${baseDir}/R/genotype_functions/genotype_functions.r"
 params.pseudobulk_source_functions="${baseDir}/R/expression_functions/pseudobulk_functions.r"
 params.eqtl_source_functions="${baseDir}/R/MatrixEQTL_functions/matrixeqtl_source.r"
+params.quarto_report="${baseDir}/R/quarto_reports/run_report.qmd"
 
 params.single_cell_file="/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/TEST_DATA/roche_ms_decontx.rds"
+
 
 /// Expression metrics
 params.min_cells=10
@@ -139,6 +141,30 @@ process qc_expression{
     """
 }
 
+process final_report{
+
+    input: 
+    path pseudobulk_file_list
+    path genotype_file
+
+    output: 
+
+    path "report.html"
+
+
+    script:
+
+
+    """
+    #!/usr/bin/env/bash
+
+    quarto render ${params.quarto_report} --output report.html \
+    --params pseudobulk_files=$pseudobulk_file_list \
+    --genotype_file=$genotype_file
+
+    """
+
+}
 
 workflow expression{
 
@@ -150,6 +176,7 @@ workflow expression{
     
 
 }
+
 
 workflow{
 
@@ -179,9 +206,10 @@ workflow{
     create_genotype(gds_file=params.gds_file)
 
     expression()
+    final_report(pseudobulk_file_list=expression.out.pseudobulk_normalised,
+    genotype_file=create_genotype.out.genotype_mat)
 
 
-    
 
 }
 
