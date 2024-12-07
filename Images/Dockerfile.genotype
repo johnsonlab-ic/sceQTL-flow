@@ -13,11 +13,20 @@ RUN apt-get update && apt-get install -y \
 # Install BiocManager
 RUN R -e 'if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")'
 
-RUN R -e 'BiocManager::install(c("SeqArray", "SNPRelate", "GenomicRanges", "BSgenome", "SNPlocs.Hsapiens.dbSNP155.GRCh38","SNPlocs.Hsapiens.dbSNP155.GRCh37","GenomeInfoDb"))'
+# Install individual Bioconductor packages
+RUN R -e 'BiocManager::install("SeqArray")'
+RUN R -e 'BiocManager::install("SNPRelate")'
+RUN R -e 'BiocManager::install("GenomicRanges")'
+RUN R -e 'BiocManager::install("BSgenome")'
+RUN R -e 'BiocManager::install("SNPlocs.Hsapiens.dbSNP155.GRCh38")'
+RUN R -e 'BiocManager::install("SNPlocs.Hsapiens.dbSNP155.GRCh37")'
+RUN R -e 'BiocManager::install("GenomeInfoDb")'
 
 RUN R -e 'install.packages(c("dplyr","data.table"))'
 
 RUN R -e 'install.packages(c("argparse","MatrixEQTL","coloc","MendelianRandomization","ieugwasr","genetics.binaRies"))'
+
+RUN R -e 'install.packages("lobstr")'
 
 # Set the working directory
 WORKDIR /usr/local/src

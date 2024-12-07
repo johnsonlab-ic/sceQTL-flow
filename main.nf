@@ -197,7 +197,7 @@ workflow{
     create_genotype(gds_file=params.gds_file)
 
     //aggregate counts
-    // pseudobulk_singlecell(single_cell_file=params.single_cell_file)
+    pseudobulk_singlecell(single_cell_file=params.single_cell_file)
 
     // //QC and normalisation
     // qc_expression(pseudobulk_file=pseudobulk_singlecell.out.pseudobulk_counts.flatten())
