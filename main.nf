@@ -209,7 +209,7 @@ workflow{
     final_report(
         pseudobulk_file_list= qc_expression.out.collect(),
         genotype_file= create_genotype.out.genotype_mat,
-        report_file=${params.quarto_report}
+        report_file=params.quarto_report
     )
 
 
