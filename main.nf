@@ -155,7 +155,7 @@ process final_report{
 
     output: 
 
-    path "report.html"
+    path "report*"
 
 
     script:
