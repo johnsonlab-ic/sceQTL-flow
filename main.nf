@@ -7,9 +7,14 @@ params.inputfile="/rds/general/user/ah3918/projects/puklandmarkproject/live/User
 params.genotype_source_functions="${baseDir}/R/genotype_functions/genotype_functions.r"
 params.pseudobulk_source_functions="${baseDir}/R/expression_functions/pseudobulk_functions.r"
 params.eqtl_source_functions="${baseDir}/R/MatrixEQTL_functions/matrixeqtl_source.r"
+params.quarto_report="${baseDir}/R/quarto_reports/run_report.qmd"
 
 params.single_cell_file="/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/TEST_DATA/roche_ms_decontx.rds"
 
+
+/// Expression metrics
+params.min_cells=10
+params.min_expression=0.1
 
 
 process create_genotype {
@@ -62,14 +67,9 @@ process pseudobulk_singlecell{
     celltypelist=Seurat::SplitObject(seuratobj,split.by="CellType")
 
     aggregated_counts_list=pseudobulk_counts(celltypelist,
-    min.cells=10,
+    min.cells=as.numeric(${params.min_cells}),
     indiv_col="Individual_ID",
     assay="decontXcounts")
-    
-    aggregated_counts_list=lapply(aggregated_counts_list,function(x){
-        x=log2(edgeR::cpm(x)+1)
-        return(x)
-    })
 
     for(i in 1:length(aggregated_counts_list)){
         data.table::fwrite(aggregated_counts_list[[i]],paste0(names(aggregated_counts_list[i]),"_pseudobulk.csv"))
@@ -113,26 +113,59 @@ process run_matrixeQTL{
 
 }
 
-process find_top_genes {
+process qc_expression{
     publishDir "${params.outdir}", mode: 'copy'
 
     input:
     path pseudobulk_file
 
     output:
-    path "*top_genes_list.txt"
+    path "*pseudobulk_normalised.csv" , emit: pseudobulk_normalised
 
     script:
     """
     #!/usr/bin/env Rscript
     library(data.table)
     pseudobulk_data <- fread("$pseudobulk_file")
-    gene_sums <- rowSums(pseudobulk_data[, -1, with=FALSE])
-    top_genes <- head(order(gene_sums, decreasing=TRUE), 10)
-    celltype <- gsub("_pseudobulk.csv", "", basename("$pseudobulk_file"))
-    write.table(data.frame(celltype=celltype, top_genes=top_genes), 
-    file=paste0(celltype,"top_genes_list.txt"), row.names=FALSE, col.names=TRUE, sep="\t", append=TRUE)
+
+    min_percentage <- as.numeric(${params.min_expression})
+    min_individuals <- min_percentage * ncol(pseudobulk_data)
+    pseudobulk_data <- pseudobulk_data[rowSums(pseudobulk_data > 0) >= min_individuals, ]
+
+    cell_type_name <- gsub("_pseudobulk.csv", "", "$pseudobulk_file")
+
+    pseudobulk_data=log2(edgeR::cpm(pseudobulk_data)+1)
+
+    # Save the normalized data
+    fwrite(pseudobulk_data, paste0(cell_type_name, "_pseudobulk_normalised.csv"))
     """
+}
+
+process final_report{
+
+    publishDir "${params.outdir}", mode: 'copy'
+
+    input: 
+    path pseudobulk_file_list
+    path genotype_file
+
+    output: 
+
+    path "report.html"
+
+
+    script:
+
+
+    """
+    #!/bin/bash
+
+    quarto render ${params.quarto_report} --output report.html \
+    --params pseudobulk_files=$pseudobulk_file_list \
+    --genotype_file=$genotype_file
+
+    """
+
 }
 
 workflow{
@@ -141,21 +174,38 @@ workflow{
     ========================================
     Welcome to the Nextflow eQTL pipeline
     ========================================
+    
+    File inputs:
+
     Output Directory: ${params.outdir}
     GDS File: ${params.gds_file}
     Input Seurat File: ${params.single_cell_file}
     WorkDir: ${workflow.workDir}
+
+    ========================================
+
+    Expression QC metrics:
+
+    Min cells for pseudobulking: ${params.min_cells}
+    Min percentage for genes: ${params.min_expression}
+
     ========================================
 
     This is the stable pipeline. 
 
     """
     create_genotype(gds_file=params.gds_file)
+
+    //aggregate counts
     pseudobulk_singlecell(single_cell_file=params.single_cell_file)
-    find_top_genes(pseudobulk_file=pseudobulk_singlecell.out.pseudobulk_counts.flatten())
 
-
+    //QC and normalisation
+    qc_expression(pseudobulk_file=pseudobulk_singlecell.out.pseudobulk_counts.flatten())
     
+    final_report(pseudobulk_file_list=qc_expression.out.pseudobulk_normalised,
+    genotype_file=create_genotype.out.genotype_mat)
+
+
 
 }
 
@@ -164,7 +214,7 @@ workflow.onComplete {
 
     println """
     ========================================
-    Pipeline Completed!! Hello!
+    Pipeline Completed!
     ========================================
 
     """
