@@ -10,6 +10,6 @@ docker buildx build --platform linux/amd64,linux/arm64 -t ${DOCKER_HUB_USERNAME}
 
 # Build the report_image
 echo "Building report_image..."
-docker buildx build --platform linux/amd64,linux/arm64 -t ${DOCKER_HUB_USERNAME}/report_image:latest -f ${indir}/Images/Dockerfile.reports --push .
+docker buildx build --platform linux/amd64 -t ${DOCKER_HUB_USERNAME}/report_image_amd64:latest -f ${indir}/Images/Dockerfile.reports_amd64 --push .
 
 echo "All images have been built and pushed successfully."
