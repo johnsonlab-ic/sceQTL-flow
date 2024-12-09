@@ -165,7 +165,7 @@ process final_report{
     #!/bin/bash
 
     quarto render ${params.quarto_report} --output report.html \
-    --genotype_file=$genotype_file
+    -P genotype_file:$genotype_file
 
     """
 
