@@ -203,7 +203,7 @@ workflow{
     qc_expression(pseudobulk_file: pseudobulk_singlecell.out.pseudobulk_counts.flatten())
     
     final_report(
-        pseudobulk_file_list: qc_expression.out.collect()
+        pseudobulk_file_list: qc_expression.out.collect(),
         genotype_file: create_genotype.out.genotype_mat
     )
 
