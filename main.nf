@@ -152,6 +152,7 @@ process final_report{
     input: 
     path pseudobulk_file_list
     path genotype_file
+    path report_file
 
     output: 
 
@@ -164,7 +165,7 @@ process final_report{
     """
     #!/bin/bash
 
-    quarto render ${params.quarto_report} --output-dir ./ \
+    quarto render $report_file --output-dir ./ \
     -P genotype_file:$genotype_file
 
     """
@@ -207,7 +208,8 @@ workflow{
     
     final_report(
         pseudobulk_file_list= qc_expression.out.collect(),
-        genotype_file= create_genotype.out.genotype_mat
+        genotype_file= create_genotype.out.genotype_mat,
+        report_file=${params.quarto_report}
     )
 
 
