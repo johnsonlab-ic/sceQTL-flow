@@ -155,7 +155,7 @@ process final_report{
 
     output: 
 
-    path "report*"
+    path "*"
 
 
     script:
@@ -164,7 +164,7 @@ process final_report{
     """
     #!/bin/bash
 
-    quarto render ${params.quarto_report} --output report.html \
+    quarto render ${params.quarto_report} \
     -P genotype_file:$genotype_file
 
     """
