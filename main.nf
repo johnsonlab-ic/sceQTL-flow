@@ -165,7 +165,6 @@ process final_report{
     #!/bin/bash
 
     quarto render ${params.quarto_report} --output report.html \
-    --pseudobulk_files=$pseudobulk_file_list \
     --genotype_file=$genotype_file
 
     """
