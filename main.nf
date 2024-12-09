@@ -204,7 +204,7 @@ workflow{
     
     final_report(
         pseudobulk_file_list: qc_expression.out.collect()
-        genotype_file: create_genotype.out.genotype_mat)
+        genotype_file: create_genotype.out.genotype_mat
     )
 
 
