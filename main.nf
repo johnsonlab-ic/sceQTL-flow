@@ -84,6 +84,7 @@ process pseudobulk_singlecell{
 }
 
 
+
 process run_matrixeQTL{
     
     input:
@@ -106,6 +107,9 @@ process run_matrixeQTL{
     genotype_data=fread("$genotype_mat")
     snp_locations=fread("$snp_locations")
     gene_locations=fread("$gene_locations")
+
+
+
 
 
 
@@ -161,7 +165,7 @@ process final_report{
     #!/bin/bash
 
     quarto render ${params.quarto_report} --output report.html \
-    --params pseudobulk_files=$pseudobulk_file_list \
+    --pseudobulk_files=$pseudobulk_file_list \
     --genotype_file=$genotype_file
 
     """
