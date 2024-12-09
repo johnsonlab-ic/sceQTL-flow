@@ -35,6 +35,11 @@ ggplot(airquality, aes(Temp, Ozone)) +
 
 ```{r}
 library(data.table)
-exp_mats=lapply(params$pseudobulk_files,fread)
-geno_mat=fread(params$genotype_file)
+geno_mat=as.character(params$genotype_file)
+exp_mats=as.character(params$pseudobulk_files)
+
+print(geno_mat)
+print(exp_mats)
+exp_mats=lapply(exp_mats,fread)
+geno_mat=fread(geno_mat)
 ```
