@@ -109,10 +109,6 @@ process run_matrixeQTL{
     gene_locations=fread("$gene_locations")
 
 
-
-
-
-
     """
 
 }
