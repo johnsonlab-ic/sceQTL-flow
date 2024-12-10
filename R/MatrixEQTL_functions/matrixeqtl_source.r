@@ -22,6 +22,8 @@ calculate_ciseqtl=function(exp_mat,
     covs_meqtl=covs$CreateFromMatrix(as.matrix(covs))
     saveRDS(covs,paste0(name,"_covs_used.rds"))
     
+  }else{
+    covs_meqtl=NULL
   }
 
   ##create SNP input
