@@ -23,7 +23,7 @@ calculate_ciseqtl=function(exp_mat,
     saveRDS(covs,paste0(name,"_covs_used.rds"))
     
   }else{
-    covs_meqtl=NULL
+    covs_meqtl=MatrixEQTL::SlicedData$new()
   }
 
   ##create SNP input
