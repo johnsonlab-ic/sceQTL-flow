@@ -171,7 +171,7 @@ process run_matrixeQTL{
     exp_mat <- exp_mat %>% select(all_of(common_samples))
     geno_mat <- geno_mat %>% select(all_of(common_samples))
 
-    common_genes <- intersect(exp_loc$geneid, rownames(exp_mat))
+    common_genes <- intersect(exp_loc %>% pull(geneid), rownames(exp_mat))
 
     # Subset the data frame using dplyr's filter function
     exp_mat <- exp_mat %>% filter(rownames(exp_mat) %in% common_genes)
