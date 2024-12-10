@@ -73,9 +73,10 @@ process pseudobulk_singlecell{
 
     for (i in 1:length(aggregated_counts_list)) {
 
+        df=aggregated_counts_list[[i]] %>% mutate(geneid=row.names(.)) 
         
         # Write the data frame to a CSV file
-        data.table::fwrite(aggregated_counts_list[[i]], paste0(names(aggregated_counts_list[i]), "_pseudobulk.csv"),row.names=TRUE)
+        data.table::fwrite(df, paste0(names(aggregated_counts_list[i]), "_pseudobulk.csv"))
     }
 
     gene_locations=get_gene_locations(aggregated_counts_list[[1]])
@@ -103,6 +104,7 @@ process qc_expression{
     #!/usr/bin/env Rscript
     library(data.table)
     pseudobulk_data <- fread("$pseudobulk_file")
+    pseudobulk_data <- pseudobulk_data %>% column_to_rownames(var="geneid")
 
     min_percentage <- as.numeric(${params.min_expression})
     min_individuals <- min_percentage * ncol(pseudobulk_data)
@@ -111,9 +113,10 @@ process qc_expression{
     cell_type_name <- gsub("_pseudobulk.csv", "", "$pseudobulk_file")
 
     pseudobulk_data=log2(edgeR::cpm(pseudobulk_data)+1)
+    pseudobulk_data = pseudobulk_data %>% mutate(geneid=row.names(.))
 
     # Save the normalized data
-    fwrite(pseudobulk_data, paste0(cell_type_name, "_pseudobulk_normalised.csv"),row.names=TRUE)
+    fwrite(pseudobulk_data, paste0(cell_type_name, "_pseudobulk_normalised.csv"))
     """
 }
 
