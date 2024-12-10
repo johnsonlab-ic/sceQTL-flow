@@ -71,8 +71,11 @@ process pseudobulk_singlecell{
     indiv_col="Individual_ID",
     assay="decontXcounts")
 
-    for(i in 1:length(aggregated_counts_list)){
-        data.table::fwrite(aggregated_counts_list[[i]],paste0(names(aggregated_counts_list[i]),"_pseudobulk.csv"))
+    for (i in 1:length(aggregated_counts_list)) {
+
+        
+        # Write the data frame to a CSV file
+        data.table::fwrite(aggregated_counts_list[[i]], paste0(names(aggregated_counts_list[i]), "_pseudobulk.csv"),row.names=TRUE)
     }
 
     gene_locations=get_gene_locations(aggregated_counts_list[[1]])
@@ -99,7 +102,7 @@ process qc_expression{
     """
     #!/usr/bin/env Rscript
     library(data.table)
-    pseudobulk_data <- fread("$pseudobulk_file")
+    pseudobulk_data <- fread("$pseudobulk_file",row.names=1)
 
     min_percentage <- as.numeric(${params.min_expression})
     min_individuals <- min_percentage * ncol(pseudobulk_data)
@@ -110,7 +113,7 @@ process qc_expression{
     pseudobulk_data=log2(edgeR::cpm(pseudobulk_data)+1)
 
     # Save the normalized data
-    fwrite(pseudobulk_data, paste0(cell_type_name, "_pseudobulk_normalised.csv"))
+    fwrite(pseudobulk_data, paste0(cell_type_name, "_pseudobulk_normalised.csv"),row.names=TRUE)
     """
 }
 
@@ -162,7 +165,7 @@ process run_matrixeQTL{
     library(data.table)
     library(dplyr)
     
-    exp_mat=fread("$expression_mat")
+    exp_mat=fread("$expression_mat",row.names=1)
     geno_mat=fread("$genotype_mat")
     geno_loc=fread("$snp_locations")
     exp_loc=fread("$gene_locations")
