@@ -165,7 +165,7 @@ process run_matrixeQTL{
     library(data.table)
     library(dplyr)
     
-    exp_mat=fread("$expression_mat",row.names=1)
+    exp_mat=fread("$expression_mat")
     geno_mat=fread("$genotype_mat")
     geno_loc=fread("$snp_locations")
     exp_loc=fread("$gene_locations")
