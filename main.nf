@@ -85,33 +85,6 @@ process pseudobulk_singlecell{
 
 
 
-process run_matrixeQTL{
-    
-    input:
-    path genotype_mat
-    path snp_locations
-    path expression_mat
-    path gene_locations 
-
-    output:
-    path "*"
-
-
-    script:
-    """
-    #!/usr/bin/env Rscript
-    
-    source("${params.eqtl_source_functions}")
-    
-    pseudobulk_data=fread("$expression_mat")
-    genotype_data=fread("$genotype_mat")
-    snp_locations=fread("$snp_locations")
-    gene_locations=fread("$gene_locations")
-
-
-    """
-
-}
 
 process qc_expression{
     publishDir "${params.outdir}", mode: 'copy'
@@ -140,6 +113,66 @@ process qc_expression{
     fwrite(pseudobulk_data, paste0(cell_type_name, "_pseudobulk_normalised.csv"))
     """
 }
+
+
+process qc_genotype {
+
+    publishDir "${params.outdir}", mode: 'copy'
+
+    input:
+    path genotype_mat
+    path snp_locations
+
+    output:
+    path "*"
+
+    script:
+    """
+    #!/usr/bin/env Rscript
+    library(data.table)
+
+    genotype_data <- fread("$genotype_mat")
+    snp_locations <- fread("$snp_locations")
+
+
+    """
+    
+    
+}
+
+process run_matrixeQTL{
+    
+    input:
+    path genotype_mat
+    path snp_locations
+    path expression_mat
+    path gene_locations 
+
+    output:
+    path "*"
+
+
+    script:
+    """
+    #!/usr/bin/env Rscript
+    
+    source("${params.eqtl_source_functions}")
+    
+    exp_mat=fread("$expression_mat")
+    exp_mat=fread("$genotype_mat")
+    geno_loc=fread("$snp_locations")
+    gene_mat=fread("$gene_locations")
+
+
+    calculate_ciseqtl(exp_mat=exp_mat,
+    exp_loc=exp_loc,
+    geno_mat=geno_mat,
+    geno_loc=geno_loc)
+
+    """
+
+}
+
 
 process final_report{
 
@@ -201,12 +234,20 @@ workflow{
 
     //QC and normalisation
     qc_expression(pseudobulk_file= pseudobulk_singlecell.out.pseudobulk_counts.flatten())
-    
-    final_report(
-        pseudobulk_file_list= qc_expression.out.collect(),
-        genotype_file= create_genotype.out.genotype_mat,
-        report_file=params.quarto_report
+
+    //run matrix eQTL
+    run_matrixeQTL(
+        genotype_mat= create_genotype.out.genotype_mat,
+        snp_locations= create_genotype.out.snp_chromlocations,
+        expression_mat= qc_expression.out.pseudobulk_normalised.flatten(),
+        gene_locations= pseudobulk_singlecell.out.gene_locations
     )
+    
+    // final_report(
+    //     pseudobulk_file_list= qc_expression.out.collect(),
+    //     genotype_file= create_genotype.out.genotype_mat,
+    //     report_file=params.quarto_report
+    // )
 
 
 
