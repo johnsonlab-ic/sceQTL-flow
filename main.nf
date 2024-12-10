@@ -186,11 +186,8 @@ process run_matrixeQTL{
     common_genes <- intersect(exp_loc %>% pull(geneid), rownames(exp_mat))
     exp_mat <- exp_mat %>% filter(rownames(exp_mat) %in% common_genes)
 
-    geno_loc<-geno_loc[,c("annot","chrom","position")] 
-    row.names(geno_loc)<-geno_loc[,"annot"]
-    geno_mat<-geno_mat[rownames(geno_loc),]
-    geno_mat<-geno_mat[complete.cases(geno_mat),]
-    geno_loc<-geno_loc[rownames(geno_mat),]
+    
+
 
 
     calculate_ciseqtl(exp_mat=exp_mat,
