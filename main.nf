@@ -157,6 +157,8 @@ process run_matrixeQTL{
     #!/usr/bin/env Rscript
     
     source("${params.eqtl_source_functions}")
+
+    library(data.table)
     
     exp_mat=fread("$expression_mat")
     exp_mat=fread("$genotype_mat")
