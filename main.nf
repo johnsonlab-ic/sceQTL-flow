@@ -172,7 +172,7 @@ process run_matrixeQTL{
     
     ##read in data
     exp_mat=fread("$expression_mat") %>% tibble::column_to_rownames(var="geneid")
-    geno_mat=fread("$genotype_mat")
+    geno_mat=fread("$genotype_mat") %>% tibble::column_to_rownames(var="snp")
     geno_loc=fread("$snp_locations")
     exp_loc=fread("$gene_locations")
 
@@ -187,7 +187,11 @@ process run_matrixeQTL{
     exp_mat <- exp_mat %>% filter(rownames(exp_mat) %in% common_genes)
 
     
-
+    geno_loc<-geno_loc[,c("annot","chrom","position")] 
+    row.names(geno_loc)<-geno_loc[,"annot"]
+    geno_mat<-geno_mat[rownames(geno_loc),]
+    geno_mat<-geno_mat[complete.cases(geno_mat),]
+    geno_loc<-geno_loc[rownames(geno_mat),]
 
 
     calculate_ciseqtl(exp_mat=exp_mat,
