@@ -102,7 +102,7 @@ process qc_expression{
     """
     #!/usr/bin/env Rscript
     library(data.table)
-    pseudobulk_data <- fread("$pseudobulk_file",row.names=1)
+    pseudobulk_data <- fread("$pseudobulk_file")
 
     min_percentage <- as.numeric(${params.min_expression})
     min_individuals <- min_percentage * ncol(pseudobulk_data)
