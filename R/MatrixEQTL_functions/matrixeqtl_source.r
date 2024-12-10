@@ -19,7 +19,7 @@ calculate_ciseqtl=function(exp_mat,
     message("Covs used: ",paste0(covs,sep=", "))
 
     covs_meqtl=MatrixEQTL::SlicedData$new();
-    covs_meqtl=$CreateFromMatrix(as.matrix(covs))
+    covs_meqtl=covs$CreateFromMatrix(as.matrix(covs))
     saveRDS(covs,paste0(name,"_covs_used.rds"))
     
   }
