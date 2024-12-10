@@ -140,6 +140,7 @@ process qc_genotype {
     
 }
 
+
 process run_matrixeQTL{
     
     input:
@@ -164,6 +165,10 @@ process run_matrixeQTL{
     geno_mat=fread("$genotype_mat")
     geno_loc=fread("$snp_locations")
     exp_loc=fread("$gene_locations")
+
+    common_samples=intersect(colnames(exp_mat),colnames(geno_mat))
+    exp_mat=exp_mat[,common_samples]
+    geno_mat=geno_mat[,common_samples]
 
 
     calculate_ciseqtl(exp_mat=exp_mat,
