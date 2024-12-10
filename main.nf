@@ -103,6 +103,7 @@ process qc_expression{
     """
     #!/usr/bin/env Rscript
     library(data.table)
+    library(tidyverse)
     pseudobulk_data <- fread("$pseudobulk_file")
     pseudobulk_data <- pseudobulk_data %>% column_to_rownames(var="geneid")
 
