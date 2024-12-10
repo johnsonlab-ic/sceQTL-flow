@@ -170,7 +170,7 @@ process run_matrixeQTL{
     library(data.table)
     library(dplyr)
     
-    exp_mat=fread("$expression_mat")
+    exp_mat=fread("$expression_mat") %>% tibble::column_to_rownames(var="geneid")
     geno_mat=fread("$genotype_mat")
     geno_loc=fread("$snp_locations")
     exp_loc=fread("$gene_locations")
