@@ -160,15 +160,18 @@ process run_matrixeQTL{
     source("${params.eqtl_source_functions}")
 
     library(data.table)
+    library(dplyr)
     
-    exp_mat=fread("$expression_mat",data.table=FALSE)
-    geno_mat=fread("$genotype_mat",data.table=FALSE)
+    exp_mat=fread("$expression_mat")
+    geno_mat=fread("$genotype_mat")
     geno_loc=fread("$snp_locations")
     exp_loc=fread("$gene_locations")
 
-    common_samples=intersect(colnames(exp_mat),colnames(geno_mat))
-    exp_mat=exp_mat[,common_samples]
-    geno_mat=geno_mat[,common_samples]
+    common_samples <- intersect(colnames(exp_mat), colnames(geno_mat))
+
+    # Subset the data frames using dplyr's select function
+    exp_mat <- exp_mat %>% select(all_of(common_samples))
+    geno_mat <- geno_mat %>% select(all_of(common_samples))
 
 
     calculate_ciseqtl(exp_mat=exp_mat,
