@@ -161,9 +161,9 @@ process run_matrixeQTL{
     library(data.table)
     
     exp_mat=fread("$expression_mat")
-    exp_mat=fread("$genotype_mat")
+    geno_mat=fread("$genotype_mat")
     geno_loc=fread("$snp_locations")
-    gene_mat=fread("$gene_locations")
+    exp_loc=fread("$gene_locations")
 
 
     calculate_ciseqtl(exp_mat=exp_mat,
