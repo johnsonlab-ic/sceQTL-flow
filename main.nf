@@ -114,7 +114,7 @@ process qc_expression{
 
     cell_type_name <- gsub("_pseudobulk.csv", "", "$pseudobulk_file")
 
-    pseudobulk_data=log2(edgeR::cpm(pseudobulk_data)+1)
+    pseudobulk_data=log2(edgeR::cpm(pseudobulk_data)+1) %>% as.data.frame()
     pseudobulk_data = pseudobulk_data %>% mutate(geneid=row.names(.))
 
     # Save the normalized data
