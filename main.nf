@@ -161,8 +161,8 @@ process run_matrixeQTL{
 
     library(data.table)
     
-    exp_mat=fread("$expression_mat")
-    geno_mat=fread("$genotype_mat")
+    exp_mat=fread("$expression_mat",data.table=FALSE)
+    geno_mat=fread("$genotype_mat",data.table=FALSE)
     geno_loc=fread("$snp_locations")
     exp_loc=fread("$gene_locations")
 
