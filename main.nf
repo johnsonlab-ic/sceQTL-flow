@@ -151,6 +151,8 @@ process qc_genotype {
 
 process run_matrixeQTL{
     
+    publishDir "${params.outdir}", mode: 'copy'
+
     input:
     path genotype_mat
     path snp_locations
