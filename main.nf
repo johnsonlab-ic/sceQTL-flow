@@ -168,11 +168,13 @@ process run_matrixeQTL{
     exp_loc=fread("$gene_locations")
 
     common_samples <- intersect(colnames(exp_mat), colnames(geno_mat))
-
-    # Subset the data frames using dplyr's select function
     exp_mat <- exp_mat %>% select(all_of(common_samples))
     geno_mat <- geno_mat %>% select(all_of(common_samples))
 
+    common_genes <- intersect(exp_loc$geneid, rownames(exp_mat))
+
+    # Subset the data frame using dplyr's filter function
+    exp_mat <- exp_mat %>% filter(rownames(exp_mat) %in% common_genes)
 
     calculate_ciseqtl(exp_mat=exp_mat,
     exp_loc=exp_loc,
