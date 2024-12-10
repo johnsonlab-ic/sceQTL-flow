@@ -26,10 +26,10 @@ calculate_ciseqtl=function(exp_mat,
 
   ##create SNP input
   geno_meqtl=MatrixEQTL::SlicedData$new();
-  snps$CreateFromMatrix(as.matrix(geno_mat))
+  geno_meqtl$CreateFromMatrix(as.matrix(geno_mat))
 
   expr_meqtl=MatrixEQTL::SlicedData$new();
-  gene$CreateFromMatrix(as.matrix(exp_mat))
+  expr_meqtl$CreateFromMatrix(as.matrix(exp_mat))
   n_indivs<-ncol(exp_mat)
 
   me<-suppressMessages(MatrixEQTL::Matrix_eQTL_main(geno_meqtl,
