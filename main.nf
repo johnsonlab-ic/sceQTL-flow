@@ -187,11 +187,11 @@ process run_matrixeQTL{
     exp_mat <- exp_mat %>% filter(rownames(exp_mat) %in% common_genes)
 
     
-    geno_loc<-geno_loc[,c("annot","chrom","position")] 
-    row.names(geno_loc)<-geno_loc[,"annot"]
+    geno_loc<-geno_loc[,c("annot","chrom","position")] %>% tibble::column_to_rownames(var="annot")
     geno_mat<-geno_mat[rownames(geno_loc),]
     geno_mat<-geno_mat[complete.cases(geno_mat),]
     geno_loc<-geno_loc[rownames(geno_mat),]
+    geno_loc=geno_loc %>% mutate(snp=rownames(geno_loc))
 
 
     calculate_ciseqtl(exp_mat=exp_mat,
