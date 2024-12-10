@@ -170,19 +170,28 @@ process run_matrixeQTL{
     library(data.table)
     library(dplyr)
     
+    ##read in data
     exp_mat=fread("$expression_mat") %>% tibble::column_to_rownames(var="geneid")
     geno_mat=fread("$genotype_mat")
     geno_loc=fread("$snp_locations")
     exp_loc=fread("$gene_locations")
 
+
+    ##keep same samples
     common_samples <- intersect(colnames(exp_mat), colnames(geno_mat))
     exp_mat <- exp_mat %>% select(all_of(common_samples))
     geno_mat <- geno_mat %>% select(all_of(common_samples))
 
+    #harmonise gene_loc and snp_loc
     common_genes <- intersect(exp_loc %>% pull(geneid), rownames(exp_mat))
-
-    # Subset the data frame using dplyr's filter function
     exp_mat <- exp_mat %>% filter(rownames(exp_mat) %in% common_genes)
+
+    geno_loc<-geno_loc[,c("annot","chrom","position")] 
+    row.names(geno_loc)<-geno_loc[,"annot"]
+    geno_mat<-geno_mat[rownames(geno_loc),]
+    geno_mat<-geno_mat[complete.cases(geno_mat),]
+    geno_loc<-geno_loc[rownames(geno_mat),]
+
 
     calculate_ciseqtl(exp_mat=exp_mat,
     exp_loc=exp_loc,
