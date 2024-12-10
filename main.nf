@@ -104,9 +104,9 @@ process qc_expression{
     #!/usr/bin/env Rscript
     library(data.table)
     library(dplyr)
-    
+
     pseudobulk_data <- fread("$pseudobulk_file")
-    pseudobulk_data <- pseudobulk_data %>% column_to_rownames(var="geneid")
+    pseudobulk_data <- pseudobulk_data %>% tibble::column_to_rownames(var="geneid")
 
     min_percentage <- as.numeric(${params.min_expression})
     min_individuals <- min_percentage * ncol(pseudobulk_data)
