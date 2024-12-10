@@ -191,7 +191,7 @@ process run_matrixeQTL{
     geno_mat<-geno_mat[rownames(geno_loc),]
     geno_mat<-geno_mat[complete.cases(geno_mat),]
     geno_loc<-geno_loc[rownames(geno_mat),]
-    geno_loc=geno_loc %>% mutate(snp=rownames(geno_loc))
+    geno_loc=geno_loc %>% mutate(snp=rownames(geno_loc),position=as.numeric(position)) 
     print(head(geno_loc))
 
 
