@@ -16,6 +16,7 @@ params.single_cell_file="/rds/general/user/ah3918/projects/puklandmarkproject/li
 params.min_cells=10
 params.min_expression=0.1
 params.cis_distance=1e6
+params.fdr_threshold=0.05
 
 
 process create_genotype {
@@ -219,6 +220,7 @@ process combine_eqtls{
 
     output:
     path "mateqtlouts.rds"
+    path "mateqtlouts_FDR_filtered.rds"
 
 
     script:
@@ -226,9 +228,29 @@ process combine_eqtls{
     #!/usr/bin/env Rscript
 
     library(data.table)
+    library(dplyr)
+
     eqtls=as.character("$eqtls")
     eqtls=unlist(strsplit(eqtls, " "))
-    print(eqtls)
+    celltypes=gsub("_cis_MatrixEQTLout.rds","",eqtls)
+
+    #first, create a list of all the eqtl results at 5% FDR 
+    eqtl_list=lapply(eqtls, function(x) {
+        eqtl=as.data.frame(readRDS(x))
+        eqtl=eqtl %>% filter(FDR<=${params.fdr_threshold})
+        eqtl
+    })
+    names(eqtl_list)=celltypes
+    saveRDS(eqtl_list, "mateqtlouts_FDR_filtered.rds")
+
+    #now, create a list of all associations without cutoff
+    eqtl_list=lapply(eqtls, function(x) {
+        eqtl=as.data.frame(readRDS(x))
+        eqtl
+    })
+    names(eqtl_list)=celltypes
+    saveRDS(eqtl_list, "mateqtlouts.rds")
+
 
     """
 
@@ -283,6 +305,7 @@ workflow{
     Min cells for pseudobulking: ${params.min_cells}
     Min percentage for genes: ${params.min_expression}
     Cis distance: ${params.cis_distance}
+    FDR threshold: ${params.fdr_threshold}
 
     ========================================
 
