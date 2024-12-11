@@ -92,14 +92,14 @@ calculate_ciseqtl=function(exp_mat,
         pcs <- pcs[, colnames(exp_mat)]
         
         # Create an empty matrix for covariates with the same number of columns as exp_mat
-        covs <- matrix(nrow = 0, ncol = n_indivs)
-        colnames(covs) <- colnames(exp_mat)
-        
+
         # Iterate over batches of 10 PCs
         for (num_pcs in seq(10, ncol(pcs), by = 10)) {
 
             print(num_pcs)
             # Add PCs as covariates
+            covs <- matrix(nrow = 0, ncol = n_indivs)
+            colnames(covs) <- colnames(exp_mat)
             covs <- rbind(covs, pcs[1:num_pcs, ])
             # print(head(covs))
             covs_meqtl <- MatrixEQTL::SlicedData$new()
