@@ -27,6 +27,7 @@ RUN R -e 'install.packages(c("dplyr","data.table"))'
 RUN R -e 'install.packages(c("argparse","MatrixEQTL","coloc","MendelianRandomization","ieugwasr","genetics.binaRies"))'
 
 RUN R -e 'install.packages("lobstr")'
+RUN R -e 'install.packages("arrow")'
 
 # Set the working directory
 WORKDIR /usr/local/src

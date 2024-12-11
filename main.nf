@@ -161,7 +161,7 @@ process run_matrixeQTL{
     path gene_locations 
 
     output:
-    path "*"
+    path "*_cis_MatrixEQTLout.rds", emit: eqtl_results
 
 
     script:
@@ -210,6 +210,29 @@ process run_matrixeQTL{
 
 }
 
+process combine_eqtls{
+
+    publishDir "${params.outdir}", mode: 'copy'
+
+    input:
+    path eqtls
+
+    output:
+    path "mateqtlouts.rds"
+
+
+    script:
+    """
+    #!/usr/bin/env Rscript
+
+    library(data.table)
+    
+    print("$eqtls")
+
+    """
+
+
+}
 
 process final_report{
 
@@ -280,6 +303,9 @@ workflow{
         expression_mat= qc_expression.out.pseudobulk_normalised.flatten(),
         gene_locations= pseudobulk_singlecell.out.gene_locations
     )
+    
+    combine_eqtls(eqtls= run_matrixeQTL.out.eqtl_results)
+
     
     // final_report(
     //     pseudobulk_file_list= qc_expression.out.collect(),
