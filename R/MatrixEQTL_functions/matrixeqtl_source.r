@@ -180,7 +180,7 @@ save_results = TRUE) {
       labs(title = "Number of eQTLs Discovered per Batch of 10 PCs",
            x = "Number of PCs",
            y = "Number of eQTLs") +
-      theme_minimal() +
+      theme_minimal() 
       ggsave(plot_file)
     
     message(paste0("MatrixEQTL calculated for ", name, " with ", best_num_pcs, " PCs."))
