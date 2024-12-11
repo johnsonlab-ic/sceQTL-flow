@@ -81,10 +81,10 @@ library(MatrixEQTL)
     }
     
     message(paste0("MatrixEQTL calculated for ", name, "."))
- } else {
+  } else {
     message("Optimizing number of PCs to use..")
     best_num_pcs <- 0
-    best_eqtls <- data.frame()  # Initialize with an empty data frame
+    best_eqtls <- NULL
     best_proportion_significant <- 0
     results <- data.frame(num_pcs = integer(), num_eqtls = integer())
     
@@ -95,7 +95,7 @@ library(MatrixEQTL)
     pcs <- pcs[, 1:max_pcs]
     pcs <- t(pcs)
     pcs <- pcs[, colnames(exp_mat)]
-    write.table(pcs, "pcs.txt")
+    write.table(pcs,"pcs.txt")
     
     # Iterate over batches of 10 PCs
     for (num_pcs in seq(10, ncol(pcs), by = 10)) {
@@ -103,8 +103,8 @@ library(MatrixEQTL)
       print(num_pcs)
       # Add PCs as covariates
       covs <- pcs[1:num_pcs, ]
-      write.table(covs, "covs.txt")
-      write.table(exp_mat, "exp_mat.txt")
+      write.table(covs,"covs.txt")
+      write.table(exp_mat,"exp_mat.txt")
       covs_meqtl <- MatrixEQTL::SlicedData$new()
       covs_meqtl$CreateFromMatrix(as.matrix(covs))
       
@@ -127,6 +127,7 @@ library(MatrixEQTL)
         min.pv.by.genesnp = FALSE,
         noFDRsaveMemory = FALSE
       ))
+      saveRDS(me, paste0(name, "_", num_pcs, "_MatrixEQTLout.rds"))
       
       # Calculate the number of significant eQTLs (FDR < 0.05)
       if (pvOutputThreshold_cis > 0) {
@@ -135,30 +136,26 @@ library(MatrixEQTL)
         eqtls <- me$all$eqtls
       }
       
-      if (!is.null(eqtls) && nrow(eqtls) > 0) {
-        num_eqtls <- sum(eqtls$FDR < 0.05)
-        
-        # Store the results
-        results <- rbind(results, data.frame(num_pcs = num_pcs, num_eqtls = num_eqtls))
-        
-        # Update the best results if the current number of eQTLs is higher
-        if (num_eqtls > best_proportion_significant) {
-          best_proportion_significant <- num_eqtls
-          best_num_pcs <- num_pcs
-          best_eqtls <- eqtls
-        }
+      num_eqtls <- sum(eqtls$pvalue < 0.05)
+      
+      # Store the results
+      results <- rbind(results, data.frame(num_pcs = num_pcs, num_eqtls = num_eqtls))
+      
+      # Update the best results if the current number of eQTLs is higher
+      if (num_eqtls > best_proportion_significant) {
+        best_proportion_significant <- num_eqtls
+        best_num_pcs <- num_pcs
+        best_eqtls <- eqtls
       }
     }
     
     # Save the best results
     if (save_results) {
       save_eqtls <- function(eqtls, prefix) {
-        if (!is.null(eqtls) && nrow(eqtls) > 0) {
-          names(eqtls)[names(eqtls) == "statistic"] <- "t.stat"
-          names(eqtls)[names(eqtls) == "pvalue"] <- "p.value"
-          names(eqtls)[names(eqtls) == "snps"] <- "SNP"
-          saveRDS(eqtls, paste0(name, "_", prefix, "_MatrixEQTLout.rds"))
-        }
+        names(eqtls)[names(eqtls) == "statistic"] <- "t.stat"
+        names(eqtls)[names(eqtls) == "pvalue"] <- "p.value"
+        names(eqtls)[names(eqtls) == "snps"] <- "SNP"
+        saveRDS(eqtls, paste0(name, "_", prefix, "_MatrixEQTLout.rds"))
       }
       
       if (pvOutputThreshold_cis > 0) {
@@ -182,7 +179,8 @@ library(MatrixEQTL)
       labs(title = "Number of eQTLs Discovered per Batch of 10 PCs",
            x = "Number of PCs",
            y = "Number of eQTLs") +
-      theme_minimal() 
+      theme_minimal()
+      
       ggsave(plot_file)
     
     message(paste0("MatrixEQTL calculated for ", name, " with ", best_num_pcs, " PCs."))
