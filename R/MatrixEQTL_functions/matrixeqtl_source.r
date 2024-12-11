@@ -84,7 +84,7 @@ calculate_ciseqtl=function(exp_mat,
         results <- data.frame(num_pcs = integer(), num_eqtls = integer())
         
         # Calculate PCs from the expression matrix
-        pca <- prcomp(exp_mat, scale. = FALSE, center = FALSE)
+        pca <- prcomp(exp_mat, scale. = TRUE, center = TRUE)
         pcs <- pca$rotation
         max_pcs <- floor(ncol(pcs) / 10)
         pcs <- pcs[, 1:(max_pcs * 10)]
