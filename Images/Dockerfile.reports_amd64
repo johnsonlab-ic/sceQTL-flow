@@ -11,9 +11,9 @@ RUN apt-get update && apt-get install -y \
     pkg-config
 
 # Install Quarto
-RUN wget https://github.com/quarto-dev/quarto-cli/releases/download/v1.6.39/quarto-1.6.39-linux-arm64.deb && \
-    dpkg -i quarto-1.6.39-linux-arm64.deb && \
-    rm quarto-1.6.39-linux-arm64.deb
+RUN wget https://github.com/quarto-dev/quarto-cli/releases/download/v1.6.39/quarto-1.6.39-linux-amd64.deb && \
+    dpkg -i quarto-1.6.39-linux-amd64.deb && \
+    rm quarto-1.6.39-linux-amd64.deb
 
 # Install required R packages
 RUN R -e 'install.packages(c("dplyr", "data.table", "ggplot2", "cowplot", "patchwork", "ggrepel", "tidyverse", "gridExtra"))'

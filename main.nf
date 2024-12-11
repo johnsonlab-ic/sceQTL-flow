@@ -15,6 +15,8 @@ params.single_cell_file="/rds/general/user/ah3918/projects/puklandmarkproject/li
 /// Expression metrics
 params.min_cells=10
 params.min_expression=0.1
+params.cis_distance=1e6
+params.fdr_threshold=0.05
 
 
 process create_genotype {
@@ -71,8 +73,12 @@ process pseudobulk_singlecell{
     indiv_col="Individual_ID",
     assay="decontXcounts")
 
-    for(i in 1:length(aggregated_counts_list)){
-        data.table::fwrite(aggregated_counts_list[[i]],paste0(names(aggregated_counts_list[i]),"_pseudobulk.csv"))
+    for (i in 1:length(aggregated_counts_list)) {
+
+        df=aggregated_counts_list[[i]] %>% mutate(geneid=row.names(.)) 
+        
+        # Write the data frame to a CSV file
+        data.table::fwrite(df, paste0(names(aggregated_counts_list[i]), "_pseudobulk.csv"))
     }
 
     gene_locations=get_gene_locations(aggregated_counts_list[[1]])
@@ -84,34 +90,7 @@ process pseudobulk_singlecell{
 }
 
 
-process run_matrixeQTL{
-    
-    input:
-    path genotype_mat
-    path snp_locations
-    path expression_mat
-    path gene_locations 
 
-    output:
-    path "*"
-
-
-    script:
-    """
-    #!/usr/bin/env Rscript
-    
-    source("${params.eqtl_source_functions}")
-    
-    pseudobulk_data=fread("$expression_mat")
-    genotype_data=fread("$genotype_mat")
-    snp_locations=fread("$snp_locations")
-    gene_locations=fread("$gene_locations")
-
-
-
-    """
-
-}
 
 process qc_expression{
     publishDir "${params.outdir}", mode: 'copy'
@@ -126,7 +105,10 @@ process qc_expression{
     """
     #!/usr/bin/env Rscript
     library(data.table)
+    library(dplyr)
+
     pseudobulk_data <- fread("$pseudobulk_file")
+    pseudobulk_data <- pseudobulk_data %>% tibble::column_to_rownames(var="geneid")
 
     min_percentage <- as.numeric(${params.min_expression})
     min_individuals <- min_percentage * ncol(pseudobulk_data)
@@ -134,11 +116,145 @@ process qc_expression{
 
     cell_type_name <- gsub("_pseudobulk.csv", "", "$pseudobulk_file")
 
-    pseudobulk_data=log2(edgeR::cpm(pseudobulk_data)+1)
+    pseudobulk_data=log2(edgeR::cpm(pseudobulk_data)+1) %>% as.data.frame()
+    pseudobulk_data = pseudobulk_data %>% mutate(geneid=row.names(.))
 
     # Save the normalized data
     fwrite(pseudobulk_data, paste0(cell_type_name, "_pseudobulk_normalised.csv"))
     """
+}
+
+
+process qc_genotype {
+
+    publishDir "${params.outdir}", mode: 'copy'
+
+    input:
+    path genotype_mat
+    path snp_locations
+
+    output:
+    path "*"
+
+    script:
+    """
+    #!/usr/bin/env Rscript
+    library(data.table)
+
+    genotype_data <- fread("$genotype_mat")
+    snp_locations <- fread("$snp_locations")
+
+
+    """
+    
+    
+}
+
+
+process run_matrixeQTL{
+
+    publishDir "${params.outdir}", mode: 'copy'
+
+    input:
+    path genotype_mat
+    path snp_locations
+    path expression_mat
+    path gene_locations 
+
+    output:
+    path "*_cis_MatrixEQTLout.rds", emit: eqtl_results
+
+
+    script:
+    """
+    #!/usr/bin/env Rscript
+    
+    source("${params.eqtl_source_functions}")
+
+    library(data.table)
+    library(dplyr)
+    
+    ##read in data
+    exp_mat=fread("$expression_mat") %>% tibble::column_to_rownames(var="geneid")
+    geno_mat=fread("$genotype_mat") %>% tibble::column_to_rownames(var="snp")
+    geno_loc=fread("$snp_locations")
+    exp_loc=fread("$gene_locations")
+    celltype=gsub("_pseudobulk_normalised.csv","","$expression_mat")
+
+
+    ##keep same samples
+    common_samples <- intersect(colnames(exp_mat), colnames(geno_mat))
+    exp_mat <- exp_mat %>% select(all_of(common_samples))
+    geno_mat <- geno_mat %>% select(all_of(common_samples))
+
+    #harmonise gene_loc and snp_loc
+    common_genes <- intersect(exp_loc %>% pull(geneid), rownames(exp_mat))
+    exp_mat <- exp_mat %>% filter(rownames(exp_mat) %in% common_genes)
+
+    
+    geno_loc<-geno_loc[,c("annot","chrom","position")] %>% tibble::column_to_rownames(var="annot")
+    geno_mat<-geno_mat[rownames(geno_loc),]
+    geno_mat<-geno_mat[complete.cases(geno_mat),]
+    geno_loc<-geno_loc[rownames(geno_mat),]
+    geno_loc=geno_loc %>% mutate(annot=rownames(geno_loc)) %>% select(annot,chrom,position)
+    print(head(geno_loc))
+
+
+    calculate_ciseqtl(exp_mat=exp_mat,
+    exp_loc=exp_loc,
+    geno_mat=geno_mat,
+    geno_loc=geno_loc,
+    name=celltype,
+    cisDist=${params.cis_distance})
+
+    """
+
+}
+
+process combine_eqtls{
+
+    publishDir "${params.outdir}", mode: 'copy'
+
+    input:
+    path eqtls
+
+    output:
+    path "mateqtlouts.rds"
+    path "mateqtlouts_FDR_filtered.rds"
+
+
+    script:
+    """
+    #!/usr/bin/env Rscript
+
+    library(data.table)
+    library(dplyr)
+
+    eqtls=as.character("$eqtls")
+    eqtls=unlist(strsplit(eqtls, " "))
+    celltypes=gsub("_cis_MatrixEQTLout.rds","",eqtls)
+
+    #first, create a list of all the eqtl results at 5% FDR 
+    eqtl_list=lapply(eqtls, function(x) {
+        eqtl=as.data.frame(readRDS(x))
+        eqtl=eqtl %>% filter(FDR<=${params.fdr_threshold})
+        eqtl
+    })
+    names(eqtl_list)=celltypes
+    saveRDS(eqtl_list, "mateqtlouts_FDR_filtered.rds")
+
+    #now, create a list of all associations without cutoff
+    eqtl_list=lapply(eqtls, function(x) {
+        eqtl=as.data.frame(readRDS(x))
+        eqtl
+    })
+    names(eqtl_list)=celltypes
+    saveRDS(eqtl_list, "mateqtlouts.rds")
+
+
+    """
+
+
 }
 
 process final_report{
@@ -148,10 +264,11 @@ process final_report{
     input: 
     path pseudobulk_file_list
     path genotype_file
+    path report_file
 
     output: 
 
-    path "report.html"
+    path "report*"
 
 
     script:
@@ -160,9 +277,8 @@ process final_report{
     """
     #!/bin/bash
 
-    quarto render ${params.quarto_report} --output report.html \
-    --params pseudobulk_files=$pseudobulk_file_list \
-    --genotype_file=$genotype_file
+    quarto render $report_file --output-dir ./ \
+    -P genotype_file:$genotype_file
 
     """
 
@@ -184,26 +300,42 @@ workflow{
 
     ========================================
 
-    Expression QC metrics:
+    Run parameters:
 
     Min cells for pseudobulking: ${params.min_cells}
     Min percentage for genes: ${params.min_expression}
+    Cis distance: ${params.cis_distance}
+    FDR threshold: ${params.fdr_threshold}
 
     ========================================
 
     This is the stable pipeline. 
 
     """
-    create_genotype(gds_file=params.gds_file)
+    create_genotype(gds_file= params.gds_file)
 
     //aggregate counts
-    pseudobulk_singlecell(single_cell_file=params.single_cell_file)
+    pseudobulk_singlecell(single_cell_file= params.single_cell_file)
 
     //QC and normalisation
-    qc_expression(pseudobulk_file=pseudobulk_singlecell.out.pseudobulk_counts.flatten())
+    qc_expression(pseudobulk_file= pseudobulk_singlecell.out.pseudobulk_counts.flatten())
+
+    //run matrix eQTL
+    run_matrixeQTL(
+        genotype_mat= create_genotype.out.genotype_mat,
+        snp_locations= create_genotype.out.snp_chromlocations,
+        expression_mat= qc_expression.out.pseudobulk_normalised.flatten(),
+        gene_locations= pseudobulk_singlecell.out.gene_locations
+    )
     
-    final_report(pseudobulk_file_list=qc_expression.out.pseudobulk_normalised,
-    genotype_file=create_genotype.out.genotype_mat)
+    combine_eqtls(eqtls= run_matrixeQTL.out.eqtl_results.collect())
+
+
+    // final_report(
+    //     pseudobulk_file_list= qc_expression.out.collect(),
+    //     genotype_file= create_genotype.out.genotype_mat,
+    //     report_file=params.quarto_report
+    // )
 
 
 

@@ -19,17 +19,19 @@ calculate_ciseqtl=function(exp_mat,
     message("Covs used: ",paste0(covs,sep=", "))
 
     covs_meqtl=MatrixEQTL::SlicedData$new();
-    covs_meqtl=$CreateFromMatrix(as.matrix(covs))
+    covs_meqtl=covs$CreateFromMatrix(as.matrix(covs))
     saveRDS(covs,paste0(name,"_covs_used.rds"))
     
+  }else{
+    covs_meqtl=MatrixEQTL::SlicedData$new()
   }
 
   ##create SNP input
   geno_meqtl=MatrixEQTL::SlicedData$new();
-  snps$CreateFromMatrix(as.matrix(geno_mat))
+  geno_meqtl$CreateFromMatrix(as.matrix(geno_mat))
 
   expr_meqtl=MatrixEQTL::SlicedData$new();
-  gene$CreateFromMatrix(as.matrix(exp_mat))
+  expr_meqtl$CreateFromMatrix(as.matrix(exp_mat))
   n_indivs<-ncol(exp_mat)
 
   me<-suppressMessages(MatrixEQTL::Matrix_eQTL_main(geno_meqtl,
