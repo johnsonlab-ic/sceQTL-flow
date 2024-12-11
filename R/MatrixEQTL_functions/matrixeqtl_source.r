@@ -136,7 +136,7 @@ library(MatrixEQTL)
         eqtls <- me$all$eqtls
       }
       
-      num_eqtls <- sum(eqtls$FDR < 0.05)
+      num_eqtls <- sum(eqtls$pvalue < 0.05)
       
       # Store the results
       results <- rbind(results, data.frame(num_pcs = num_pcs, num_eqtls = num_eqtls))
