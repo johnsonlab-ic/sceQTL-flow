@@ -1,20 +1,5 @@
-
-
-
-calculate_ciseqtl=function(exp_mat,
-  geno_mat,
-  exp_loc,
-  geno_loc,
-  name="celltype",
-  cisDist=1e6,
-  covmat=NULL,
-  pvOutputThreshold=2e-5,
-  filter_trans_FDR=FALSE,
-  pvOutputThreshold_cis=1,
-  optimize_pcs=FALSE,
-  save_results=TRUE){
-
-    library(MatrixEQTL)
+calculate_ciseqtl <- function(exp_mat, geno_mat, exp_loc, geno_loc, name = "celltype", cisDist = 1e6, covmat = NULL, pvOutputThreshold = 2e-5, filter_trans_FDR = FALSE, pvOutputThreshold_cis = 5e-2, optimize_pcs = FALSE, save_results = TRUE) {
+  library(MatrixEQTL)
   library(data.table)
   library(dplyr)
   library(ggplot2)
@@ -26,10 +11,6 @@ calculate_ciseqtl=function(exp_mat,
   expr_meqtl <- MatrixEQTL::SlicedData$new()
   expr_meqtl$CreateFromMatrix(as.matrix(exp_mat))
   n_indivs <- ncol(exp_mat)
-  if(n_indivs<20){
-    optimize_pcs=FALSE
-    message("Only 20 indivs retained. Setting optimize_pcs to FALSE")
-  }
   
   if (!is.null(covmat)) {
     message("Including covariates (covmat != 'NULL').")
@@ -65,10 +46,12 @@ calculate_ciseqtl=function(exp_mat,
     
     if (save_results) {
       save_eqtls <- function(eqtls, prefix) {
-        names(eqtls)[names(eqtls) == "statistic"] <- "t.stat"
-        names(eqtls)[names(eqtls) == "pvalue"] <- "p.value"
-        names(eqtls)[names(eqtls) == "snps"] <- "SNP"
-        saveRDS(eqtls, paste0(name, "_", prefix, "_MatrixEQTLout.rds"))
+        if (!is.null(eqtls) && nrow(eqtls) > 0) {
+          names(eqtls)[names(eqtls) == "statistic"] <- "t.stat"
+          names(eqtls)[names(eqtls) == "pvalue"] <- "p.value"
+          names(eqtls)[names(eqtls) == "snps"] <- "SNP"
+          saveRDS(eqtls, paste0(name, "_", prefix, "_MatrixEQTLout.rds"))
+        }
       }
       
       if (pvOutputThreshold_cis > 0) {
@@ -88,19 +71,18 @@ calculate_ciseqtl=function(exp_mat,
   } else {
     message("Optimizing number of PCs to use..")
     best_num_pcs <- 0
-    best_eqtls <- NULL
+    best_eqtls <- data.frame()  # Initialize with an empty data frame
     best_proportion_significant <- 0
     results <- data.frame(num_pcs = integer(), num_eqtls = integer())
     
     # Calculate PCs from the expression matrix
     pca <- prcomp(exp_mat, scale. = TRUE, center = TRUE)
     pcs <- pca$rotation
-    max_pcs <- min(floor(ncol(pcs) / 10) * 10, n_indivs - 10)
-    print(paste0("max pcs to use:", max_pcs))
+    max_pcs <- min(floor(ncol(pcs) / 10) * 10, n_indivs - 1)
     pcs <- pcs[, 1:max_pcs]
     pcs <- t(pcs)
     pcs <- pcs[, colnames(exp_mat)]
-    write.table(pcs,"pcs.txt")
+    write.table(pcs, "pcs.txt")
     
     # Iterate over batches of 10 PCs
     for (num_pcs in seq(10, ncol(pcs), by = 10)) {
@@ -108,8 +90,8 @@ calculate_ciseqtl=function(exp_mat,
       print(num_pcs)
       # Add PCs as covariates
       covs <- pcs[1:num_pcs, ]
-      write.table(covs,"covs.txt")
-      write.table(exp_mat,"exp_mat.txt")
+      write.table(covs, "covs.txt")
+      write.table(exp_mat, "exp_mat.txt")
       covs_meqtl <- MatrixEQTL::SlicedData$new()
       covs_meqtl$CreateFromMatrix(as.matrix(covs))
       
@@ -132,7 +114,6 @@ calculate_ciseqtl=function(exp_mat,
         min.pv.by.genesnp = FALSE,
         noFDRsaveMemory = FALSE
       ))
-      saveRDS(me, paste0(name, "_", num_pcs, "_MatrixEQTLout.rds"))
       
       # Calculate the number of significant eQTLs (FDR < 0.05)
       if (pvOutputThreshold_cis > 0) {
@@ -141,26 +122,30 @@ calculate_ciseqtl=function(exp_mat,
         eqtls <- me$all$eqtls
       }
       
-      num_eqtls <- sum(eqtls$pvalue < 0.05)
-      
-      # Store the results
-      results <- rbind(results, data.frame(num_pcs = num_pcs, num_eqtls = num_eqtls))
-      
-      # Update the best results if the current number of eQTLs is higher
-      if (num_eqtls > best_proportion_significant) {
-        best_proportion_significant <- num_eqtls
-        best_num_pcs <- num_pcs
-        best_eqtls <- eqtls
+      if (!is.null(eqtls) && nrow(eqtls) > 0) {
+        num_eqtls <- sum(eqtls$FDR < 0.05)
+        
+        # Store the results
+        results <- rbind(results, data.frame(num_pcs = num_pcs, num_eqtls = num_eqtls))
+        
+        # Update the best results if the current number of eQTLs is higher
+        if (num_eqtls > best_proportion_significant) {
+          best_proportion_significant <- num_eqtls
+          best_num_pcs <- num_pcs
+          best_eqtls <- eqtls
+        }
       }
     }
     
     # Save the best results
     if (save_results) {
       save_eqtls <- function(eqtls, prefix) {
-        names(eqtls)[names(eqtls) == "statistic"] <- "t.stat"
-        names(eqtls)[names(eqtls) == "pvalue"] <- "p.value"
-        names(eqtls)[names(eqtls) == "snps"] <- "SNP"
-        saveRDS(eqtls, paste0(name, "_", prefix, "_MatrixEQTLout.rds"))
+        if (!is.null(eqtls) && nrow(eqtls) > 0) {
+          names(eqtls)[names(eqtls) == "statistic"] <- "t.stat"
+          names(eqtls)[names(eqtls) == "pvalue"] <- "p.value"
+          names(eqtls)[names(eqtls) == "snps"] <- "SNP"
+          saveRDS(eqtls, paste0(name, "_", prefix, "_MatrixEQTLout.rds"))
+        }
       }
       
       if (pvOutputThreshold_cis > 0) {
@@ -184,8 +169,7 @@ calculate_ciseqtl=function(exp_mat,
       labs(title = "Number of eQTLs Discovered per Batch of 10 PCs",
            x = "Number of PCs",
            y = "Number of eQTLs") +
-      theme_minimal()
-      
+      theme_minimal() +
       ggsave(plot_file)
     
     message(paste0("MatrixEQTL calculated for ", name, " with ", best_num_pcs, " PCs."))
