@@ -169,6 +169,7 @@ process run_matrixeQTL{
 
     output:
     path "*_cis_MatrixEQTLout.rds", emit: eqtl_results
+    path "*png", emit: pc_plots
 
 
     script:
