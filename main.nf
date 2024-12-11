@@ -27,7 +27,7 @@ params.optimize_pcs="TRUE"
 
 process create_genotype {
 
-    label "process_high_memory"
+    label "process_high"
 
     publishDir "${params.outdir}/", mode: "copy"
 
@@ -55,7 +55,7 @@ process create_genotype {
 
 process pseudobulk_singlecell{
 
-   label "process_high_memory"
+   label "process_high"
 
    publishDir "${params.outdir}/", mode: "copy"
 
