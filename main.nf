@@ -166,7 +166,7 @@ process qc_genotype {
 
 process run_matrixeQTL{
 
-    label "process_high"
+    label "process_high_memory"
 
     publishDir "${params.outdir}", mode: 'copy'
 
