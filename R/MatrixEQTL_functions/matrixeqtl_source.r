@@ -77,6 +77,7 @@ calculate_ciseqtl=function(exp_mat,
     
     message(paste0("MatrixEQTL calculated for ", name, "."))
     } else {
+        library(ggplot2)
         message("Optimizing number of PCs to use..")
         best_num_pcs <- 0
         best_eqtls <- NULL
