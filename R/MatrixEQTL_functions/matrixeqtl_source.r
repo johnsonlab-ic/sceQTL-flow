@@ -134,7 +134,7 @@ save_results = TRUE) {
       }
       
       if (!is.null(eqtls) && nrow(eqtls) > 0) {
-        num_eqtls <- sum(eqtls$FDR < 0.05)
+        num_eqtls <- sum(eqtls$pvalue < 0.05)
         
         # Store the results
         results <- rbind(results, data.frame(num_pcs = num_pcs, num_eqtls = num_eqtls))
