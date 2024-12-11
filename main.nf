@@ -22,7 +22,7 @@ params.min_expression="TRUE"
 // eQTL parameters
 params.cis_distance=1e6
 params.fdr_threshold=0.05
-params.optimize_pcs=true
+params.optimize_pcs="TRUE"
 
 
 process create_genotype {
