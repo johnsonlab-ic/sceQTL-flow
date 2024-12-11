@@ -1,4 +1,16 @@
-calculate_ciseqtl <- function(exp_mat, geno_mat, exp_loc, geno_loc, name = "celltype", cisDist = 1e6, covmat = NULL, pvOutputThreshold = 2e-5, filter_trans_FDR = FALSE, pvOutputThreshold_cis = 5e-2, optimize_pcs = FALSE, save_results = TRUE) {
+calculate_ciseqtl <- function(exp_mat, 
+geno_mat, 
+exp_loc, 
+geno_loc, 
+name = "celltype", 
+cisDist = 1e6, 
+covmat = NULL, 
+pvOutputThreshold = 2e-5, 
+filter_trans_FDR = FALSE, 
+pvOutputThreshold_cis = 5e-2, 
+optimize_pcs = FALSE, 
+save_results = TRUE) {
+
   library(MatrixEQTL)
   library(data.table)
   library(dplyr)
@@ -68,7 +80,10 @@ calculate_ciseqtl <- function(exp_mat, geno_mat, exp_loc, geno_loc, name = "cell
     }
     
     message(paste0("MatrixEQTL calculated for ", name, "."))
+
   } else {
+
+
     message("Optimizing number of PCs to use..")
     best_num_pcs <- 0
     best_eqtls <- data.frame()  # Initialize with an empty data frame
@@ -169,7 +184,7 @@ calculate_ciseqtl <- function(exp_mat, geno_mat, exp_loc, geno_loc, name = "cell
       labs(title = "Number of eQTLs Discovered per Batch of 10 PCs",
            x = "Number of PCs",
            y = "Number of eQTLs") +
-      theme_minimal() +
+      theme_minimal() 
       ggsave(plot_file)
     
     message(paste0("MatrixEQTL calculated for ", name, " with ", best_num_pcs, " PCs."))
