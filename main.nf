@@ -13,8 +13,13 @@ params.single_cell_file="/rds/general/user/ah3918/projects/puklandmarkproject/li
 
 
 /// Expression metrics
+params.count_assay="decontXcounts"
+params.celltype_column="CellType"
+params.individual_column="Individual_ID"
 params.min_cells=10
 params.min_expression=0.1
+
+// eQTL parameters
 params.cis_distance=1e6
 params.fdr_threshold=0.05
 
@@ -66,12 +71,12 @@ process pseudobulk_singlecell{
     source("${params.pseudobulk_source_functions}")
 
     seuratobj=readRDS("$single_cell_file")
-    celltypelist=Seurat::SplitObject(seuratobj,split.by="CellType")
+    celltypelist=Seurat::SplitObject(seuratobj,split.by="${params.celltype_column}")
 
     aggregated_counts_list=pseudobulk_counts(celltypelist,
     min.cells=as.numeric(${params.min_cells}),
-    indiv_col="Individual_ID",
-    assay="decontXcounts")
+    indiv_col="${params.individual_column}",
+    assay="${params.count_assay}")
 
     for (i in 1:length(aggregated_counts_list)) {
 
