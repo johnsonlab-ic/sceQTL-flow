@@ -22,6 +22,7 @@ params.min_expression=0.1
 // eQTL parameters
 params.cis_distance=1e6
 params.fdr_threshold=0.05
+params.optimize_pcs=TRUE
 
 
 process create_genotype {
@@ -210,7 +211,8 @@ process run_matrixeQTL{
     geno_mat=geno_mat,
     geno_loc=geno_loc,
     name=celltype,
-    cisDist=${params.cis_distance})
+    cisDist=${params.cis_distance},
+    optimize_pcs=${params.optimize_pcs})
 
     """
 
@@ -316,7 +318,7 @@ workflow{
     Assay used: ${params.count_assay}
 
     eQTL parameters:
-    
+
     Cis distance: ${params.cis_distance}
     FDR threshold: ${params.fdr_threshold}
 

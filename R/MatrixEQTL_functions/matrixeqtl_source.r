@@ -11,7 +11,7 @@ calculate_ciseqtl=function(exp_mat,
   pvOutputThreshold=2e-5,
   filter_trans_FDR=FALSE,
   pvOutputThreshold_cis=5e-2,
-  optimize_PCs=FALSE,
+  optimize_pcs=FALSE,
   save_results=TRUE){
 
   if(!is.null(covmat)){
@@ -35,7 +35,7 @@ calculate_ciseqtl=function(exp_mat,
   expr_meqtl$CreateFromMatrix(as.matrix(exp_mat))
   n_indivs<-ncol(exp_mat)
 
-  if(optimize_PCs=FALSE){
+  if(optimize_pcs=FALSE){
 
     me<-suppressMessages(MatrixEQTL::Matrix_eQTL_main(geno_meqtl,
                         expr_meqtl,
