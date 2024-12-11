@@ -90,6 +90,7 @@ calculate_ciseqtl=function(exp_mat,
         pcs <- pcs[, 1:(max_pcs * 10)]
         pcs <- t(pcs)
         pcs <- pcs[, colnames(exp_mat)]
+        write.table(pcs,"pcs.txt")
         
         # Create an empty matrix for covariates with the same number of columns as exp_mat
 
