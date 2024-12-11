@@ -14,7 +14,7 @@ calculate_ciseqtl=function(exp_mat,
   optimize_pcs=FALSE,
   save_results=TRUE){
 
-library(MatrixEQTL)
+    library(MatrixEQTL)
   library(data.table)
   library(dplyr)
   library(ggplot2)
@@ -26,6 +26,10 @@ library(MatrixEQTL)
   expr_meqtl <- MatrixEQTL::SlicedData$new()
   expr_meqtl$CreateFromMatrix(as.matrix(exp_mat))
   n_indivs <- ncol(exp_mat)
+  if(n_indivs<20){
+    optimize_pcs=FALSE
+    message("Only 20 indivs retained. Setting optimize_pcs to FALSE")
+  }
   
   if (!is.null(covmat)) {
     message("Including covariates (covmat != 'NULL').")
