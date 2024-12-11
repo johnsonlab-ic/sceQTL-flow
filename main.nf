@@ -203,7 +203,6 @@ process run_matrixeQTL{
     geno_mat<-geno_mat[complete.cases(geno_mat),]
     geno_loc<-geno_loc[rownames(geno_mat),]
     geno_loc=geno_loc %>% mutate(annot=rownames(geno_loc)) %>% select(annot,chrom,position)
-    print(head(geno_loc))
 
 
     calculate_ciseqtl(exp_mat=exp_mat,
