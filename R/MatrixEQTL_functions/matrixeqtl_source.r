@@ -24,7 +24,8 @@ save_results = TRUE) {
   expr_meqtl$CreateFromMatrix(as.matrix(exp_mat))
   n_indivs <- ncol(exp_mat)
   if(n_indivs<20){
-    stop("Less than 20 individuals in the expression matrix. Please check the input data.")
+    message("Less than 20 individuals in the expression matrix. Please check the input data.")
+    optimize_pcs=FALSE
     
   }
   
