@@ -95,6 +95,7 @@ calculate_ciseqtl=function(exp_mat,
       covs <- rbind(covs, as.numeric(pcs[, 1:num_pcs]))
 
       print(head(covs))
+      head(pcs)
       covs_meqtl <- MatrixEQTL::SlicedData$new()
       covs_meqtl$CreateFromMatrix(as.matrix(covs))
       
