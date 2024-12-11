@@ -17,7 +17,7 @@ save_results = TRUE) {
   library(ggplot2)
   
   # Create SNP input
-  geno_meqtl <- MatrixEQTL::SlicedData$new()
+ geno_meqtl <- MatrixEQTL::SlicedData$new()
   geno_meqtl$CreateFromMatrix(as.matrix(geno_mat))
   
   expr_meqtl <- MatrixEQTL::SlicedData$new()
@@ -80,10 +80,7 @@ save_results = TRUE) {
     }
     
     message(paste0("MatrixEQTL calculated for ", name, "."))
-
   } else {
-
-
     message("Optimizing number of PCs to use..")
     best_num_pcs <- 0
     best_eqtls <- data.frame()  # Initialize with an empty data frame
@@ -99,9 +96,8 @@ save_results = TRUE) {
     pcs <- pcs[, colnames(exp_mat)]
     write.table(pcs, "pcs.txt")
     
-    # Iterate over batches of 10 PCs
-    for (num_pcs in seq(10, ncol(pcs), by = 10)) {
-      if (num_pcs > n_indivs - 1) break
+    # Iterate over batches of 10 PCs, ensuring not to exceed the number of available PCs
+    for (num_pcs in seq(10, min(ncol(pcs), max_pcs), by = 10)) {
       print(num_pcs)
       # Add PCs as covariates
       covs <- pcs[1:num_pcs, ]
@@ -184,7 +180,7 @@ save_results = TRUE) {
       labs(title = "Number of eQTLs Discovered per Batch of 10 PCs",
            x = "Number of PCs",
            y = "Number of eQTLs") +
-      theme_minimal() 
+      theme_minimal() +
       ggsave(plot_file)
     
     message(paste0("MatrixEQTL calculated for ", name, " with ", best_num_pcs, " PCs."))
