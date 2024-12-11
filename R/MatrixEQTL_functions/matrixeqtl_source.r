@@ -87,6 +87,7 @@ calculate_ciseqtl=function(exp_mat,
     
     # Create an empty matrix for covariates with the same number of columns as exp_mat
     covs <- matrix(nrow = 0, ncol = n_indivs)
+    colnames(covs) <- colnames(exp_mat)
     
     # Iterate over batches of 10 PCs
     for (num_pcs in seq(10, ncol(pcs), by = 10)) {
