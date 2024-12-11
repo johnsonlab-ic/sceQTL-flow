@@ -98,51 +98,51 @@ calculate_ciseqtl=function(exp_mat,
         # Iterate over batches of 10 PCs
         for (num_pcs in seq(10, ncol(pcs), by = 10)) {
 
-        
-        # Add PCs as covariates
-        covs <- rbind(covs, pcs[1:num_pcs, ])
-        print(head(covs))
-        covs_meqtl <- MatrixEQTL::SlicedData$new()
-        covs_meqtl$CreateFromMatrix(as.matrix(covs))
-        
-        # Run Matrix eQTL analysis
-        me <- suppressMessages(MatrixEQTL::Matrix_eQTL_main(
-            geno_meqtl,
-            expr_meqtl,
-            cvrt = covs_meqtl,
-            useModel = MatrixEQTL::modelLINEAR,
-            errorCovariance = numeric(),
-            verbose = FALSE,
-            output_file_name = NULL,
-            output_file_name.cis = NULL,
-            pvOutputThreshold.cis = pvOutputThreshold_cis,
-            pvOutputThreshold = pvOutputThreshold,
-            snpspos = geno_loc,
-            genepos = exp_loc,
-            cisDist = cisDist,
-            pvalue.hist = FALSE,
-            min.pv.by.genesnp = FALSE,
-            noFDRsaveMemory = FALSE
-        ))
-        
-        # Calculate the number of significant eQTLs (FDR < 0.05)
-        if (pvOutputThreshold_cis > 0) {
-            eqtls <- me$cis$eqtls
-        } else {
-            eqtls <- me$all$eqtls
-        }
-        
-        num_eqtls <- sum(eqtls$FDR < 0.05)
-        
-        # Store the results
-        results <- rbind(results, data.frame(num_pcs = num_pcs, num_eqtls = num_eqtls))
-        
-        # Update the best results if the current number of eQTLs is higher
-        if (num_eqtls > best_proportion_significant) {
-            best_proportion_significant <- num_eqtls
-            best_num_pcs <- num_pcs
-            best_eqtls <- eqtls
-        }
+            print(num_pcs)
+            # Add PCs as covariates
+            covs <- rbind(covs, pcs[1:num_pcs, ])
+            print(head(covs))
+            covs_meqtl <- MatrixEQTL::SlicedData$new()
+            covs_meqtl$CreateFromMatrix(as.matrix(covs))
+            
+            # Run Matrix eQTL analysis
+            me <- suppressMessages(MatrixEQTL::Matrix_eQTL_main(
+                geno_meqtl,
+                expr_meqtl,
+                cvrt = covs_meqtl,
+                useModel = MatrixEQTL::modelLINEAR,
+                errorCovariance = numeric(),
+                verbose = FALSE,
+                output_file_name = NULL,
+                output_file_name.cis = NULL,
+                pvOutputThreshold.cis = pvOutputThreshold_cis,
+                pvOutputThreshold = pvOutputThreshold,
+                snpspos = geno_loc,
+                genepos = exp_loc,
+                cisDist = cisDist,
+                pvalue.hist = FALSE,
+                min.pv.by.genesnp = FALSE,
+                noFDRsaveMemory = FALSE
+            ))
+            
+            # Calculate the number of significant eQTLs (FDR < 0.05)
+            if (pvOutputThreshold_cis > 0) {
+                eqtls <- me$cis$eqtls
+            } else {
+                eqtls <- me$all$eqtls
+            }
+            
+            num_eqtls <- sum(eqtls$FDR < 0.05)
+            
+            # Store the results
+            results <- rbind(results, data.frame(num_pcs = num_pcs, num_eqtls = num_eqtls))
+            
+            # Update the best results if the current number of eQTLs is higher
+            if (num_eqtls > best_proportion_significant) {
+                best_proportion_significant <- num_eqtls
+                best_num_pcs <- num_pcs
+                best_eqtls <- eqtls
+            }
         }
         
         # Save the best results
