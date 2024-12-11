@@ -35,7 +35,7 @@ calculate_ciseqtl=function(exp_mat,
   expr_meqtl$CreateFromMatrix(as.matrix(exp_mat))
   n_indivs<-ncol(exp_mat)
 
-  if(optimize_pcs=FALSE){
+  if(optimize_pcs==FALSE){
 
     me<-suppressMessages(MatrixEQTL::Matrix_eQTL_main(geno_meqtl,
                         expr_meqtl,
