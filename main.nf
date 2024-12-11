@@ -15,6 +15,7 @@ params.single_cell_file="/rds/general/user/ah3918/projects/puklandmarkproject/li
 /// Expression metrics
 params.min_cells=10
 params.min_expression=0.1
+params.cis_distance=1e6
 
 
 process create_genotype {
@@ -150,7 +151,7 @@ process qc_genotype {
 
 
 process run_matrixeQTL{
-    
+
     publishDir "${params.outdir}", mode: 'copy'
 
     input:
@@ -177,6 +178,7 @@ process run_matrixeQTL{
     geno_mat=fread("$genotype_mat") %>% tibble::column_to_rownames(var="snp")
     geno_loc=fread("$snp_locations")
     exp_loc=fread("$gene_locations")
+    celltype=gsub("_pseudobulk_normalised.csv","","$expression_mat")
 
 
     ##keep same samples
@@ -200,7 +202,9 @@ process run_matrixeQTL{
     calculate_ciseqtl(exp_mat=exp_mat,
     exp_loc=exp_loc,
     geno_mat=geno_mat,
-    geno_loc=geno_loc)
+    geno_loc=geno_loc
+    name=celltype,
+    cisDist=${params.cis_distance})
 
     """
 
@@ -250,10 +254,11 @@ workflow{
 
     ========================================
 
-    Expression QC metrics:
+    Run parameters:
 
     Min cells for pseudobulking: ${params.min_cells}
     Min percentage for genes: ${params.min_expression}
+    Cis distance: ${params.cis_distance}
 
     ========================================
 
