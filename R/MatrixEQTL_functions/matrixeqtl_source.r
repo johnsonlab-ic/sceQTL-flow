@@ -93,7 +93,7 @@ save_results = TRUE) {
     # Calculate PCs from the expression matrix
     pca <- prcomp(exp_mat, scale. = TRUE, center = TRUE)
     pcs <- pca$rotation
-    max_pcs <- min(floor(ncol(pcs) / 10) * 10, n_indivs - 1)
+    max_pcs <- min(floor(ncol(pcs) / 10) * 10, n_indivs - 10)
     pcs <- pcs[, 1:max_pcs]
     pcs <- t(pcs)
     pcs <- pcs[, colnames(exp_mat)]
