@@ -95,7 +95,7 @@ calculate_ciseqtl=function(exp_mat,
     # Calculate PCs from the expression matrix
     pca <- prcomp(exp_mat, scale. = TRUE, center = TRUE)
     pcs <- pca$rotation
-    max_pcs <- min(floor(ncol(pcs) / 10) * 10, n_indivs - 1)
+    max_pcs <- min(floor(ncol(pcs) / 10) * 10, n_indivs - 10)
     print(paste0("max pcs to use:", max_pcs))
     pcs <- pcs[, 1:max_pcs]
     pcs <- t(pcs)
