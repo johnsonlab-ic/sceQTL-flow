@@ -304,9 +304,9 @@ workflow{
         gene_locations= pseudobulk_singlecell.out.gene_locations
     )
     
-    combine_eqtls(eqtls= run_matrixeQTL.out.eqtl_results)
+    combine_eqtls(eqtls= run_matrixeQTL.out.eqtl_results.collect())
 
-    
+
     // final_report(
     //     pseudobulk_file_list= qc_expression.out.collect(),
     //     genotype_file= create_genotype.out.genotype_mat,
