@@ -226,7 +226,8 @@ process combine_eqtls{
     #!/usr/bin/env Rscript
 
     library(data.table)
-    eqtls=unlist(strsplit($eqtls, " "))
+    eqtls=as.character("$eqtls")
+    eqtls=unlist(strsplit(eqtls, " "))
     print(eqtls)
 
     """
