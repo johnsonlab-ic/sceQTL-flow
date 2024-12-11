@@ -167,7 +167,7 @@ process qc_genotype {
 process run_matrixeQTL{
 
     label "process_high"
-    
+
     publishDir "${params.outdir}", mode: 'copy'
 
     input:
@@ -229,7 +229,7 @@ process run_matrixeQTL{
 }
 
 process combine_eqtls{
-
+    label "process_high"
     publishDir "${params.outdir}", mode: 'copy'
 
     input:
