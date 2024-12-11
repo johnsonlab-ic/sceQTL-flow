@@ -7,7 +7,7 @@ cisDist = 1e6,
 covmat = NULL, 
 pvOutputThreshold = 2e-5, 
 filter_trans_FDR = FALSE, 
-pvOutputThreshold_cis = 1, 
+pvOutputThreshold_cis = 5e-2, 
 optimize_pcs = FALSE, 
 save_results = TRUE) {
 
