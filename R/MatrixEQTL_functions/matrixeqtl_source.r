@@ -104,6 +104,9 @@ calculate_ciseqtl=function(exp_mat,
             # print(head(covs))
             covs_meqtl <- MatrixEQTL::SlicedData$new()
             covs_meqtl$CreateFromMatrix(as.matrix(covs))
+
+            write.table(exp_mat, "exp_mat.txt", sep = "\t", quote = FALSE, row.names = TRUE)
+            write.table(covs, "covs.txt", sep = "\t", quote = FALSE, row.names = TRUE)
             
             # Run Matrix eQTL analysis
             me <- suppressMessages(MatrixEQTL::Matrix_eQTL_main(
