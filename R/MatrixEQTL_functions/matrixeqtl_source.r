@@ -10,7 +10,7 @@ calculate_ciseqtl=function(exp_mat,
   covmat=NULL,
   pvOutputThreshold=2e-5,
   filter_trans_FDR=FALSE,
-  pvOutputThreshold_cis=5e-2,
+  pvOutputThreshold_cis=1,
   optimize_pcs=FALSE,
   save_results=TRUE){
 
