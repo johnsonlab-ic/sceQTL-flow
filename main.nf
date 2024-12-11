@@ -305,10 +305,18 @@ workflow{
 
     ========================================
 
-    Run parameters:
+                RUN PARAMETERS
+
+    Expression/Pseudobulking parameters:
 
     Min cells for pseudobulking: ${params.min_cells}
     Min percentage for genes: ${params.min_expression}
+    Cell-type column: ${params.celltype_column}
+    Individual column: ${params.individual_column}
+    Assay used: ${params.count_assay}
+
+    eQTL parameters:
+    
     Cis distance: ${params.cis_distance}
     FDR threshold: ${params.fdr_threshold}
 
