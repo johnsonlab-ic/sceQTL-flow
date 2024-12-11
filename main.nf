@@ -17,12 +17,12 @@ params.count_assay="decontXcounts"
 params.celltype_column="CellType"
 params.individual_column="Individual_ID"
 params.min_cells=10
-params.min_expression=0.1
+params.min_expression="TRUE"
 
 // eQTL parameters
 params.cis_distance=1e6
 params.fdr_threshold=0.05
-params.optimize_pcs=TRUE
+params.optimize_pcs=true
 
 
 process create_genotype {
@@ -212,7 +212,7 @@ process run_matrixeQTL{
     geno_loc=geno_loc,
     name=celltype,
     cisDist=${params.cis_distance},
-    optimize_pcs=${params.optimize_pcs})
+    optimize_pcs=as.logical(${params.optimize_pcs}))
 
     """
 
