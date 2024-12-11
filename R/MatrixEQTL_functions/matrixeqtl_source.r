@@ -95,6 +95,7 @@ library(MatrixEQTL)
     pcs <- pcs[, 1:max_pcs]
     pcs <- t(pcs)
     pcs <- pcs[, colnames(exp_mat)]
+    write.table(pcs,"pcs.txt")
     
     # Iterate over batches of 10 PCs
     for (num_pcs in seq(10, ncol(pcs), by = 10)) {
@@ -102,6 +103,8 @@ library(MatrixEQTL)
       print(num_pcs)
       # Add PCs as covariates
       covs <- pcs[1:num_pcs, ]
+      write.table(covs,"covs.txt")
+      write.table(exp_mat,"exp_mat.txt")
       covs_meqtl <- MatrixEQTL::SlicedData$new()
       covs_meqtl$CreateFromMatrix(as.matrix(covs))
       
