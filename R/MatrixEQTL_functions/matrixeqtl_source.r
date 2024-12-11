@@ -127,6 +127,7 @@ library(MatrixEQTL)
         min.pv.by.genesnp = FALSE,
         noFDRsaveMemory = FALSE
       ))
+      saveRDS(me, paste0(name, "_", num_pcs, "_MatrixEQTLout.rds"))
       
       # Calculate the number of significant eQTLs (FDR < 0.05)
       if (pvOutputThreshold_cis > 0) {
