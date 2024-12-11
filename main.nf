@@ -202,7 +202,7 @@ process run_matrixeQTL{
     calculate_ciseqtl(exp_mat=exp_mat,
     exp_loc=exp_loc,
     geno_mat=geno_mat,
-    geno_loc=geno_loc
+    geno_loc=geno_loc,
     name=celltype,
     cisDist=${params.cis_distance})
 
