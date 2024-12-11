@@ -94,7 +94,7 @@ calculate_ciseqtl=function(exp_mat,
       message("Dims of covs:",dim(covs))
 
       message("Dims of pcs:",dim(pcs))
-      covs <- rbind(covs, pcs[, 1:num_pcs])
+      covs <- rbind(covs, as.numeric(pcs[, 1:num_pcs]))
       covs_meqtl <- MatrixEQTL::SlicedData$new()
       covs_meqtl$CreateFromMatrix(as.matrix(covs))
       
