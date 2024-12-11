@@ -103,6 +103,9 @@ process pseudobulk_singlecell{
 
 
 process qc_expression{
+
+    label "process_single"
+
     publishDir "${params.outdir}", mode: 'copy'
 
     input:
@@ -163,6 +166,8 @@ process qc_genotype {
 
 process run_matrixeQTL{
 
+    label "process_high"
+    
     publishDir "${params.outdir}", mode: 'copy'
 
     input:
