@@ -101,7 +101,7 @@ calculate_ciseqtl=function(exp_mat,
             print(num_pcs)
             # Add PCs as covariates
             covs <- rbind(covs, pcs[1:num_pcs, ])
-            print(head(covs))
+            # print(head(covs))
             covs_meqtl <- MatrixEQTL::SlicedData$new()
             covs_meqtl$CreateFromMatrix(as.matrix(covs))
             
