@@ -91,7 +91,7 @@ library(MatrixEQTL)
     # Calculate PCs from the expression matrix
     pca <- prcomp(exp_mat, scale. = TRUE, center = TRUE)
     pcs <- pca$rotation
-    max_pcs <- ncol(pcs)-10
+    max_pcs <- ncol(pcs)-5
     pcs <- pcs[, 1:max_pcs]
     pcs <- t(pcs)
     pcs <- pcs[, colnames(exp_mat)]
