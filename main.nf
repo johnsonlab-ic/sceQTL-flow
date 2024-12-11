@@ -305,7 +305,7 @@ workflow{
     Input Seurat File: ${params.single_cell_file}
     WorkDir: ${workflow.workDir}
 
-    ========================================
+    ==============================================
 
                 RUN PARAMETERS
 
@@ -321,8 +321,11 @@ workflow{
 
     Cis distance: ${params.cis_distance}
     FDR threshold: ${params.fdr_threshold}
+    Optimize PCs: ${params.optimize_pcs}
 
-    ========================================
+    If "optimize PCs" is set to TRUE, the pipeline will run longer.
+
+    ==============================================
 
     !WARNING - This pipeline is still in development and may not work as expected!
 
