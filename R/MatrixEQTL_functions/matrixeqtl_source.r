@@ -147,7 +147,7 @@ save_results = TRUE) {
         }
       }
     }
-    
+    saveRDS(eqtls,"eqtls.rds")
     # Save the best results
     if (save_results) {
       save_eqtls <- function(eqtls, prefix) {
