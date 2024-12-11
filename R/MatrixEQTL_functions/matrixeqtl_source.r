@@ -92,7 +92,7 @@ library(MatrixEQTL)
     pca <- prcomp(exp_mat, scale. = TRUE, center = TRUE)
     pcs <- pca$rotation
     max_pcs <- min(floor(ncol(pcs) / 10) * 10, n_indivs - 1)
-    print("max pcs to use:", max_pcs)
+    print(paste0("max pcs to use:", max_pcs))
     pcs <- pcs[, 1:max_pcs]
     pcs <- t(pcs)
     pcs <- pcs[, colnames(exp_mat)]
