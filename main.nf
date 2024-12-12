@@ -55,7 +55,7 @@ process create_genotype {
 
 process pseudobulk_singlecell{
 
-   label "process_high"
+   label "process_high_memory"
 
    publishDir "${params.outdir}/expression_matrices/", mode: "copy"
 
