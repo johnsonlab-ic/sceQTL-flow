@@ -230,7 +230,7 @@ process run_matrixeQTL{
 
 process combine_eqtls{
     label "process_high"
-    publishDir "${params.outdir}", mode: 'copy'
+    publishDir "${params.outdir}/eQTL_outputs/", mode: 'copy'
 
     input:
     path eqtls
