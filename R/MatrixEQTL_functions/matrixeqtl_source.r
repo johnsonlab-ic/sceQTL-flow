@@ -99,15 +99,15 @@ save_results = TRUE) {
     pcs <- pcs[, 1:max_pcs]
     pcs <- t(pcs)
     pcs <- pcs[, colnames(exp_mat)]
-    write.table(pcs, "pcs.txt")
+    # write.table(pcs, "pcs.txt")
     
     # Iterate over batches of 10 PCs, ensuring not to exceed the number of available PCs
     for (num_pcs in seq(10, min(ncol(pcs), max_pcs), by = 10)) {
       print(num_pcs)
       # Add PCs as covariates
       covs <- pcs[1:num_pcs, ]
-      write.table(covs, "covs.txt")
-      write.table(exp_mat, "exp_mat.txt")
+    #   write.table(covs, "covs.txt")
+    #   write.table(exp_mat, "exp_mat.txt")
       covs_meqtl <- MatrixEQTL::SlicedData$new()
       covs_meqtl$CreateFromMatrix(as.matrix(covs))
       
@@ -152,7 +152,7 @@ save_results = TRUE) {
         }
       }
     }
-    saveRDS(eqtls,"eqtls.rds")
+    # saveRDS(eqtls,"eqtls.rds")
     # Save the best results
     if (save_results) {
       save_eqtls <- function(eqtls, prefix) {

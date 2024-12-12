@@ -29,7 +29,7 @@ process create_genotype {
 
     label "process_high"
 
-    publishDir "${params.outdir}/", mode: "copy"
+    publishDir "${params.outdir}/genotype_files/", mode: "copy"
 
     input:
     path gds_file 
@@ -57,7 +57,7 @@ process pseudobulk_singlecell{
 
    label "process_high"
 
-   publishDir "${params.outdir}/", mode: "copy"
+   publishDir "${params.outdir}/expression_matrices/", mode: "copy"
 
    input: 
    path single_cell_file
@@ -106,7 +106,7 @@ process qc_expression{
 
     label "process_single"
 
-    publishDir "${params.outdir}", mode: 'copy'
+    publishDir "${params.outdir}/expression_matrices/", mode: 'copy'
 
     input:
     path pseudobulk_file
@@ -168,7 +168,7 @@ process run_matrixeQTL{
 
     label "process_high_memory"
 
-    publishDir "${params.outdir}", mode: 'copy'
+    publishDir "${params.outdir}/eQTL_outputs/", mode: 'copy'
 
     input:
     path genotype_mat
