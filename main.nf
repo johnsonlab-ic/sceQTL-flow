@@ -28,7 +28,7 @@ params.optimize_pcs="TRUE"
 
 process create_genotype {
 
-    label "process_high"
+    label "process_high_memory"
 
     publishDir "${params.outdir}/genotype_files/", mode: "copy"
 
