@@ -13,12 +13,12 @@ params.single_cell_file="/rds/general/user/ah3918/projects/puklandmarkproject/li
 
 
 /// Expression metrics
-params.count_assay="decontXcounts"
+params.counts_assay="decontXcounts"
 params.counts_slot="counts"
 params.celltype_column="CellType"
 params.individual_column="Individual_ID"
 params.min_cells=10
-params.min_expression="TRUE"
+params.min_expression=0.05
 
 // eQTL parameters
 params.cis_distance=1e6
@@ -82,7 +82,7 @@ process pseudobulk_singlecell{
     aggregated_counts_list=pseudobulk_counts(celltypelist,
     min.cells=as.numeric(${params.min_cells}),
     indiv_col="${params.individual_column}",
-    assay="${params.count_assay}",
+    assay="${params.counts_assay}",
     slot="${params.counts_slot}")
 
     for (i in 1:length(aggregated_counts_list)) {
@@ -327,7 +327,7 @@ workflow{
     Min percentage for genes: ${params.min_expression}
     Cell-type column: ${params.celltype_column}
     Individual column: ${params.individual_column}
-    Assay used: ${params.count_assay}
+    Assay used: ${params.counts_assay}
 
     eQTL parameters:
 
