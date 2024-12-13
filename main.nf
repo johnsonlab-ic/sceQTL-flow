@@ -14,6 +14,7 @@ params.single_cell_file="/rds/general/user/ah3918/projects/puklandmarkproject/li
 
 /// Expression metrics
 params.count_assay="decontXcounts"
+params.counts_slot="counts"
 params.celltype_column="CellType"
 params.individual_column="Individual_ID"
 params.min_cells=10
