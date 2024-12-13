@@ -4,7 +4,8 @@ generate_genotype_matrix=function(vcfs,
                                   parallel=FALSE,
                                   preprocess=FALSE,
                                   autosomalonly=TRUE,
-                                  minmaf=0.05){
+                                  minmaf=0.05,
+                                  chain_fpath="/usr/local/src/hg19ToHg38.over.chain.gz"){
 
 
 
@@ -49,7 +50,7 @@ generate_genotype_matrix=function(vcfs,
   message("Checking snps for build and converting to rsids..")
 
   print(lobstr::mem_used())
-  chrompos_mat=check_snps(chrompos_mat)
+  chrompos_mat=check_snps(chrompos_mat, chain_fpath)
   geno_mat=geno_mat[match(chrompos_mat$old_snp,geno_mat$snp),]
   geno_mat$snp=chrompos_mat$annot
   rownames(geno_mat)=geno_mat$snp
@@ -137,7 +138,7 @@ generate_genotype_matrix=function(vcfs,
 
 
 
-check_snps=function(chrompos_mat){
+check_snps=function(chrompos_mat, chain_fpath){
 
   nsnps<-nrow(chrompos_mat)
   chrompos_mat$old_snp=chrompos_mat$annot
@@ -165,7 +166,6 @@ check_snps=function(chrompos_mat){
    message("Detected genome build as hg19. Lifting over..")
     
     GenomeInfoDb::seqlevelsStyle(chromlocs_GR)="UCSC"
-    chain_fpath=system.file("data", "hg19ToHg38.over.chain", package="SCGsuite")
     chain<-rtracklayer::import.chain(chain_fpath)
 
     liftover_GR<-rtracklayer::liftOver(chromlocs_GR,chain)

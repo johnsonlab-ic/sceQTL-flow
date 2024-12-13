@@ -46,7 +46,8 @@ process create_genotype {
     #!/usr/bin/env Rscript
     library(dplyr)
     source("${params.genotype_source_functions}")
-    generate_genotype_matrix(gds_file="$gds_file")
+    generate_genotype_matrix(gds_file="$gds_file", 
+    chain_fpath="/usr/local/src/hg19ToHg38.over.chain.gz")
 
 
     """
