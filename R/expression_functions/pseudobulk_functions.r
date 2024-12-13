@@ -40,12 +40,12 @@ get_gene_locations <- function(exp_mat) {
 }
 
 # Function to pseudobulk counts
-pseudobulk_counts <- function(seuratlist, min.cells = 100, indiv_col = "Sample_ID", assay = "RNA") {
+pseudobulk_counts <- function(seuratlist, min.cells = 100, indiv_col = "Sample_ID", assay = "RNA", slot = "counts") {
   agg_count_list <- lapply(seuratlist, function(x) {
     Seurat::DefaultAssay(x) <- assay
     metadata <- x[[]]
 
-    counts <- Seurat::GetAssayData(x, slot = "counts")
+    counts <- Seurat::GetAssayData(x, slot = slot)
     unique_ids <- unique(metadata[[indiv_col]])
     indiv_table <- metadata %>% dplyr::count(get(indiv_col))
     indiv_table <- indiv_table %>% dplyr::filter(n > min.cells)
