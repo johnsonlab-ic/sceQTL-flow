@@ -81,7 +81,8 @@ process pseudobulk_singlecell{
     aggregated_counts_list=pseudobulk_counts(celltypelist,
     min.cells=as.numeric(${params.min_cells}),
     indiv_col="${params.individual_column}",
-    assay="${params.count_assay}")
+    assay="${params.count_assay}",
+    slot="${params.counts_slot}")
 
     for (i in 1:length(aggregated_counts_list)) {
 
