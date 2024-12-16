@@ -72,7 +72,7 @@ get_gene_locations<-function(exp_mat){
     
   }
 
-  genes=genes %>% dplyr::rename(chr=seqnames,left=start,right=end)
+  genes=genes %>% dplyr::rename(chr=seqnames,left=start,right=end) %>% mutate(chr=paste0("chr",chr))
   return(genes)
 
 }
