@@ -13,15 +13,24 @@ params.single_cell_file="/rds/general/user/ah3918/projects/puklandmarkproject/li
 
 
 /// Expression metrics
+params.counts_assay="decontXcounts"
+params.counts_slot="counts"
+params.celltype_column="CellType"
+params.individual_column="Individual_ID"
 params.min_cells=10
-params.min_expression=0.1
+params.min_expression=0.05
+
+// eQTL parameters
 params.cis_distance=1e6
 params.fdr_threshold=0.05
+params.optimize_pcs=true
 
 
 process create_genotype {
 
-    publishDir "${params.outdir}/", mode: "copy"
+    label "process_high_memory"
+
+    publishDir "${params.outdir}/genotype_files/", mode: "copy"
 
     input:
     path gds_file 
@@ -37,7 +46,8 @@ process create_genotype {
     #!/usr/bin/env Rscript
     library(dplyr)
     source("${params.genotype_source_functions}")
-    generate_genotype_matrix(gds_file="$gds_file")
+    generate_genotype_matrix(gds_file="$gds_file", 
+    chain_fpath="/usr/local/src/hg19ToHg38.over.chain")
 
 
     """
@@ -47,7 +57,9 @@ process create_genotype {
 
 process pseudobulk_singlecell{
 
-   publishDir "${params.outdir}/", mode: "copy"
+   label "process_high_memory"
+
+   publishDir "${params.outdir}/expression_matrices/", mode: "copy"
 
    input: 
    path single_cell_file
@@ -66,12 +78,13 @@ process pseudobulk_singlecell{
     source("${params.pseudobulk_source_functions}")
 
     seuratobj=readRDS("$single_cell_file")
-    celltypelist=Seurat::SplitObject(seuratobj,split.by="CellType")
+    celltypelist=Seurat::SplitObject(seuratobj,split.by="${params.celltype_column}")
 
     aggregated_counts_list=pseudobulk_counts(celltypelist,
     min.cells=as.numeric(${params.min_cells}),
-    indiv_col="Individual_ID",
-    assay="decontXcounts")
+    indiv_col="${params.individual_column}",
+    assay="${params.counts_assay}",
+    slot="${params.counts_slot}")
 
     for (i in 1:length(aggregated_counts_list)) {
 
@@ -93,7 +106,10 @@ process pseudobulk_singlecell{
 
 
 process qc_expression{
-    publishDir "${params.outdir}", mode: 'copy'
+
+    label "process_single"
+
+    publishDir "${params.outdir}/expression_matrices/", mode: 'copy'
 
     input:
     path pseudobulk_file
@@ -153,7 +169,9 @@ process qc_genotype {
 
 process run_matrixeQTL{
 
-    publishDir "${params.outdir}", mode: 'copy'
+    label "process_high_memory"
+
+    publishDir "${params.outdir}/eQTL_outputs/", mode: 'copy'
 
     input:
     path genotype_mat
@@ -163,6 +181,7 @@ process run_matrixeQTL{
 
     output:
     path "*_cis_MatrixEQTLout.rds", emit: eqtl_results
+    path "*"
 
 
     script:
@@ -197,7 +216,7 @@ process run_matrixeQTL{
     geno_mat<-geno_mat[complete.cases(geno_mat),]
     geno_loc<-geno_loc[rownames(geno_mat),]
     geno_loc=geno_loc %>% mutate(annot=rownames(geno_loc)) %>% select(annot,chrom,position)
-    print(head(geno_loc))
+
 
 
     calculate_ciseqtl(exp_mat=exp_mat,
@@ -205,15 +224,16 @@ process run_matrixeQTL{
     geno_mat=geno_mat,
     geno_loc=geno_loc,
     name=celltype,
-    cisDist=${params.cis_distance})
+    cisDist=${params.cis_distance},
+    optimize_pcs=as.logical("${params.optimize_pcs}"))
 
     """
 
 }
 
 process combine_eqtls{
-
-    publishDir "${params.outdir}", mode: 'copy'
+    label "process_high"
+    publishDir "${params.outdir}/eQTL_outputs/", mode: 'copy'
 
     input:
     path eqtls
@@ -298,16 +318,28 @@ workflow{
     Input Seurat File: ${params.single_cell_file}
     WorkDir: ${workflow.workDir}
 
-    ========================================
+    ==============================================
 
-    Run parameters:
+                RUN PARAMETERS
+
+    Expression/Pseudobulking parameters:
 
     Min cells for pseudobulking: ${params.min_cells}
     Min percentage for genes: ${params.min_expression}
+    Cell-type column: ${params.celltype_column}
+    Individual column: ${params.individual_column}
+    Assay used: ${params.counts_assay}
+    Slot used: ${params.counts_slot}
+
+    eQTL parameters:
+
     Cis distance: ${params.cis_distance}
     FDR threshold: ${params.fdr_threshold}
+    Optimize PCs: ${params.optimize_pcs}
 
-    ========================================
+    If "optimize PCs" is set to TRUE, the pipeline will run longer.
+
+    ==============================================
 
     This is the stable pipeline. 
 

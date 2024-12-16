@@ -32,6 +32,10 @@ RUN R -e 'install.packages("arrow")'
 # Set the working directory
 WORKDIR /usr/local/src
 
+# Download the chain file
+RUN wget -P /usr/local/src https://hgdownload.soe.ucsc.edu/goldenpath/hg19/liftOver/hg19ToHg38.over.chain.gz
+RUN gunzip /usr/local/src/hg19ToHg38.over.chain.gz
+
 # Copy any additional scripts or files if needed
 # COPY . .
 
