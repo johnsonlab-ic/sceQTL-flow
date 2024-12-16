@@ -47,7 +47,7 @@ process create_genotype {
     library(dplyr)
     source("${params.genotype_source_functions}")
     generate_genotype_matrix(gds_file="$gds_file", 
-    chain_fpath="/usr/local/src/hg19ToHg38.over.chain.gz")
+    chain_fpath="/usr/local/src/hg19ToHg38.over.chain")
 
 
     """
@@ -329,6 +329,7 @@ workflow{
     Cell-type column: ${params.celltype_column}
     Individual column: ${params.individual_column}
     Assay used: ${params.counts_assay}
+    Slot used: ${params.counts_slot}
 
     eQTL parameters:
 
