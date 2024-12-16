@@ -225,7 +225,7 @@ process run_matrixeQTL{
     geno_loc=geno_loc,
     name=celltype,
     cisDist=${params.cis_distance},
-    optimize_pcs=as.logical(${params.optimize_pcs}))
+    optimize_pcs=as.logical("${params.optimize_pcs}"))
 
     """
 
