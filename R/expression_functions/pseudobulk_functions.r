@@ -57,7 +57,8 @@ get_gene_locations<-function(exp_mat){
     genes=genes %>% filter(!gene_biotype=="LRG_gene") %>%
     dplyr::select(gene_id,seqnames,start,end) %>% 
     filter(seqnames %in% paste0(c(1:22,"X","Y"))) %>%
-    filter(gene_id %in% yourgenes)
+    filter(gene_id %in% yourgenes) %>%
+    dplyr::rename(geneid=gene_id)
 
   }else{
 
@@ -66,7 +67,8 @@ get_gene_locations<-function(exp_mat){
     genes=genes %>% filter(!gene_biotype=="LRG_gene") %>%
     dplyr::select(gene_name,seqnames,start,end) %>% 
     filter(seqnames %in% paste0(c(1:22,"X","Y"))) %>%
-    filter(gene_name %in% yourgenes)
+    filter(gene_name %in% yourgenes) %>%
+    dplyr::rename(geneid=gene_name)
     
   }
 
