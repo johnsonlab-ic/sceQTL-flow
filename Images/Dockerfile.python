@@ -1,0 +1,25 @@
+# Use the official Python base image
+FROM python:3.9-slim
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    wget \
+    zlib1g-dev \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install tensorqtl
+RUN pip3 install tensorqtl
+
+# Set the working directory
+WORKDIR /usr/src/app
+
+# Copy any additional scripts or files if needed
+# COPY . .
+
+# Set the default command to Python
+CMD ["python3"]
