@@ -11,7 +11,7 @@ git pull; nextflow run -c nextflow.config main.nf --gds_file path_to_genotype_gd
 
 ### Input files / output dirs
 
-- '-w' is the "work" directory, where Nextflow hosts temp files and stages input files.
+
 - **outdir**: Output directory for the pipeline results. Default: `/rds/general/user/ah3918/projects/puklandmarkproject/ephemeral/tmp/`
 - **gds_file**: Path to the GDS file containing genotype data. Default: `/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/TEST_DATA/test_geno.gds`
 - **single_cell_file**: Path to the single-cell data file. Default: `/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/TEST_DATA/roche_ms_decontx.rds`
@@ -30,4 +30,8 @@ You don't need to add the parameters necessarily, there are default values.
 - **fdr_threshold**: FDR threshold for eQTL results. Default: `0.05`
 - **optimize_pcs**: Boolean to optimize principal components. This iteratively runs MatrixEQTL to find optimal PCs. Default: `true`
 
+### Other useful flags
+
+- **-w**: Working directory. This is where nextflow stages input files. Needs lots of space! Default: `/rds/general/user/$USER/ephemeral/`
+- **-N <email.address>**: Email address to send notifications to on run completion. For example; "a.haglund19@imperial.ac.uk". 
 
