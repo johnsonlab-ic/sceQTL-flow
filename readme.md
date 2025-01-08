@@ -29,7 +29,7 @@ To run the pipeline:
 1. Clone this repository. Run;
 
     ```sh
-    git clone https://github.com/johnsonlab-ic/sc-eQTL-pipepeline/ 
+    git clone https://github.com/johnsonlab-ic/sc-eQTL-pipeline/ 
     cd sc-eQTL-pipepeline
     ```
 
