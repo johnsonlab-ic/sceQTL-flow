@@ -28,7 +28,11 @@ To run the pipeline:
 2. Run the following command in the terminal, ensuring you provide the correct paths for the inputs:
 
     ```sh
-    git pull; nextflow run -c nextflow.config main.nf --gds_file path_to_genotype_gds_file --single_cell_file path_to_single_cell_file --outdir path_to_output_directory
+    git pull; nextflow run -c nextflow.config main.nf \
+    --gds_file path_to_genotype_gds_file \
+    --single_cell_file path_to_single_cell_file \
+    --outdir path_to_output_directory \
+    --N email@adress
     ```
 
 ### Input Files / Output Directories
