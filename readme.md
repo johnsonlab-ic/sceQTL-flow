@@ -26,11 +26,17 @@ Make sure you have nextflow installed! `curl -s https://get.nextflow.io | bash`
 
 To run the pipeline:
 
-1. Clone this repository.
+1. Clone this repository. Run;
+
+    ```sh
+    git clone https://github.com/johnsonlab-ic/sc-eQTL-pipepeline/ 
+    cd sc-eQTL-pipepeline
+    ```
+
 2. Run the following command in the terminal, ensuring you provide the correct paths for the inputs:
 
     ```sh
-    git pull; nextflow run -c nextflow.config main.nf \
+    git pull; nextflow run -c nextflow.config main.nf -profile imperial \
     --gds_file path_to_genotype_gds_file \
     --single_cell_file path_to_single_cell_file \
     --outdir path_to_output_directory \
@@ -62,3 +68,8 @@ You don't need to add the parameters necessarily, there are default values.
 - **-w**: Working directory. This is where nextflow stages input files. Needs lots of space! Default: `/rds/general/user/$USER/ephemeral/`
 - **-N <email.address>**: Email address to send notifications to on run completion. For example: `a.haglund19@imperial.ac.uk`.
 
+
+
+### Notes / warnings!!
+
+This is designed to be run on the Imperial College HPC system (for the time being) due to being very memory-intensive but will vary by dataset.
