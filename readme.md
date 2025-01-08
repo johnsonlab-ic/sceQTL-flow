@@ -1,16 +1,16 @@
 
 
 
-## Welcome
+# Welcome
 
 This pipeline is designed for eQTL (expression Quantitative Trait Loci) analysis using single-cell RNA sequencing data. It integrates genotype data with single-cell expression data to identify genetic variants that influence gene expression at the single-cell level.
 
-### Required Input Files
+## Required Input Files
 
 - **Genotype GDS File**: A GDS (Genomic Data Structure) file containing genotype data.
 - **Single-Cell Data File**: An RDS file containing single-cell RNA sequencing data in a Seurat object format.
 
-### Pipeline Functionality
+## Pipeline Functionality
 
 The pipeline performs the following steps:
 
@@ -20,7 +20,7 @@ The pipeline performs the following steps:
 4. **Result Optimization**: Optionally optimizes the number of principal components for the eQTL analysis.
 5. **Output Generation**: Produces results including significant eQTLs, summary statistics, and diagnostic plots.
 
-### Usage
+## Usage
 
 Make sure you have nextflow installed! `curl -s https://get.nextflow.io | bash` 
 
@@ -43,13 +43,13 @@ To run the pipeline:
     --N email@adress
     ```
 
-### Input Files / Output Directories
+## Input Files / Output Directories
 
 - **outdir**: Output directory for the pipeline results. Default: `/rds/general/user/ah3918/projects/puklandmarkproject/ephemeral/tmp/`
 - **gds_file**: Path to the GDS file containing genotype data. Default: `/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/TEST_DATA/test_geno.gds`
 - **single_cell_file**: Path to the single-cell data file. Default: `/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/TEST_DATA/roche_ms_decontx.rds`
 
-### Run Parameters / Flags
+## Run Parameters / Flags
 
 You don't need to add the parameters necessarily, there are default values.
 
@@ -63,13 +63,13 @@ You don't need to add the parameters necessarily, there are default values.
 - **--fdr_threshold**: FDR threshold for eQTL results. Default: `0.05`
 - **--optimize_pcs**: Boolean to optimize principal components. This iteratively runs MatrixEQTL to find optimal PCs. Default: `true`
 
-### Other Useful Flags
+## Other Useful Flags
 
 - **-w**: Working directory. This is where nextflow stages input files. Needs lots of space! Default: `/rds/general/user/$USER/ephemeral/`
 - **-N <email.address>**: Email address to send notifications to on run completion. For example: `a.haglund19@imperial.ac.uk`.
 
 
 
-### Notes / warnings!!
+## Notes / warnings!!
 
 This is designed to be run on the Imperial College HPC system (for the time being) due to being very memory-intensive but will vary by dataset.
