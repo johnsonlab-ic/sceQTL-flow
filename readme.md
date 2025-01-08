@@ -30,7 +30,7 @@ To run the pipeline:
 
     ```sh
     git clone https://github.com/johnsonlab-ic/sc-eQTL-pipeline/ 
-    cd sc-eQTL-pipepeline
+    cd sc-eQTL-pipeline
     ```
 
 2. Run the following command in the terminal, ensuring you provide the correct paths for the inputs:
