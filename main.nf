@@ -2,7 +2,6 @@ nextflow.enable.dsl=2
 
 params.outdir="/rds/general/user/ah3918/projects/puklandmarkproject/ephemeral/tmp/"
 params.gds_file="/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/TEST_DATA/test_geno.gds"
-params.inputfile="/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/eqtl_pipeline_dev/eQTL_PIPELINE/testfile.txt"
 
 params.genotype_source_functions="${baseDir}/R/genotype_functions/genotype_functions.r"
 params.pseudobulk_source_functions="${baseDir}/R/expression_functions/pseudobulk_functions.r"
@@ -13,7 +12,7 @@ params.single_cell_file="/rds/general/user/ah3918/projects/puklandmarkproject/li
 
 
 /// Expression metrics
-params.counts_assay="decontXcounts"
+params.counts_assay="RNA"
 params.counts_slot="counts"
 params.celltype_column="CellType"
 params.individual_column="Individual_ID"
