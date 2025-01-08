@@ -160,10 +160,14 @@ process qc_genotype {
     snp_locations <- fread("$snp_locations")
 
 
+
+
+
     """
     
     
 }
+
 
 
 process run_matrixeQTL{
