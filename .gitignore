@@ -13,3 +13,4 @@ build.log
 run_journal.sh
 docker_build.sh
 build*log
+.vscode/
