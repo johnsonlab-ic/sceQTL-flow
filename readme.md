@@ -22,6 +22,8 @@ The pipeline performs the following steps:
 
 ### Usage
 
+Make sure you have nextflow installed! `curl -s https://get.nextflow.io | bash` 
+
 To run the pipeline:
 
 1. Clone this repository.
