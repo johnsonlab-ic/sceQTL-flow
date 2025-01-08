@@ -11,6 +11,3 @@ build.log
 jupyter_dev/
 build.log
 run_journal.sh
-dockerbuild_2.sh
-build*log
-.vscode/
