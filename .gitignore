@@ -11,3 +11,4 @@ build.log
 jupyter_dev/
 build.log
 run_journal.sh
+jupyter_notebooks/
