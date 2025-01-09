@@ -170,10 +170,6 @@ process qc_genotype {
 
 
 
-<<<<<<< HEAD
-=======
-
->>>>>>> main
 process run_matrixeQTL{
 
     label "process_high_memory"
