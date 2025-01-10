@@ -242,8 +242,8 @@ process combine_eqtls{
     path eqtls
 
     output:
-    path "mateqtlouts.rds"
-    path "mateqtlouts_FDR_filtered.rds"
+    path "mateqtlouts.rds", emit: mateqtlouts
+    path "mateqtlouts_FDR_filtered.rds", emit: mateqtlouts_FDR_filtered
 
 
     script:
