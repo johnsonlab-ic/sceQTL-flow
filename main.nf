@@ -280,31 +280,28 @@ process combine_eqtls{
 
 }
 
-process final_report{
+process final_report {
+
+    label "process_single"
 
     publishDir "${params.outdir}", mode: 'copy'
 
     input: 
-    path pseudobulk_file_list
-    path genotype_file
+    path eqtl_results_filtered
+    path eqtl_results
     path report_file
 
     output: 
-
-    path "report*"
-
+    path "report.html"
 
     script:
-
-
     """
-    #!/bin/bash
-
-    quarto render $report_file --output-dir ./ \
-    -P genotype_file:$genotype_file
-
+    #!/usr/bin/env Rscript
+    rmarkdown::render(input = "$report_file", output_file = "report.html", params = list(
+        eqtl_results_filtered = "$eqtl_results_filtered",
+        eqtl_results = "$eqtl_results"
+    ))
     """
-
 }
 
 workflow{
@@ -365,6 +362,11 @@ workflow{
     
     combine_eqtls(eqtls= run_matrixeQTL.out.eqtl_results.collect())
 
+    final_report(
+        eqtl_results_filtered = combine_eqtls.out.mateqtlouts_FDR_filtered,
+        eqtl_results = combine_eqtls.out.mateqtlouts,
+        report_file = params.quarto_report
+    )
 
     // final_report(
     //     pseudobulk_file_list= qc_expression.out.collect(),

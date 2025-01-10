@@ -1,0 +1,45 @@
+---
+title: "eQTL Pipeline Report"
+output: html_document
+params:
+  eqtl_results_filtered: NULL
+  eqtl_results: NULL
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(data.table)
+library(dplyr)
+```
+
+## eQTL Analysis Report
+
+### Summary of eQTL Results
+
+#### Filtered eQTL Results (FDR <= 0.05)
+
+```{r filtered_eqtl_results}
+eqtl_results_filtered <- readRDS(params$eqtl_results_filtered)
+summary(eqtl_results_filtered)
+```
+
+#### All eQTL Results
+
+```{r all_eqtl_results}
+eqtl_results <- readRDS(params$eqtl_results)
+summary(eqtl_results)
+```
+
+### Detailed eQTL Results
+
+#### Filtered eQTL Results (FDR <= 0.05)
+
+```{r filtered_eqtl_details}
+print(eqtl_results_filtered)
+```
+
+#### All eQTL Results
+
+```{r all_eqtl_details}
+print(eqtl_results)
+```
