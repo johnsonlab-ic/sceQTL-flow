@@ -339,9 +339,11 @@ workflow{
 
     If "optimize PCs" is set to TRUE, the pipeline will run longer.
 
+    Generating reports via markdown too now!
+
     ==============================================
 
-    This is the stable pipeline. 
+    This is the DEV pipeline. Might not work as expected.
 
     """
     create_genotype(gds_file= params.gds_file)
