@@ -23,7 +23,7 @@ params.min_expression=0.05
 params.cis_distance=1e6
 params.fdr_threshold=0.05
 params.optimize_pcs=true
-params.report=true
+params.report=false
 
 
 process create_genotype {
@@ -366,11 +366,11 @@ workflow{
     combine_eqtls(eqtls= run_matrixeQTL.out.eqtl_results.collect())
 
     if(params.report){
-    final_report(
-        eqtl_results_filtered = combine_eqtls.out.mateqtlouts_FDR_filtered,
-        eqtl_results = combine_eqtls.out.mateqtlouts,
-        report_file = params.quarto_report
-    )
+        final_report(
+            eqtl_results_filtered = combine_eqtls.out.mateqtlouts_FDR_filtered,
+            eqtl_results = combine_eqtls.out.mateqtlouts,
+            report_file = params.quarto_report
+        )
     }
 
     // final_report(
