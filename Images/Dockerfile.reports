@@ -17,9 +17,6 @@ RUN apt-get update && apt-get install -y \
 # Install required R packages
 RUN R -e 'install.packages(c("dplyr", "data.table", "ggplot2", "cowplot", "patchwork", "ggrepel", "tidyverse", "gridExtra", "ggbeeswarm", "rmarkdown", "tinytex"), repos="http://cran.rstudio.com/")'
 
-# Install TinyTeX (a lightweight, cross-platform, portable, and easy-to-maintain LaTeX distribution)
-RUN R -e "tinytex::install_tinytex()"
-
 # Set the working directory
 WORKDIR /usr/local/src
 
