@@ -344,7 +344,7 @@ workflow{
 
     ==============================================
 
-    This is the DEV pipeline. Might not work as expected.
+    This is DEV branch. Might not work as expected. 
 
     """
     create_genotype(gds_file= params.gds_file)
