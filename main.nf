@@ -344,7 +344,7 @@ workflow{
 
     ==============================================
 
-    This is the DEV pipeline. Might not work as expected.
+    This is the stable release.
 
     """
     create_genotype(gds_file= params.gds_file)
