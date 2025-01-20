@@ -6,7 +6,7 @@ params.gds_file="/rds/general/user/ah3918/projects/puklandmarkproject/live/Users
 params.genotype_source_functions="${baseDir}/R/genotype_functions/genotype_functions.r"
 params.pseudobulk_source_functions="${baseDir}/R/expression_functions/pseudobulk_functions.r"
 params.eqtl_source_functions="${baseDir}/R/MatrixEQTL_functions/matrixeqtl_source.r"
-params.quarto_report="${baseDir}/R/quarto_reports/run_report.qmd"
+params.quarto_report="${baseDir}/R/rmarkdown_reports/final_report.Rmd"
 
 params.single_cell_file="/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/TEST_DATA/roche_ms_decontx.rds"
 
