@@ -65,7 +65,7 @@ process pseudobulk_singlecell{
    path single_cell_file
 
    output:
-   path "ct_names.csv", emit: ct_names
+   path "ct_names.txt", emit: ct_names
    path "*pseudobulk.csv", emit: pseudobulk_counts
    path "gene_locations.csv", emit: gene_locations
 
@@ -101,7 +101,7 @@ process pseudobulk_singlecell{
 
     gene_locations=get_gene_locations(aggregated_counts_list[[1]])
     data.table::fwrite(gene_locations,"gene_locations.csv")
-    writeLines(names(aggregated_counts_list), "ct_names.csv")
+    writeLines(names(aggregated_counts_list), "ct_names.txt")
 
     """
 
@@ -357,7 +357,7 @@ workflow{
     //aggregate counts
     pseudobulk_singlecell(single_cell_file= params.single_cell_file)
     pseudobulk_ch=pseudobulk_singlecell.out.pseudobulk_counts.flatten()
-    pseudobulk_ch.view()
+    pseudobulk_ch.view { "Contents of pseudobulk_ch: ${it}" }
     
     //QC and normalisation
     qc_expression(pseudobulk_file= pseudobulk_ch)
