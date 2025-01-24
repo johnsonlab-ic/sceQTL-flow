@@ -356,11 +356,8 @@ workflow{
 
     //aggregate counts
     pseudobulk_singlecell(single_cell_file= params.single_cell_file)
-     pseudobulk_ch = pseudobulk_singlecell.out.pseudobulk_counts
-        .map { path -> tuple(path.baseName.replace('_pseudobulk', ''), path) }
-        .view { "Contents of pseudobulk_ch: ${it}" }
-        .flatten()
-
+    pseudobulk_ch=pseudobulk_singlecell.out.pseudobulk_counts.flatten()
+    pseudobulk_ch.view { "Contents of pseudobulk_ch: ${it}" }
     
     //QC and normalisation
     qc_expression(pseudobulk_file= pseudobulk_ch)
