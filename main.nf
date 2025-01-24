@@ -91,7 +91,7 @@ process pseudobulk_singlecell{
 
         df=aggregated_counts_list[[i]] %>% mutate(geneid=row.names(.)) 
         
-        $celltype=names(aggregated_counts_list[i])
+        celltype=names(aggregated_counts_list[i])
         
 
         # Write the data frame to a CSV file
