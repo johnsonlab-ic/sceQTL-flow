@@ -357,7 +357,7 @@ workflow{
     //aggregate counts
     pseudobulk_singlecell(single_cell_file= params.single_cell_file)
     celltypes=pseudobulk_singlecell.out.ct_names.flatten()
-    pseudobulk_ch=pseudobulk_singlecell.out.pseudobulk_counts.flatten()
+    pseudobulk_ch = pseudobulk_singlecell.out.pseudobulk_counts.map { celltype, path -> tuple(celltype, path) }.flatten()
 
     
     //QC and normalisation
