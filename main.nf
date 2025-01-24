@@ -65,6 +65,7 @@ process pseudobulk_singlecell{
    path single_cell_file
 
    output:
+   val celltype
    path "*pseudobulk.csv", emit: pseudobulk_counts
    path "gene_locations.csv", emit: gene_locations
 
@@ -90,6 +91,9 @@ process pseudobulk_singlecell{
 
         df=aggregated_counts_list[[i]] %>% mutate(geneid=row.names(.)) 
         
+        celltype=names(aggregated_counts_list[i])
+        println("Emitting celltype: ${celltype}")
+
         # Write the data frame to a CSV file
         data.table::fwrite(df, paste0(names(aggregated_counts_list[i]), "_pseudobulk.csv"))
     }
@@ -352,8 +356,9 @@ workflow{
     //aggregate counts
     pseudobulk_singlecell(single_cell_file= params.single_cell_file)
 
+    pseudobulk_ch=pseudobulk_singlecell.out.pseudobulk_counts.flatten()
     //QC and normalisation
-    qc_expression(pseudobulk_file= pseudobulk_singlecell.out.pseudobulk_counts.flatten())
+    qc_expression(pseudobulk_file= pseudobulk_ch)
 
     //run matrix eQTL
     run_matrixeQTL(
