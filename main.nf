@@ -356,9 +356,8 @@ workflow{
 
     //aggregate counts
     pseudobulk_singlecell(single_cell_file= params.single_cell_file)
-    pseudobulk_singlecell.out.pseudobulk_counts.flatten().view()
     pseudobulk_ch=pseudobulk_singlecell.out.pseudobulk_counts.flatten()
-
+    pseudobulk_ch.view()
     
     //QC and normalisation
     qc_expression(pseudobulk_file= pseudobulk_ch)
