@@ -65,7 +65,7 @@ process pseudobulk_singlecell{
    path single_cell_file
 
    output:
-   val celltype
+   
    path "*pseudobulk.csv", emit: pseudobulk_counts
    path "gene_locations.csv", emit: gene_locations
 
