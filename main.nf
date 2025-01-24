@@ -356,7 +356,8 @@ workflow{
 
     //aggregate counts
     pseudobulk_singlecell(single_cell_file= params.single_cell_file)
-    celltypes=pseudobulk_singlecell.out.ct_names.flatten()
+    celltypes=pseudobulk_singlecell.out.pseudobulk_counts.basename()
+    println(celltypes)
     pseudobulk_ch=pseudobulk_singlecell.out.pseudobulk_counts.flatten()
 
     
