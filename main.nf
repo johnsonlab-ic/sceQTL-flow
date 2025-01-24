@@ -92,7 +92,7 @@ process pseudobulk_singlecell{
         df=aggregated_counts_list[[i]] %>% mutate(geneid=row.names(.)) 
         
         celltype=names(aggregated_counts_list[i])
-        println("Emitting celltype: ${celltype}")
+        println("Emitting celltype: $celltype")
 
         # Write the data frame to a CSV file
         data.table::fwrite(df, paste0(names(aggregated_counts_list[i]), "_pseudobulk.csv"))
