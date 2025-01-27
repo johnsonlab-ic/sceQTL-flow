@@ -317,7 +317,7 @@ process final_report {
         min_expression = ${params.min_expression},
         cis_distance = ${params.cis_distance},
         fdr_threshold = ${params.fdr_threshold},
-        optimize_pcs = ${params.optimize_pcs}
+        optimize_pcs = ${params.optimize_pcs ? 'TRUE' : 'FALSE'}
     ))
     """
 }
