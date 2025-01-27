@@ -19,7 +19,7 @@ params.individual_column="Individual_ID"
 params.min_cells=10
 params.min_expression=0.05
 
-// eQTL parameters
+// eQTL parameterscd 
 params.cis_distance=1e6
 params.fdr_threshold=0.05
 params.optimize_pcs=true
@@ -65,6 +65,7 @@ process pseudobulk_singlecell{
    path single_cell_file
 
    output:
+   path "ct_names.txt", emit: ct_names
    path "*pseudobulk.csv", emit: pseudobulk_counts
    path "gene_locations.csv", emit: gene_locations
 
@@ -90,13 +91,17 @@ process pseudobulk_singlecell{
 
         df=aggregated_counts_list[[i]] %>% mutate(geneid=row.names(.)) 
         
+        celltype=names(aggregated_counts_list[i])
+        
+
         # Write the data frame to a CSV file
         data.table::fwrite(df, paste0(names(aggregated_counts_list[i]), "_pseudobulk.csv"))
     }
 
+
     gene_locations=get_gene_locations(aggregated_counts_list[[1]])
     data.table::fwrite(gene_locations,"gene_locations.csv")
-
+    writeLines(names(aggregated_counts_list), "ct_names.txt")
 
     """
 
@@ -300,7 +305,19 @@ process final_report {
     #!/usr/bin/env Rscript
     rmarkdown::render(input = "$report_file", output_file = "report.html", params = list(
         eqtl_results_filtered = "$eqtl_results_filtered",
-        eqtl_results = "$eqtl_results"
+        eqtl_results = "$eqtl_results",
+        outdir = "${params.outdir}",
+        gds_file = "${params.gds_file}",
+        single_cell_file = "${params.single_cell_file}",
+        counts_assay = "${params.counts_assay}",
+        counts_slot = "${params.counts_slot}",
+        celltype_column = "${params.celltype_column}",
+        individual_column = "${params.individual_column}",
+        min_cells = ${params.min_cells},
+        min_expression = ${params.min_expression},
+        cis_distance = ${params.cis_distance},
+        fdr_threshold = ${params.fdr_threshold},
+        optimize_pcs = ${params.optimize_pcs ? 'TRUE' : 'FALSE'}
     ))
     """
 }
@@ -351,9 +368,11 @@ workflow{
 
     //aggregate counts
     pseudobulk_singlecell(single_cell_file= params.single_cell_file)
-
+    pseudobulk_ch=pseudobulk_singlecell.out.pseudobulk_counts.flatten()
+    
+    
     //QC and normalisation
-    qc_expression(pseudobulk_file= pseudobulk_singlecell.out.pseudobulk_counts.flatten())
+    qc_expression(pseudobulk_file= pseudobulk_ch)
 
     //run matrix eQTL
     run_matrixeQTL(
