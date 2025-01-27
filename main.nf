@@ -19,7 +19,7 @@ params.individual_column="Individual_ID"
 params.min_cells=10
 params.min_expression=0.05
 
-// eQTL parameters
+// eQTL parameterscd 
 params.cis_distance=1e6
 params.fdr_threshold=0.05
 params.optimize_pcs=true
