@@ -18,7 +18,7 @@ library(tidyr)
 
 ### Total and Unique eGenes (5% FDR)
 
-```{r plot_total_unique_eGenes}
+```{r plot_total_unique_eGenes, include=FALSE}
 total_genes <- function(cell_list) {
   sapply(cell_list, function(df) length(unique(df$gene)))
 }
@@ -115,18 +115,44 @@ print(g)
 
 ### Summary of eQTL Results
 
-#### Filtered eQTL Results (FDR <= 0.05)
-
-```{r filtered_eqtl_results}
+```{r summarize_eqtl_results}
 eqtl_results_filtered <- readRDS(params$eqtl_results_filtered)
-summary(eqtl_results_filtered)
-```
 
-#### All eQTL Results
+# Number of eGenes discovered (FDR < 0.05)
+num_eGenes <- length(unique(eqtl_results_filtered$gene))
+cat("Number of eGenes discovered (FDR < 0.05):", num_eGenes, "\n")
 
-```{r all_eqtl_results}
-eqtl_results <- readRDS(params$eqtl_results)
-summary(eqtl_results)
+# Number of eGenes per cell-type
+eGenes_per_celltype <- sapply(mateqtlouts_filt, function(df) length(unique(df$gene)))
+cat("Number of eGenes per cell-type:\n")
+print(eGenes_per_celltype)
+
+# Number of unique eGenes per cell-type
+unique_eGenes_per_celltype <- sapply(mateqtlouts_filt, function(df) {
+  current_genes <- unique(df$gene)
+  other_genes <- unique(unlist(sapply(mateqtlouts_filt, function(other_df) {
+    if (identical(df, other_df)) return(NULL)
+    return(other_df$gene)
+  })))
+  length(setdiff(current_genes, other_genes))
+})
+cat("Number of unique eGenes per cell-type:\n")
+print(unique_eGenes_per_celltype)
+
+# Number of shared eGenes
+shared_eGenes <- num_eGenes - sum(unique_eGenes_per_celltype)
+cat("Number of shared eGenes:", shared_eGenes, "\n")
+
+# Cell-types sharing the most genes
+shared_genes_matrix <- sapply(mateqtlouts_filt, function(df1) {
+  sapply(mateqtlouts_filt, function(df2) {
+    length(intersect(df1$gene, df2$gene))
+  })
+})
+diag(shared_genes_matrix) <- 0
+max_shared_genes <- max(shared_genes_matrix)
+celltypes_sharing_most_genes <- which(shared_genes_matrix == max_shared_genes, arr.ind = TRUE)
+cat("Cell-types sharing the most genes:", rownames(shared_genes_matrix)[celltypes_sharing_most_genes[1, 1]], "and", colnames(shared_genes_matrix)[celltypes_sharing_most_genes[1, 2]], "\n")
 ```
 
 ### Detailed eQTL Results
@@ -140,5 +166,6 @@ print(eqtl_results_filtered)
 #### All eQTL Results
 
 ```{r all_eqtl_details}
+eqtl_results <- readRDS(params$eqtl_results)
 print(eqtl_results)
 ```
