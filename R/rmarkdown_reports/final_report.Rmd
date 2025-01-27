@@ -4,6 +4,18 @@ output: html_document
 params:
   eqtl_results_filtered: NULL
   eqtl_results: NULL
+  outdir: NULL
+  gds_file: NULL
+  single_cell_file: NULL
+  counts_assay: "RNA"
+  counts_slot: "counts"
+  celltype_column: "CellType"
+  individual_column: "Individual_ID"
+  min_cells: 10
+  min_expression: 0.05
+  cis_distance: 1e6
+  fdr_threshold: 0.05
+  optimize_pcs: true
 ---
 
 ```{r setup, include=FALSE}
@@ -15,6 +27,23 @@ library(tidyr)
 ```
 
 ## eQTL Analysis Report
+
+### Pipeline Settings
+
+The following settings were used in the pipeline:
+
+- **Output Directory**: `r params$outdir`
+- **GDS File**: `r params$gds_file`
+- **Single-Cell Data File**: `r params$single_cell_file`
+- **Counts Assay**: `r params$counts_assay`
+- **Counts Slot**: `r params$counts_slot`
+- **Cell-Type Column**: `r params$celltype_column`
+- **Individual Column**: `r params$individual_column`
+- **Minimum Cells for Pseudobulking**: `r params$min_cells`
+- **Minimum Expression Percentage for Genes**: `r params$min_expression`
+- **Cis Distance for eQTL Analysis**: `r params$cis_distance`
+- **FDR Threshold for eQTL Results**: `r params$fdr_threshold`
+- **Optimize Principal Components**: `r params$optimize_pcs`
 
 ### Total and Unique eGenes (5% FDR)
 
@@ -115,8 +144,12 @@ print(g)
 
 ### Summary of eQTL Results
 
-```{r summarize_eqtl_results}
+```{r summarize_eqtl_results, echo=FALSE}
 eqtl_results_filtered <- readRDS(params$eqtl_results_filtered)
+
+# Number of cell-types tested
+num_celltypes <- length(unique(eqtl_results_filtered$celltype))
+cat("Number of cell-types tested:", num_celltypes, "\n")
 
 # Number of eGenes discovered (FDR < 0.05)
 num_eGenes <- length(unique(eqtl_results_filtered$gene))
@@ -159,13 +192,28 @@ cat("Cell-types sharing the most genes:", rownames(shared_genes_matrix)[celltype
 
 #### Filtered eQTL Results (FDR <= 0.05)
 
-```{r filtered_eqtl_details}
-print(eqtl_results_filtered)
+```{r filtered_eqtl_details, echo=FALSE}
+cat("Below are the filtered eQTL results (FDR <= 0.05) for each unique gene in each cell type.\n")
+for (celltype in names(mateqtlouts_filt)) {
+  cat("\n### Cell Type:", celltype, "\n")
+  unique_genes <- unique(mateqtlouts_filt[[celltype]]$gene)
+  for (gene in unique_genes) {
+    cat("\n#### Gene:", gene, "\n")
+    print(mateqtlouts_filt[[celltype]] %>% filter(gene == gene))
+  }
+}
 ```
 
 #### All eQTL Results
 
-```{r all_eqtl_details}
-eqtl_results <- readRDS(params$eqtl_results)
-print(eqtl_results)
+```{r all_eqtl_details, echo=FALSE}
+cat("Below are the eQTL results for each unique gene in each cell type.\n")
+for (celltype in names(mateqtlouts)) {
+  cat("\n### Cell Type:", celltype, "\n")
+  unique_genes <- unique(mateqtlouts[[celltype]]$gene)
+  for (gene in unique_genes) {
+    cat("\n#### Gene:", gene, "\n")
+    print(mateqtlouts[[celltype]] %>% filter(gene == gene))
+  }
+}
 ```
