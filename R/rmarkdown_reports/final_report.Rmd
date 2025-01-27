@@ -204,16 +204,3 @@ for (celltype in names(mateqtlouts_filt)) {
 }
 ```
 
-#### All eQTL Results
-
-```{r all_eqtl_details, echo=FALSE}
-cat("Below are the eQTL results for each unique gene in each cell type.\n")
-for (celltype in names(mateqtlouts)) {
-  cat("\n### Cell Type:", celltype, "\n")
-  unique_genes <- unique(mateqtlouts[[celltype]]$gene)
-  for (gene in unique_genes) {
-    cat("\n#### Gene:", gene, "\n")
-    print(mateqtlouts[[celltype]] %>% filter(gene == gene))
-  }
-}
-```
