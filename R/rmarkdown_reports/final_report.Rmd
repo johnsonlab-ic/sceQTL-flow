@@ -45,7 +45,33 @@ The following settings were used in the pipeline:
 - **FDR Threshold for eQTL Results**: `r params$fdr_threshold`
 - **Optimize Principal Components**: `r params$optimize_pcs`
 
-### Input overview
+### Input Overview
+
+```{r input_overview, echo=FALSE}
+# Load the filtered eQTL results
+eqtl_results_filtered <- readRDS(params$eqtl_results_filtered)
+
+# Load the eQTL results
+eqtl_results <- readRDS(params$eqtl_results)
+
+# Number and names of cell-types tested
+cell_types <- names(eqtl_results_filtered)
+num_celltypes <- length(cell_types)
+cat("**Number of cell-types tested:**", num_celltypes, "\n\n")
+cat("**Names of cell-types tested:**", paste(cell_types, collapse=", "), "\n\n")
+
+# Average number of genes tested
+genes_list <- lapply(eqtl_results, function(df) unique(df$gene))
+all_genes <- unique(unlist(genes_list))
+avg_genes_tested <- length(all_genes) / num_celltypes
+cat("**Average number of genes tested per cell-type:**", round(avg_genes_tested), "\n\n")
+
+# Number of SNPs tested
+snps_list <- lapply(eqtl_results, function(df) unique(df$SNP))
+all_snps <- unique(unlist(snps_list))
+num_snps_tested <- length(all_snps)
+cat("**Number of SNPs tested:**", num_snps_tested, "\n\n")
+```
 
 ### Total and Unique eGenes (5% FDR)
 
@@ -143,4 +169,3 @@ g <- ggplot(df_long, aes(x = celltype, y = count, fill = celltype_col)) +
 
 print(g)
 ```
-
