@@ -45,6 +45,8 @@ The following settings were used in the pipeline:
 - **FDR Threshold for eQTL Results**: `r params$fdr_threshold`
 - **Optimize Principal Components**: `r params$optimize_pcs`
 
+### Input overview
+
 ### Total and Unique eGenes (5% FDR)
 
 ```{r plot_total_unique_eGenes, echo=FALSE}
@@ -140,67 +142,5 @@ g <- ggplot(df_long, aes(x = celltype, y = count, fill = celltype_col)) +
         legend.text = element_text(size = 7))
 
 print(g)
-```
-
-### Summary of eQTL Results
-
-```{r summarize_eqtl_results, echo=FALSE}
-eqtl_results_filtered <- readRDS(params$eqtl_results_filtered)
-
-# Number of cell-types tested
-num_celltypes <- length(unique(eqtl_results_filtered$celltype))
-cat("Number of cell-types tested:", num_celltypes, "\n")
-
-# Number of eGenes discovered (FDR < 0.05)
-num_eGenes <- length(unique(eqtl_results_filtered$gene))
-cat("Number of eGenes discovered (FDR < 0.05):", num_eGenes, "\n")
-
-# Number of eGenes per cell-type
-eGenes_per_celltype <- sapply(mateqtlouts_filt, function(df) length(unique(df$gene)))
-cat("Number of eGenes per cell-type:\n")
-print(eGenes_per_celltype)
-
-# Number of unique eGenes per cell-type
-unique_eGenes_per_celltype <- sapply(mateqtlouts_filt, function(df) {
-  current_genes <- unique(df$gene)
-  other_genes <- unique(unlist(sapply(mateqtlouts_filt, function(other_df) {
-    if (identical(df, other_df)) return(NULL)
-    return(other_df$gene)
-  })))
-  length(setdiff(current_genes, other_genes))
-})
-cat("Number of unique eGenes per cell-type:\n")
-print(unique_eGenes_per_celltype)
-
-# Number of shared eGenes
-shared_eGenes <- num_eGenes - sum(unique_eGenes_per_celltype)
-cat("Number of shared eGenes:", shared_eGenes, "\n")
-
-# Cell-types sharing the most genes
-shared_genes_matrix <- sapply(mateqtlouts_filt, function(df1) {
-  sapply(mateqtlouts_filt, function(df2) {
-    length(intersect(df1$gene, df2$gene))
-  })
-})
-diag(shared_genes_matrix) <- 0
-max_shared_genes <- max(shared_genes_matrix)
-celltypes_sharing_most_genes <- which(shared_genes_matrix == max_shared_genes, arr.ind = TRUE)
-cat("Cell-types sharing the most genes:", rownames(shared_genes_matrix)[celltypes_sharing_most_genes[1, 1]], "and", colnames(shared_genes_matrix)[celltypes_sharing_most_genes[1, 2]], "\n")
-```
-
-### Detailed eQTL Results
-
-#### Filtered eQTL Results (FDR <= 0.05)
-
-```{r filtered_eqtl_details, echo=FALSE}
-cat("Below are the filtered eQTL results (FDR <= 0.05) for each unique gene in each cell type.\n")
-for (celltype in names(mateqtlouts_filt)) {
-  cat("\n### Cell Type:", celltype, "\n")
-  unique_genes <- unique(mateqtlouts_filt[[celltype]]$gene)
-  for (gene in unique_genes) {
-    cat("\n#### Gene:", gene, "\n")
-    print(mateqtlouts_filt[[celltype]] %>% filter(gene == gene))
-  }
-}
 ```
 
