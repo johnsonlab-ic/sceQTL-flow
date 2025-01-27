@@ -47,7 +47,7 @@ The following settings were used in the pipeline:
 
 ### Total and Unique eGenes (5% FDR)
 
-```{r plot_total_unique_eGenes, include=FALSE}
+```{r plot_total_unique_eGenes, echo=FALSE}
 total_genes <- function(cell_list) {
   sapply(cell_list, function(df) length(unique(df$gene)))
 }
