@@ -1,11 +1,15 @@
 process combine_eqtls {
+
     label "process_high"
     publishDir "${params.outdir}/eQTL_outputs/", mode: 'copy'
+
     input:
     path eqtls
+
     output:
     path "mateqtlouts.rds", emit: mateqtlouts
     path "mateqtlouts_FDR_filtered.rds", emit: mateqtlouts_FDR_filtered
+    
     script:
     """
     #!/usr/bin/env Rscript

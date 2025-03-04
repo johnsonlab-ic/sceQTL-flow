@@ -21,3 +21,19 @@ git pull;nextflow run -c nextflow.config main.nf \
 -N a.haglund19@imperial.ac.uk \
 -with-report pipeline_report.html \
 --report true
+
+
+
+nextflow run main.nf \
+-w ${workdir} \
+-profile "offline" \
+--outdir ${outdir} \
+--gds_file ${datadir}/test_data/test_geno.gds \
+--single_cell_file ${datadir}//test_data/roche_ms_decontx.rds \
+--celltype_column "CellType" \
+--individual_column "Individual_ID" \
+--counts_slot "counts" \
+--counts_assay "decontXcounts" \
+--optimize_pcs true \
+-with-report pipeline_report.html \
+--report true

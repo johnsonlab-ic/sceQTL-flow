@@ -1,11 +1,18 @@
 process qc_expression {
+    tag "${pseudobulk_file}"
     label "process_single"
     publishDir "${params.outdir}/expression_matrices/", mode: 'copy'
+
     input:
+
     path pseudobulk_file
+
     output:
+
     path "*pseudobulk_normalised.csv" , emit: pseudobulk_normalised
+
     script:
+
     """
     #!/usr/bin/env Rscript
     library(data.table)

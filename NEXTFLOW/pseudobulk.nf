@@ -1,19 +1,26 @@
 process pseudobulk_singlecell {
+    tag "${single_cell_file}"
     label "process_high_memory"
     publishDir "${params.outdir}/expression_matrices/", mode: "copy"
+
     input: 
     path single_cell_file
+    path source_R
+
     output:
     path "ct_names.txt", emit: ct_names
     path "*pseudobulk.csv", emit: pseudobulk_counts
     path "gene_locations.csv", emit: gene_locations
+    
     script:
     """
     #!/usr/bin/env Rscript
     library(Seurat)
     library(BPCells)
     library(dplyr)
-    source("${params.pseudobulk_source_functions}")
+
+    source("$source_R")
+
     seuratobj=readRDS("$single_cell_file")
     celltypelist=Seurat::SplitObject(seuratobj,split.by="${params.celltype_column}")
     aggregated_counts_list=pseudobulk_counts(celltypelist,
@@ -31,3 +38,4 @@ process pseudobulk_singlecell {
     writeLines(names(aggregated_counts_list), "ct_names.txt")
     """
 }
+// docker run -it --rm -v /var/lib/docker/alex_tmp/data/:/mnt/data ah3918/expression_image:latest
