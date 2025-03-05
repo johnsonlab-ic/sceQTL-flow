@@ -68,3 +68,5 @@ process run_matrixeQTL {
 }
 
 // docker run -it --rm -v /var/lib/docker/alex_tmp/data/:/mnt/data ah3918/expression_image:latest
+
+// docker run -it --rm -v ./:/ ah3918/expression_image:latest

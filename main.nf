@@ -27,8 +27,8 @@ include { qc_expression } from './NEXTFLOW/qc_expression.nf'
 include { run_matrixeQTL } from './NEXTFLOW/matrixeqtl.nf'
 include { combine_eqtls } from './NEXTFLOW/combine_eqtls.nf'
 include { final_report } from './NEXTFLOW/final_report.nf'
-include { optimize_pcs } from './NEXTFLOW/optimize_pcs.nf'
-
+include { optimize_pcs } from './NEXTFLOW/optimize/optimize_pcs.nf'
+include { select_pcs } from './NEXTFLOW/optimize/select_pcs.nf'
 
 // default parameters 
 
@@ -84,14 +84,33 @@ workflow {
 
     qc_expression(pseudobulk_file= pseudobulk_ch)
 
-    n_pcs_ch = Channel.from(10, 20, 30, 40, 50, 60, 70, 80, 90, 100)
-    optimize_pcs(params.eqtl_source_functions,
-       create_genotype.out.genotype_mat,
-        create_genotype.out.snp_chromlocations,
-        qc_expression.out.pseudobulk_normalised.flatten(),
-        pseudobulk_singlecell.out.gene_locations,
-        n_pcs_ch
-    )
+    if (params.optimize_pcs) {
+        // Define the n_pcs channel
+        n_pcs_ch = Channel.from(1,2,3,4,5)
+
+        // Combine pseudobulk_ch with n_pcs_ch
+        qc_expression.out.pseudobulk_normalised.flatten()
+            .combine(n_pcs_ch)
+            .set { combined_ch }
+
+        // Run the optimize_pcs process
+        optimize_pcs(
+                params.eqtl_source_functions,  // source_R
+                create_genotype.out.genotype_mat,  // genotype_mat
+                create_genotype.out.snp_chromlocations,  // snp_locations
+                combined_ch.map { it[0] },  // expression_mat (file from pseudobulk_ch)
+                pseudobulk_singlecell.out.gene_locations,  // gene_locations
+                combined_ch.map { it[1] }  // n_pcs (value from n_pcs_ch)
+            )
+
+        optimize_pcs.out.egenes_results
+        .collectFile(name: "combined_egenes_results.txt", keepHeader: true) { file ->
+            file.text
+        }
+        select_pcs(egenes_results=optimize_pcs.out.egenes_results)
+
+    }
+
 
     run_matrixeQTL(params.eqtl_source_functions,
        create_genotype.out.genotype_mat,

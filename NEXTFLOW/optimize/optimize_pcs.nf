@@ -16,7 +16,7 @@ process optimize_pcs {
 
 
     output:
-    path "*egenes*.txt"
+    path "*egenes*.txt" , emit: egenes_results
 
     script:
     """
@@ -74,7 +74,7 @@ process optimize_pcs {
     )
     
     n_egenes = outs %>% filter(FDR<0.05) %>% pull(gene) %>% unique() %>% length()
-    write.table(data.frame(n_pcs=${n_pcs}, n_genes=n_egenes), file=paste0(celltype,"_egenes_vs_",${n_pcs},".txt"), sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+    write.table(data.frame(celltype=celltype,n_pcs=${n_pcs}, n_genes=n_egenes), file=paste0(celltype,"_egenes_vs_",${n_pcs},".txt"), sep="\t", quote=FALSE, row.names=FALSE)
 
 
 
