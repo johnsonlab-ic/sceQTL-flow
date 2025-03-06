@@ -1,10 +1,13 @@
 process final_report {
     label "process_single"
-    publishDir "${params.outdir}", mode: 'copy'
+    publishDir "${baseDir}", mode: 'copy'
+
     input: 
     path eqtl_results_filtered
     path eqtl_results
     path report_file
+    path optimization_results
+
     output: 
     path "report.html"
     script:
@@ -24,7 +27,8 @@ process final_report {
         min_expression = ${params.min_expression},
         cis_distance = ${params.cis_distance},
         fdr_threshold = ${params.fdr_threshold},
-        optimize_pcs = ${params.optimize_pcs ? 'TRUE' : 'FALSE'}
+        optimize_pcs = ${params.optimize_pcs ? 'TRUE' : 'FALSE'},
+        optimization_results = "$optimization_results"
     ))
     """
 }

@@ -16,6 +16,7 @@ params:
   cis_distance: 1e6
   fdr_threshold: 0.05
   optimize_pcs: true
+  optimization_results: NULL
 ---
 
 ```{r setup, include=FALSE}
@@ -25,8 +26,27 @@ library(dplyr)
 library(ggplot2)
 library(tidyr)
 ```
+```{r echo=FALSE}
+#load pc optimization results
+if (params$optimize_pcs) {
+  # Load pc optimization results
+  file_list <- params$optimization_results
+  file_list <- unlist(strsplit(file_list, " "))
+  results <- rbindlist(lapply(file_list, fread))
+  results$celltype <- factor(results$celltype)
 
-## eQTL Analysis Report
+  # Plot pc optimization results
+  plot <- ggplot(results, aes(x = n_pcs, y = n_egenes)) +
+      geom_point() +
+      geom_line() +
+      facet_wrap(~ celltype) +
+      xlab("Number of Principal Components") +
+      ylab("Number of eGenes") +
+      theme_minimal()
+
+  print(plot)
+}
+```
 
 ### Pipeline Settings
 
@@ -45,9 +65,7 @@ The following settings were used in the pipeline:
 - **FDR Threshold for eQTL Results**: `r params$fdr_threshold`
 - **Optimize Principal Components**: `r params$optimize_pcs`
 
-### Input Overview
-
-```{r input_overview, echo=FALSE}
+```{r echo=FALSE}
 # Load the filtered eQTL results
 eqtl_results_filtered <- readRDS(params$eqtl_results_filtered)
 
@@ -57,21 +75,27 @@ eqtl_results <- readRDS(params$eqtl_results)
 # Number and names of cell-types tested
 cell_types <- names(eqtl_results_filtered)
 num_celltypes <- length(cell_types)
-cat("**Number of cell-types tested:**", num_celltypes, "\n\n")
-cat("**Names of cell-types tested:**", paste(cell_types, collapse=", "), "\n\n")
 
 # Average number of genes tested
 genes_list <- lapply(eqtl_results, function(df) unique(df$gene))
 all_genes <- unique(unlist(genes_list))
 avg_genes_tested <- length(all_genes) / num_celltypes
-cat("**Average number of genes tested per cell-type:**", round(avg_genes_tested), "\n\n")
 
 # Number of SNPs tested
 snps_list <- lapply(eqtl_results, function(df) unique(df$SNP))
 all_snps <- unique(unlist(snps_list))
 num_snps_tested <- length(all_snps)
-cat("**Number of SNPs tested:**", num_snps_tested, "\n\n")
 ```
+
+### Input Overview
+
+**Number of cell-types tested:** `r num_celltypes`
+
+**Names of cell-types tested:** `r paste(cell_types, collapse=", ")`
+
+**Average number of genes tested per cell-type:** `r round(avg_genes_tested)`
+
+**Number of SNPs tested:** `r num_snps_tested`
 
 ### Total and Unique eGenes (5% FDR)
 

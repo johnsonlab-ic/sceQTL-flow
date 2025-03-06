@@ -2,7 +2,7 @@ process optimize_pcs {
     tag "${expression_mat} and ${n_pcs} PCs"
 
     label "process_high_memory"
-    publishDir "${params.outdir}/eQTL_outputs/", mode: 'copy'
+    publishDir "${params.outdir}/optimization/", mode: 'copy'
 
     input:
     path source_R
@@ -74,7 +74,7 @@ process optimize_pcs {
     )
     
     n_egenes = outs %>% filter(FDR<0.05) %>% pull(gene) %>% unique() %>% length()
-    write.table(data.frame(celltype=celltype,n_pcs=${n_pcs}, n_genes=n_egenes), file=paste0(celltype,"_egenes_vs_",${n_pcs},".txt"), sep="\t", quote=FALSE, row.names=FALSE)
+    write.table(data.frame(celltype=celltype,n_pcs=${n_pcs}, n_egenes=n_egenes), file=paste0(celltype,"_egenes_vs_",${n_pcs},".txt"), sep="\t", quote=FALSE, row.names=FALSE)
 
 
 

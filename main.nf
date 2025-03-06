@@ -103,12 +103,22 @@ workflow {
                 combined_ch.map { it[1] }  // n_pcs (value from n_pcs_ch)
             )
 
+        // Collect all egenes_results into a single list
         optimize_pcs.out.egenes_results
-        .collectFile(name: "combined_egenes_results.txt", keepHeader: true) { file ->
-            file.text
-        }
-        select_pcs(egenes_results=optimize_pcs.out.egenes_results)
-
+                .map { file -> 
+                    // Extract cell type from the file name
+                    celltype = file.name.replaceAll(/_egenes_vs_.+\.txt$/, "")
+                    [celltype, file]
+                }
+                .groupTuple(by: 0)  // Group by cell type
+                .set { grouped_results }
+        // Pass the collected results to select_pcs
+        select_pcs(grouped_results)
+        
+        // this is for the markdown file
+        optimize_pcs.out.egenes_results
+        .collect()
+        .set { collected_results }
     }
 
 
@@ -126,7 +136,8 @@ workflow {
         final_report(
             eqtl_results_filtered = combine_eqtls.out.mateqtlouts_FDR_filtered,
             eqtl_results = combine_eqtls.out.mateqtlouts,
-            report_file = params.quarto_report
+            report_file = params.quarto_report,
+            optimization_results = collected_results
         )
     }
     // ...existing code...
