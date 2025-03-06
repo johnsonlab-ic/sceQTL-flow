@@ -2,7 +2,7 @@ workdir=/var/lib/docker/alex_tmp/NF_WORK/
 datadir=/var/lib/docker/alex_tmp/data/
 mount_path=/home/ah3918/rds/
 indir=${mount_path}/live/Users/Alex/pipelines//TEST_DATA/
-outdir=${mount_path}/ephemeral/eqtl_pipepline_outs/test_data
+outdir=${workdir}/test_data
 
 # mkdir -p ${datadir}/test_data/
 # cp -r ${indir}/* ${datadir}/test_data/
