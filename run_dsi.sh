@@ -21,3 +21,5 @@ git pull;nextflow run -c nextflow.config main.nf \
 -N a.haglund19@imperial.ac.uk \
 -with-report pipeline_report.html \
 --report true
+
+#test
