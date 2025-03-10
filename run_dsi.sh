@@ -14,15 +14,16 @@ nextflow run main.nf \
 -w ${workdir} \
 -profile "offline" \
 --outdir ${outdir} \
---gds_file ${datadir}/test_data/test_geno.gds \
+--gds_file ${datadir}/test_data/final_geno_440samples.gds \
 --single_cell_file ${datadir}//test_data/roche_ms_decontx.rds \
 --celltype_column "CellType" \
 --individual_column "Individual_ID" \
 --counts_slot "counts" \
 --counts_assay "decontXcounts" \
---optimize_pcs true \
 -with-report pipeline_report.html \
---report true
+--report true \
+--optimize_pcs false \
+--filter_chr "chr9,chr20,chr3"
 
 
 #testing with false
@@ -44,7 +45,7 @@ nextflow run main.nf \
 
 #testing with YAZAR
 workdir=/var/lib/docker/alex_tmp/NF_WORK/
-datadir=/var/lib/docker/alex_tmp/data/YAZAR/
+datadir=/var/lib/docker/alex_tmp/data/test_data/YAZAR/
 mount_path=/home/ah3918/rds/
 indir=${mount_path}/live/Users/Alex/pipelines//TEST_DATA/
 outdir=${workdir}/test_data

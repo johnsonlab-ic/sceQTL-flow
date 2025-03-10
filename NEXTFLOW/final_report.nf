@@ -13,6 +13,11 @@ process final_report {
     script:
     """
     #!/usr/bin/env Rscript
+     if (length("$optimization_results") == 0) {
+        optimization_results <- NULL
+    } else {
+        optimization_results <- "$optimization_results"
+    }
     rmarkdown::render(input = "$report_file", output_file = "report.html", params = list(
         eqtl_results_filtered = "$eqtl_results_filtered",
         eqtl_results = "$eqtl_results",
@@ -26,6 +31,7 @@ process final_report {
         min_cells = ${params.min_cells},
         min_expression = ${params.min_expression},
         cis_distance = ${params.cis_distance},
+        filter_chr="${params.filter_chr}",
         fdr_threshold = ${params.fdr_threshold},
         optimize_pcs = ${params.optimize_pcs ? 'TRUE' : 'FALSE'},
         optimization_results = "$optimization_results"

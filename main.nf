@@ -20,8 +20,11 @@ params.counts_assay="RNA"
 params.counts_slot="counts"
 params.cis_distance=1000000
 params.fdr_threshold=0.05
+params.filter_chr = "all" // Optional parameter for filtering by chromosome. use "chr6"
+params.optimize_pcs = true
 
 include { create_genotype } from './NEXTFLOW/genotype.nf'
+include { qc_genotype } from './NEXTFLOW/genotype.nf'
 include { pseudobulk_singlecell } from './NEXTFLOW/pseudobulk.nf'
 include { qc_expression } from './NEXTFLOW/qc_expression.nf'
 include { run_matrixeQTL } from './NEXTFLOW/matrixeqtl.nf'
@@ -66,6 +69,7 @@ workflow {
     Cis distance: ${params.cis_distance}
     FDR threshold: ${params.fdr_threshold}
     Optimize PCs: ${params.optimize_pcs}
+    Chromosomes used: ${params.filter_chr}
 
     If "optimize PCs" is set to TRUE, the pipeline will run longer.
 
@@ -76,17 +80,21 @@ workflow {
     This is the stable release.
 
     """
-    create_genotype(gds_file= params.gds_file,params.genotype_source_functions)
+    create_genotype(gds_file= params.gds_file, 
+    params.genotype_source_functions)
+    qc_genotype(
+        genotype_mat=create_genotype.out.genotype_mat,
+        snp_chromlocations=create_genotype.out.snp_chromlocations,
+        filter_chr=params.filter_chr  // Pass the optional parameter
+    )
 
-    pseudobulk_singlecell(params.single_cell_file,params.pseudobulk_source_functions)
-
-    pseudobulk_ch=pseudobulk_singlecell.out.pseudobulk_counts.flatten()
-
+    pseudobulk_singlecell(params.single_cell_file, params.pseudobulk_source_functions)
+    pseudobulk_ch = pseudobulk_singlecell.out.pseudobulk_counts.flatten()
     qc_expression(pseudobulk_file= pseudobulk_ch)
 
     if (params.optimize_pcs) {
         // Define the n_pcs channel
-        n_pcs_ch = Channel.from(1,2,3,4,5)
+        n_pcs_ch = Channel.from(5,10,15,20,25,30,35,40)
 
         // Combine pseudobulk_ch with n_pcs_ch
         qc_expression.out.pseudobulk_normalised.flatten()
@@ -95,40 +103,47 @@ workflow {
 
         // Run the optimize_pcs process
         optimize_pcs(
-                params.eqtl_source_functions,  // source_R
-                create_genotype.out.genotype_mat,  // genotype_mat
-                create_genotype.out.snp_chromlocations,  // snp_locations
-                combined_ch.map { it[0] },  // expression_mat (file from pseudobulk_ch)
-                pseudobulk_singlecell.out.gene_locations,  // gene_locations
-                combined_ch.map { it[1] }  // n_pcs (value from n_pcs_ch)
-            )
+            params.eqtl_source_functions,  // source_R
+            qc_genotype.out.qc_genotype_mat,  // genotype_mat
+            qc_genotype.out.qc_snp_chromlocations,  // snp_locations
+            combined_ch.map { it[0] },  // expression_mat (file from pseudobulk_ch)
+            pseudobulk_singlecell.out.gene_locations,  // gene_locations
+            combined_ch.map { it[1] }  // n_pcs (value from n_pcs_ch)
+        )
 
         // Collect all egenes_results into a single list
         optimize_pcs.out.egenes_results
-                .map { file -> 
-                    // Extract cell type from the file name
-                    celltype = file.name.replaceAll(/_egenes_vs_.+\.txt$/, "")
-                    [celltype, file]
-                }
-                .groupTuple(by: 0)  // Group by cell type
-                .set { grouped_results }
+            .map { file -> 
+                // Extract cell type from the file name
+                celltype = file.name.replaceAll(/_egenes_vs_.+\.txt$/, "")
+                [celltype, file]
+            }
+            .groupTuple(by: 0)  // Group by cell type
+            .set { grouped_results }
         // Pass the collected results to select_pcs
         select_pcs(grouped_results)
         
         // this is for the markdown file
         optimize_pcs.out.egenes_results
-        .collect()
-        .set { collected_results }
+            .collect()
+            .set { collected_results }
+
+            
+    }else{
+            // Define a dummy file for optimization_results
+        dummy_file = file("dummy_optimization_results.txt")
+
+        // Initialize collected_results with the dummy file
+        collected_results = Channel.from(dummy_file)
     }
 
-
-    run_matrixeQTL(params.eqtl_source_functions,
-       create_genotype.out.genotype_mat,
-        create_genotype.out.snp_chromlocations,
+    run_matrixeQTL(
+        params.eqtl_source_functions,
+        qc_genotype.out.qc_genotype_mat,
+        qc_genotype.out.qc_snp_chromlocations,
         qc_expression.out.pseudobulk_normalised.flatten(),
         pseudobulk_singlecell.out.gene_locations
     )
-
 
     combine_eqtls(eqtls= run_matrixeQTL.out.eqtl_results.collect())
 

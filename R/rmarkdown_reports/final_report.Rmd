@@ -7,15 +7,16 @@ params:
   outdir: NULL
   gds_file: NULL
   single_cell_file: NULL
-  counts_assay: "RNA"
-  counts_slot: "counts"
-  celltype_column: "CellType"
-  individual_column: "Individual_ID"
-  min_cells: 10
-  min_expression: 0.05
-  cis_distance: 1e6
-  fdr_threshold: 0.05
-  optimize_pcs: true
+  counts_assay: NULL
+  counts_slot: NULL
+  celltype_column: NULL
+  individual_column: NULL
+  min_cells: NULL
+  min_expression: NULL
+  cis_distance: NULL
+  filter_chr: NULL
+  fdr_threshold: NULL
+  optimize_pcs: NULL
   optimization_results: NULL
 ---
 
@@ -25,26 +26,14 @@ library(data.table)
 library(dplyr)
 library(ggplot2)
 library(tidyr)
-```
-```{r echo=FALSE}
-#load pc optimization results
-if (params$optimize_pcs) {
-  # Load pc optimization results
-  file_list <- params$optimization_results
-  file_list <- unlist(strsplit(file_list, " "))
-  results <- rbindlist(lapply(file_list, fread))
-  results$celltype <- factor(results$celltype)
-
-  # Plot pc optimization results
-  plot <- ggplot(results, aes(x = n_pcs, y = n_egenes)) +
-      geom_point() +
-      geom_line() +
-      facet_wrap(~ celltype) +
-      xlab("Number of Principal Components") +
-      ylab("Number of eGenes") +
-      theme_minimal()
-
-  print(plot)
+format_cis_distance <- function(distance) {
+  if (distance >= 1e6) {
+    return(paste0(distance / 1e6, "Mb"))
+  } else if (distance >= 1e3) {
+    return(paste0(distance / 1e3, "Kb"))
+  } else {
+    return(paste0(distance, "bp"))
+  }
 }
 ```
 
@@ -61,7 +50,8 @@ The following settings were used in the pipeline:
 - **Individual Column**: `r params$individual_column`
 - **Minimum Cells for Pseudobulking**: `r params$min_cells`
 - **Minimum Expression Percentage for Genes**: `r params$min_expression`
-- **Cis Distance for eQTL Analysis**: `r params$cis_distance`
+- **Cis Distance for eQTL Analysis**: `r format_cis_distance(params$cis_distance)`
+- **Chromosomes tested**: `r params$filter_chr`
 - **FDR Threshold for eQTL Results**: `r params$fdr_threshold`
 - **Optimize Principal Components**: `r params$optimize_pcs`
 
@@ -89,13 +79,34 @@ num_snps_tested <- length(all_snps)
 
 ### Input Overview
 
-**Number of cell-types tested:** `r num_celltypes`
+- **Number of cell-types tested:** `r num_celltypes`
+- **Names of cell-types tested:** `r paste(cell_types, collapse=", ")`
+- **Average number of genes tested per cell-type:** `r round(avg_genes_tested)`
+- **Number of SNPs tested:** `r num_snps_tested`
 
-**Names of cell-types tested:** `r paste(cell_types, collapse=", ")`
+`r if (params$optimize_pcs) "### PC optimization results"`
+```{r echo=FALSE}
+#load pc optimization results
+if (params$optimize_pcs) {
+  # Load pc optimization results
+  file_list <- params$optimization_results
+  file_list <- unlist(strsplit(file_list, " "))
+  results <- rbindlist(lapply(file_list, fread))
+  results$celltype <- factor(results$celltype)
 
-**Average number of genes tested per cell-type:** `r round(avg_genes_tested)`
+  # Plot pc optimization results
+  plot <- ggplot(results, aes(x = n_pcs, y = n_egenes)) +
+      geom_point() +
+      geom_line() +
+      facet_wrap(~ celltype) +
+      xlab("Number of Principal Components") +
+      ylab("Number of eGenes") +
+      theme_minimal()
 
-**Number of SNPs tested:** `r num_snps_tested`
+  print(plot)
+}
+```
+
 
 ### Total and Unique eGenes (5% FDR)
 
