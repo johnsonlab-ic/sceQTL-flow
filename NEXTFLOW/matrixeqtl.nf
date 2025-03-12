@@ -1,4 +1,6 @@
 process run_matrixeQTL {
+
+  
     tag "${expression_mat}"
     label "process_high_memory"
     publishDir "${params.outdir}/eQTL_outputs/", mode: 'copy'
@@ -34,6 +36,7 @@ process run_matrixeQTL {
 
     common_genes = intersect(exp_loc %>% pull(geneid), rownames(exp_mat))
     exp_mat = exp_mat %>% filter(rownames(exp_mat) %in% common_genes)
+    exp_loc = exp_loc %>% filter(geneid %in% common_genes)
 
     geno_loc = geno_loc[, c("annot", "chrom", "position")] %>% tibble::column_to_rownames(var="annot")
     geno_mat = geno_mat[rownames(geno_loc), ]
@@ -49,6 +52,7 @@ process run_matrixeQTL {
         geno_mat = geno_mat,
         geno_loc = geno_loc,
         name = celltype,
+        pvOutputThreshold =0,
         cisDist = as.numeric(${params.cis_distance}),
         optimize_pcs = as.logical("${params.optimize_pcs}")
     )

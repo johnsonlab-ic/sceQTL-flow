@@ -42,13 +42,13 @@ save_results = TRUE) {
   }
   
   # if (!optimize_pcs) {
-    me <- suppressMessages(MatrixEQTL::Matrix_eQTL_main(
+    me <- MatrixEQTL::Matrix_eQTL_main(
       geno_meqtl,
       expr_meqtl,
       cvrt = covs_meqtl,
       useModel = MatrixEQTL::modelLINEAR,
       errorCovariance = numeric(),
-      verbose = FALSE,
+      verbose = TRUE,
       output_file_name = NULL,
       output_file_name.cis = NULL,
       pvOutputThreshold.cis = pvOutputThreshold_cis,
@@ -59,7 +59,7 @@ save_results = TRUE) {
       pvalue.hist = FALSE,
       min.pv.by.genesnp = FALSE,
       noFDRsaveMemory = FALSE
-    ))
+    )
     return(me$cis$eqtls)
     # if (save_results) {
     #   save_eqtls <- function(eqtls, prefix) {

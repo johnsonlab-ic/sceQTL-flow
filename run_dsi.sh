@@ -22,8 +22,9 @@ nextflow run main.nf \
 --counts_assay "decontXcounts" \
 -with-report pipeline_report.html \
 --report true \
---optimize_pcs false \
---filter_chr "chr9,chr20,chr3"
+--cis_distance 1000000 \
+--optimize_pcs true \
+--filter_chr "all"
 
 
 #testing with false
