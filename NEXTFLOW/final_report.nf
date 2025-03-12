@@ -1,5 +1,5 @@
 process final_report {
-    label "process_single"
+    label "process_high"
     publishDir "${baseDir}", mode: 'copy'
 
     input: 
