@@ -2,9 +2,9 @@ calculate_ciseqtl <- function(exp_mat,
 geno_mat, 
 exp_loc, 
 geno_loc, 
+covmat = NULL, 
 name = "celltype", 
 cisDist = 1e6, 
-covmat = NULL, 
 pvOutputThreshold = 0, 
 filter_trans_FDR = FALSE, 
 pvOutputThreshold_cis = 1, 
@@ -22,12 +22,7 @@ save_results = TRUE) {
   
   expr_meqtl <- MatrixEQTL::SlicedData$new()
   expr_meqtl$CreateFromMatrix(as.matrix(exp_mat))
-  n_indivs <- ncol(exp_mat)
-  if(n_indivs<20){
-    message("Less than 20 individuals in the expression matrix. Please check the input data.")
-    optimize_pcs=FALSE
-    
-  }
+
   
   if (!is.null(covmat)) {
     message("Including covariates (covmat != 'NULL').")

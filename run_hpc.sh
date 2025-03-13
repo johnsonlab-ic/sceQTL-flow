@@ -3,8 +3,8 @@ indir=/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipel
 git pull;nextflow run -c nextflow.config main.nf \
 -profile imperial \
 --outdir /rds/general/user/ah3918/ephemeral/eqtl_pipepline_outs/test_data \
---gds_file ${indir}/test_geno.gds \
---single_cell_file ${indir}/final_geno_440samples.gds \
+--gds_file ${indir}/final_geno_440samples.gds \
+--single_cell_file ${indir}/roche_ms_decontx.rds \
 --celltype_column "CellType" \
 --individual_column "Individual_ID" \
 --counts_slot "counts" \
