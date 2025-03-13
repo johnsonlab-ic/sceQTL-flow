@@ -10,7 +10,8 @@ process run_matrixeQTL {
     path genotype_mat
     path snp_locations
     path expression_mat
-    path gene_locations 
+    path gene_locations
+    path cov_file
 
     output:
     path "*_cis_MatrixEQTLout.rds", emit: eqtl_results

@@ -24,7 +24,7 @@ nextflow run main.nf \
 --report true \
 --cis_distance 1000000 \
 --optimize_pcs true \
---filter_chr "all"
+--filter_chr "chr1,chr2,chr3,chr4,chr5"
 
 
 #testing with false

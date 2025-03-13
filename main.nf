@@ -4,6 +4,7 @@ nextflow.enable.dsl=2
 params.outdir="/rds/general/user/ah3918/projects/puklandmarkproject/ephemeral/tmp/"
 params.gds_file="/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/TEST_DATA/test_geno.gds"
 params.single_cell_file="/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/TEST_DATA/roche_ms_decontx.rds"
+params.cov_file="${baseDir}/R/cov.txt"
 
 
 // source functions for easy troubleshooting
@@ -94,7 +95,7 @@ workflow {
 
     if (params.optimize_pcs) {
         // Define the n_pcs channel
-        n_pcs_ch = Channel.from(5..15)
+        n_pcs_ch = Channel.from(1..5)
 
         // Combine pseudobulk_ch with n_pcs_ch
         qc_expression.out.pseudobulk_normalised.flatten()
@@ -142,7 +143,8 @@ workflow {
         qc_genotype.out.qc_genotype_mat,
         qc_genotype.out.qc_snp_chromlocations,
         qc_expression.out.pseudobulk_normalised.flatten(),
-        pseudobulk_singlecell.out.gene_locations
+        pseudobulk_singlecell.out.gene_locations,
+        params.cov_file
     )
 
     combine_eqtls(eqtls= run_matrixeQTL.out.eqtl_results.collect())
