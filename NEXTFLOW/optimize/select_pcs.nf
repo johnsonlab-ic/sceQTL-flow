@@ -5,27 +5,34 @@ process select_pcs {
 
     input:
     tuple val(celltype), path(egenes_files)
+    tuple val(celltype), path(exp_matrix)
 
     output:
-    path "optimal_pcs_${celltype}.txt", emit: optimal_pcs
-  
+    tuple val(celltype), path("optimal_pcs_${celltype}.txt"), emit: exp_pcs
+
     script:
     """
     #!/usr/bin/env Rscript
     library(data.table)
     library(ggplot2)
 
-    # Combine all files into a single data frame
+    # Combine all egenes files into a single data frame
     file_list <- unlist(strsplit("${egenes_files}", " "))
     results <- rbindlist(lapply(file_list, fread))
 
-
     # Find the optimal n_pcs for the cell type
     optimal_pcs <- results[which.max(n_egenes), ]
+    n_pcs <- optimal_pcs\$n_pcs
 
-    # Write the optimal n_pcs to a file
-    fwrite(optimal_pcs, "optimal_pcs_${celltype}.txt")
+    # Perform PCA on the expression matrix
+    exp_mat <- fread("${exp_matrix}") %>% tibble::column_to_rownames(var="geneid")
+    exp_pcs <- prcomp(t(exp_mat), scale. = TRUE)
+    exp_pcs <- exp_pcs\$x[, 1:n_pcs]
+    exp_pcs <- as.data.frame(exp_pcs)
+    colnames(exp_pcs) <- paste0("PC", 1:n_pcs)
+    exp_pcs <- t(exp_pcs)
+
+    # Write the PC covariate matrix to a file
+    write.table("exp_pcs_${celltype}.txt")
     """
-
-    
 }
