@@ -122,12 +122,26 @@ workflow {
             .groupTuple(by: 0)  // Group by cell type
             .set { grouped_results }
         // Pass the collected results to select_pcs
-        select_pcs(grouped_results)
+        ch_exp_matrices = qc_expression.out.pseudobulk_normalised.flatten()
+            .map { file ->
+                def celltype = file.getBaseName().replace("_pseudobulk_normalised", "")
+                [celltype, file]
+            }
+   
         
         // this is for the markdown file
         optimize_pcs.out.egenes_results
             .collect()
             .set { collected_results }
+
+        ch_exp_matrices = qc_expression.out.pseudobulk_normalised.flatten()
+            .map { file ->
+                def celltype = file.getBaseName().replace("_pseudobulk_normalised", "")
+                [celltype, file]
+            }
+
+        // Run the select_pcs process with two separate input channels
+        select_pcs(grouped_results, ch_exp_matrices)
 
             
     }else{
