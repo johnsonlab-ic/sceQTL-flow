@@ -1,330 +1,45 @@
 nextflow.enable.dsl=2
 
+//default inputfiles
 params.outdir="/rds/general/user/ah3918/projects/puklandmarkproject/ephemeral/tmp/"
 params.gds_file="/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/TEST_DATA/test_geno.gds"
+params.single_cell_file="/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/TEST_DATA/roche_ms_decontx.rds"
+params.cov_file="${baseDir}/R/cov.txt"
 
+
+// source functions for easy troubleshooting
 params.genotype_source_functions="${baseDir}/R/genotype_functions/genotype_functions.r"
 params.pseudobulk_source_functions="${baseDir}/R/expression_functions/pseudobulk_functions.r"
 params.eqtl_source_functions="${baseDir}/R/MatrixEQTL_functions/matrixeqtl_source.r"
 params.quarto_report="${baseDir}/R/rmarkdown_reports/final_report.Rmd"
 
-params.single_cell_file="/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/TEST_DATA/roche_ms_decontx.rds"
-
-
-/// Expression metrics
+params.min_cells=5
+params.min_expression=0.1
+params.celltype_column="celltype"
+params.individual_column="individual"
 params.counts_assay="RNA"
 params.counts_slot="counts"
-params.celltype_column="CellType"
-params.individual_column="Individual_ID"
-params.min_cells=10
-params.min_expression=0.05
-
-// eQTL parameterscd 
-params.cis_distance=1e6
+params.cis_distance=1000000
 params.fdr_threshold=0.05
-params.optimize_pcs=true
-params.report=false
+params.filter_chr = "all" // Optional parameter for filtering by chromosome. use "chr6"
+params.optimize_pcs = true
 
+include { create_genotype } from './NEXTFLOW/genotype.nf'
+include { qc_genotype } from './NEXTFLOW/genotype.nf'
+include { pseudobulk_singlecell } from './NEXTFLOW/pseudobulk.nf'
+include { qc_expression } from './NEXTFLOW/qc_expression.nf'
+include { run_matrixeQTL } from './NEXTFLOW/matrixeqtl.nf'
+include { combine_eqtls } from './NEXTFLOW/combine_eqtls.nf'
+include { final_report } from './NEXTFLOW/final_report.nf'
+include { optimize_pcs } from './NEXTFLOW/optimize/optimize_pcs.nf'
+include { select_pcs } from './NEXTFLOW/optimize/select_pcs.nf'
 
-process create_genotype {
+// default parameters 
 
-    label "process_high_memory"
 
-    publishDir "${params.outdir}/genotype_files/", mode: "copy"
 
-    input:
-    path gds_file 
-
-    output:
-    path "genotype_012mat.csv", emit: genotype_mat
-    path "snp_chromlocations.csv", emit: snp_chromlocations
-    path "MAF_mat.csv", emit: maf_mat
-
-
-    script:
-    """
-    #!/usr/bin/env Rscript
-    library(dplyr)
-    source("${params.genotype_source_functions}")
-    generate_genotype_matrix(gds_file="$gds_file", 
-    chain_fpath="/usr/local/src/hg19ToHg38.over.chain")
-
-
-    """
-
-}
-
-
-process pseudobulk_singlecell{
-
-   label "process_high_memory"
-
-   publishDir "${params.outdir}/expression_matrices/", mode: "copy"
-
-   input: 
-   path single_cell_file
-
-   output:
-   path "ct_names.txt", emit: ct_names
-   path "*pseudobulk.csv", emit: pseudobulk_counts
-   path "gene_locations.csv", emit: gene_locations
-
-   script:
-    """
-    #!/usr/bin/env Rscript
-    
-    library(Seurat)
-    library(BPCells)
-    library(dplyr)
-    source("${params.pseudobulk_source_functions}")
-
-    seuratobj=readRDS("$single_cell_file")
-    celltypelist=Seurat::SplitObject(seuratobj,split.by="${params.celltype_column}")
-
-    aggregated_counts_list=pseudobulk_counts(celltypelist,
-    min.cells=as.numeric(${params.min_cells}),
-    indiv_col="${params.individual_column}",
-    assay="${params.counts_assay}",
-    slot="${params.counts_slot}")
-
-    for (i in 1:length(aggregated_counts_list)) {
-
-        df=aggregated_counts_list[[i]] %>% mutate(geneid=row.names(.)) 
-        
-        celltype=names(aggregated_counts_list[i])
-        
-
-        # Write the data frame to a CSV file
-        data.table::fwrite(df, paste0(names(aggregated_counts_list[i]), "_pseudobulk.csv"))
-    }
-
-
-    gene_locations=get_gene_locations(aggregated_counts_list[[1]])
-    data.table::fwrite(gene_locations,"gene_locations.csv")
-    writeLines(names(aggregated_counts_list), "ct_names.txt")
-
-    """
-
-}
-
-
-
-
-process qc_expression{
-
-    label "process_single"
-
-    publishDir "${params.outdir}/expression_matrices/", mode: 'copy'
-
-    input:
-    path pseudobulk_file
-
-    output:
-    path "*pseudobulk_normalised.csv" , emit: pseudobulk_normalised
-
-    script:
-    """
-    #!/usr/bin/env Rscript
-    library(data.table)
-    library(dplyr)
-
-    pseudobulk_data <- fread("$pseudobulk_file")
-    pseudobulk_data <- pseudobulk_data %>% tibble::column_to_rownames(var="geneid")
-
-    min_percentage <- as.numeric(${params.min_expression})
-    min_individuals <- min_percentage * ncol(pseudobulk_data)
-    pseudobulk_data <- pseudobulk_data[rowSums(pseudobulk_data > 0) >= min_individuals, ]
-
-    cell_type_name <- gsub("_pseudobulk.csv", "", "$pseudobulk_file")
-
-    pseudobulk_data=log2(edgeR::cpm(pseudobulk_data)+1) %>% as.data.frame()
-    pseudobulk_data = pseudobulk_data %>% mutate(geneid=row.names(.))
-
-    # Save the normalized data
-    fwrite(pseudobulk_data, paste0(cell_type_name, "_pseudobulk_normalised.csv"))
-    """
-}
-
-
-process qc_genotype {
-
-    publishDir "${params.outdir}", mode: 'copy'
-
-    input:
-    path genotype_mat
-    path snp_locations
-
-    output:
-    path "*"
-
-    script:
-    """
-    #!/usr/bin/env Rscript
-    library(data.table)
-
-    genotype_data <- fread("$genotype_mat")
-    snp_locations <- fread("$snp_locations")
-
-
-
-
-
-    """
-    
-    
-}
-
-
-
-process run_matrixeQTL{
-
-    label "process_high_memory"
-
-    publishDir "${params.outdir}/eQTL_outputs/", mode: 'copy'
-
-    input:
-    path genotype_mat
-    path snp_locations
-    path expression_mat
-    path gene_locations 
-
-    output:
-    path "*_cis_MatrixEQTLout.rds", emit: eqtl_results
-    path "*"
-
-
-    script:
-    """
-    #!/usr/bin/env Rscript
-    
-    source("${params.eqtl_source_functions}")
-
-    library(data.table)
-    library(dplyr)
-    
-    ##read in data
-    exp_mat=fread("$expression_mat") %>% tibble::column_to_rownames(var="geneid")
-    geno_mat=fread("$genotype_mat") %>% tibble::column_to_rownames(var="snp")
-    geno_loc=fread("$snp_locations")
-    exp_loc=fread("$gene_locations")
-    celltype=gsub("_pseudobulk_normalised.csv","","$expression_mat")
-
-
-    ##keep same samples
-    common_samples <- intersect(colnames(exp_mat), colnames(geno_mat))
-    exp_mat <- exp_mat %>% select(all_of(common_samples))
-    geno_mat <- geno_mat %>% select(all_of(common_samples))
-
-    #harmonise gene_loc and snp_loc
-    common_genes <- intersect(exp_loc %>% pull(geneid), rownames(exp_mat))
-    exp_mat <- exp_mat %>% filter(rownames(exp_mat) %in% common_genes)
-
-    
-    geno_loc<-geno_loc[,c("annot","chrom","position")] %>% tibble::column_to_rownames(var="annot")
-    geno_mat<-geno_mat[rownames(geno_loc),]
-    geno_mat<-geno_mat[complete.cases(geno_mat),]
-    geno_loc<-geno_loc[rownames(geno_mat),]
-    geno_loc=geno_loc %>% mutate(annot=rownames(geno_loc)) %>% select(annot,chrom,position)
-
-
-
-    calculate_ciseqtl(exp_mat=exp_mat,
-    exp_loc=exp_loc,
-    geno_mat=geno_mat,
-    geno_loc=geno_loc,
-    name=celltype,
-    cisDist=${params.cis_distance},
-    optimize_pcs=as.logical("${params.optimize_pcs}"))
-
-    """
-
-}
-
-process combine_eqtls{
-    label "process_high"
-    publishDir "${params.outdir}/eQTL_outputs/", mode: 'copy'
-
-    input:
-    path eqtls
-
-    output:
-    path "mateqtlouts.rds", emit: mateqtlouts
-    path "mateqtlouts_FDR_filtered.rds", emit: mateqtlouts_FDR_filtered
-
-
-    script:
-    """
-    #!/usr/bin/env Rscript
-
-    library(data.table)
-    library(dplyr)
-
-    eqtls=as.character("$eqtls")
-    eqtls=unlist(strsplit(eqtls, " "))
-    celltypes=gsub("_cis_MatrixEQTLout.rds","",eqtls)
-
-    #first, create a list of all the eqtl results at 5% FDR 
-    eqtl_list=lapply(eqtls, function(x) {
-        eqtl=as.data.frame(readRDS(x))
-        eqtl=eqtl %>% filter(FDR<=${params.fdr_threshold})
-        eqtl
-    })
-    names(eqtl_list)=celltypes
-    saveRDS(eqtl_list, "mateqtlouts_FDR_filtered.rds")
-
-    #now, create a list of all associations without cutoff
-    eqtl_list=lapply(eqtls, function(x) {
-        eqtl=as.data.frame(readRDS(x))
-        eqtl
-    })
-    names(eqtl_list)=celltypes
-    saveRDS(eqtl_list, "mateqtlouts.rds")
-
-
-    """
-
-
-}
-
-process final_report {
-
-    label "process_single"
-
-    publishDir "${params.outdir}", mode: 'copy'
-
-    input: 
-    path eqtl_results_filtered
-    path eqtl_results
-    path report_file
-
-    output: 
-    path "report.html"
-
-    script:
-    """
-    #!/usr/bin/env Rscript
-    rmarkdown::render(input = "$report_file", output_file = "report.html", params = list(
-        eqtl_results_filtered = "$eqtl_results_filtered",
-        eqtl_results = "$eqtl_results",
-        outdir = "${params.outdir}",
-        gds_file = "${params.gds_file}",
-        single_cell_file = "${params.single_cell_file}",
-        counts_assay = "${params.counts_assay}",
-        counts_slot = "${params.counts_slot}",
-        celltype_column = "${params.celltype_column}",
-        individual_column = "${params.individual_column}",
-        min_cells = ${params.min_cells},
-        min_expression = ${params.min_expression},
-        cis_distance = ${params.cis_distance},
-        fdr_threshold = ${params.fdr_threshold},
-        optimize_pcs = ${params.optimize_pcs ? 'TRUE' : 'FALSE'}
-    ))
-    """
-}
-
-workflow{
-
-  println """
+workflow {
+    println """
     ========================================
     Welcome to the Nextflow eQTL pipeline
     ========================================
@@ -335,6 +50,7 @@ workflow{
     GDS File: ${params.gds_file}
     Input Seurat File: ${params.single_cell_file}
     WorkDir: ${workflow.workDir}
+    Using profile: ${workflow.profile}
 
     ==============================================
 
@@ -354,6 +70,7 @@ workflow{
     Cis distance: ${params.cis_distance}
     FDR threshold: ${params.fdr_threshold}
     Optimize PCs: ${params.optimize_pcs}
+    Chromosomes used: ${params.filter_chr}
 
     If "optimize PCs" is set to TRUE, the pipeline will run longer.
 
@@ -364,47 +81,100 @@ workflow{
     This is the stable release.
 
     """
-    create_genotype(gds_file= params.gds_file)
+    create_genotype(gds_file= params.gds_file, 
+    params.genotype_source_functions)
+    qc_genotype(
+        genotype_mat=create_genotype.out.genotype_mat,
+        snp_chromlocations=create_genotype.out.snp_chromlocations,
+        filter_chr=params.filter_chr  // Pass the optional parameter
+    )
 
-    //aggregate counts
-    pseudobulk_singlecell(single_cell_file= params.single_cell_file)
-    pseudobulk_ch=pseudobulk_singlecell.out.pseudobulk_counts.flatten()
-    
-    
-    //QC and normalisation
+    pseudobulk_singlecell(params.single_cell_file, params.pseudobulk_source_functions)
+    pseudobulk_ch = pseudobulk_singlecell.out.pseudobulk_counts.flatten()
     qc_expression(pseudobulk_file= pseudobulk_ch)
 
-    //run matrix eQTL
+    if (params.optimize_pcs) {
+        // Define the n_pcs channel
+        n_pcs_ch = Channel.from(1..5)
+
+        // Combine pseudobulk_ch with n_pcs_ch
+        qc_expression.out.pseudobulk_normalised.flatten()
+            .combine(n_pcs_ch)
+            .set { combined_ch }
+
+        // Run the optimize_pcs process
+        optimize_pcs(
+            params.eqtl_source_functions,  // source_R
+            qc_genotype.out.qc_genotype_mat,  // genotype_mat
+            qc_genotype.out.qc_snp_chromlocations,  // snp_locations
+            combined_ch.map { it[0] },  // expression_mat (file from pseudobulk_ch)
+            pseudobulk_singlecell.out.gene_locations,  // gene_locations
+            combined_ch.map { it[1] }  // n_pcs (value from n_pcs_ch)
+        )
+
+        // Collect all egenes_results into a single list
+        optimize_pcs.out.egenes_results
+            .map { file -> 
+                // Extract cell type from the file name
+                celltype = file.name.replaceAll(/_egenes_vs_.+\.txt$/, "")
+                [celltype, file]
+            }
+            .groupTuple(by: 0)  // Group by cell type
+            .set { grouped_results }
+        // Pass the collected results to select_pcs
+        ch_exp_matrices = qc_expression.out.pseudobulk_normalised.flatten()
+            .map { file ->
+                def celltype = file.getBaseName().replace("_pseudobulk_normalised", "")
+                [celltype, file]
+            }
+   
+        
+        // this is for the markdown file
+        optimize_pcs.out.egenes_results
+            .collect()
+            .set { collected_results }
+
+        ch_exp_matrices = qc_expression.out.pseudobulk_normalised.flatten()
+            .map { file ->
+                def celltype = file.getBaseName().replace("_pseudobulk_normalised", "")
+                [celltype, file]
+            }
+
+        // Run the select_pcs process with two separate input channels
+        select_pcs(grouped_results, ch_exp_matrices)
+
+            
+    }else{
+            // Define a dummy file for optimization_results
+        dummy_file = file("dummy_optimization_results.txt")
+
+        // Initialize collected_results with the dummy file
+        collected_results = Channel.from(dummy_file)
+    }
+
     run_matrixeQTL(
-        genotype_mat= create_genotype.out.genotype_mat,
-        snp_locations= create_genotype.out.snp_chromlocations,
-        expression_mat= qc_expression.out.pseudobulk_normalised.flatten(),
-        gene_locations= pseudobulk_singlecell.out.gene_locations
+        params.eqtl_source_functions,
+        qc_genotype.out.qc_genotype_mat,
+        qc_genotype.out.qc_snp_chromlocations,
+        qc_expression.out.pseudobulk_normalised.flatten(),
+        pseudobulk_singlecell.out.gene_locations,
+        params.cov_file
     )
-    
+
     combine_eqtls(eqtls= run_matrixeQTL.out.eqtl_results.collect())
 
     if(params.report){
         final_report(
             eqtl_results_filtered = combine_eqtls.out.mateqtlouts_FDR_filtered,
             eqtl_results = combine_eqtls.out.mateqtlouts,
-            report_file = params.quarto_report
+            report_file = params.quarto_report,
+            optimization_results = collected_results
         )
     }
-
-    // final_report(
-    //     pseudobulk_file_list= qc_expression.out.collect(),
-    //     genotype_file= create_genotype.out.genotype_mat,
-    //     report_file=params.quarto_report
-    // )
-
-
-
+    // ...existing code...
 }
 
-
 workflow.onComplete {
-
     println """
     ========================================
     Pipeline Completed!
