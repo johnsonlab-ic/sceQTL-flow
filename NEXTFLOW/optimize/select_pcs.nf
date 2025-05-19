@@ -15,6 +15,7 @@ process select_pcs {
     #!/usr/bin/env Rscript
     library(data.table)
     library(ggplot2)
+    library(dplyr)
 
     # Combine all egenes files into a single data frame
     file_list <- unlist(strsplit("${egenes_files}", " "))
