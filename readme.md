@@ -26,12 +26,12 @@ Make sure you have nextflow installed! `curl -s https://get.nextflow.io | bash`
 
 To run the pipeline with its most basic parameters (on the Imperial HPC):
 
-    ```sh
-    nextflow run johnsonlab-ic/sc-eQTL-pipeline \
-    --gds_file path_to_genotype_gds_file \
-    --single_cell_file path_to_single_cell_file \
-    --outdir path_to_output_directory 
-    ```
+```sh
+nextflow run johnsonlab-ic/sc-eQTL-pipeline \
+--gds_file path_to_genotype_gds_file \
+--single_cell_file path_to_single_cell_file \
+--outdir path_to_output_directory 
+```
 
 ## Input Files / Output Directories
 
