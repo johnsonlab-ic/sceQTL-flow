@@ -24,23 +24,13 @@ The pipeline performs the following steps:
 
 Make sure you have nextflow installed! `curl -s https://get.nextflow.io | bash` 
 
-To run the pipeline:
-
-1. Clone this repository. Run;
+To run the pipeline with its most basic parameters (on the Imperial HPC):
 
     ```sh
-    git clone https://github.com/johnsonlab-ic/sc-eQTL-pipeline/ 
-    cd sc-eQTL-pipeline
-    ```
-
-2. Run the following command in the terminal, ensuring you provide the correct paths for the inputs:
-
-    ```sh
-    git pull; nextflow run -c nextflow.config main.nf -profile imperial \
+    nextflow run johnsonlab-ic/sc-eQTL-pipeline \
     --gds_file path_to_genotype_gds_file \
     --single_cell_file path_to_single_cell_file \
-    --outdir path_to_output_directory \
-    --N email@adress
+    --outdir path_to_output_directory 
     ```
 
 ## Input Files / Output Directories
