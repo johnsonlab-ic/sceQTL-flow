@@ -12,7 +12,6 @@ process run_matrixeQTL {
     path expression_mat
     path gene_locations
     path cov_file
-    tuple val(celltype_optimal), path(optimal_pc_file), optional: true
 
     output:
     path "*_cis_MatrixEQTLout.rds", emit: eqtl_results
@@ -46,30 +45,11 @@ process run_matrixeQTL {
     geno_loc = geno_loc[rownames(geno_mat), ]
     geno_loc = geno_loc %>% mutate(annot = rownames(geno_loc)) %>% select(annot, chrom, position)
     
-    # Check if we have optimal PCs for this cell type
-    celltype = gsub("_pseudobulk_normalised.csv", "", "$expression_mat")
-    optimal_pc_file = "$optimal_pc_file"
-    
-    if(file.exists(optimal_pc_file) && nchar(optimal_pc_file) > 0) {
-        message("Using optimal PCs file: ", optimal_pc_file)
-        # Read the optimal PCs file and use as covariates
-        optimal_pcs = read.table(optimal_pc_file, header=TRUE, row.names=1)
-        
-        # Combine with any existing covariates
-        if(file.exists("$cov_file") && file.size("$cov_file") > 0) {
-            existing_covs = read.table("$cov_file", header=TRUE, row.names=1)
-            covmat = rbind(existing_covs, optimal_pcs)
-        } else {
-            covmat = optimal_pcs
-        }
-    } else {
-        message("No optimal PCs file provided for this cell type")
-        # Use original covariates if they exist
-        if(file.exists("$cov_file") && file.size("$cov_file") > 0) {
-            covmat = read.table("$cov_file", header=TRUE, row.names=1)
-        } else {
-            covmat = NULL
-        }
+    cov_file="$cov_file"
+    if(file.size(cov_file) > 0){
+        covmat=read.table(covmat, header=TRUE, row.names=1)
+    }else{
+        covmat = NULL
     }
 
     message("calculating eQTLs")
