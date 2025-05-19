@@ -1,6 +1,3 @@
-
-
-
 # Welcome
 
 This pipeline is designed for eQTL (expression Quantitative Trait Loci) analysis using single-cell RNA sequencing data. It integrates genotype data with single-cell expression data to identify genetic variants that influence gene expression at the single-cell level.
@@ -63,3 +60,51 @@ You don't need to add the parameters necessarily, there are default values.
 ## Notes / warnings!!
 
 This is designed to be run on the Imperial College HPC system (for the time being) due to being very memory-intensive but will vary by dataset.
+
+## Docker Images
+
+This pipeline uses Docker/Singularity containers to ensure reproducibility across environments. The following containers are used:
+
+- **eqtl-genotype**: Contains R packages and tools for handling genotype data, including SNP processing, quality control, and Matrix-eQTL integration.
+  - Repository: `ghcr.io/johnsonlab-ic/eqtl-genotype:latest`
+  - Used for: Genotype QC, PC optimization, MatrixEQTL analysis
+
+- **eqtl-expression**: Contains Seurat and other R packages for single-cell data analysis and pseudobulking.
+  - Repository: `ghcr.io/johnsonlab-ic/eqtl-expression:latest`
+  - Used for: Pseudobulking, expression QC, normalization
+
+- **eqtl-report**: Contains R markdown, knitr, and visualization packages for generating reports.
+  - Repository: `ghcr.io/johnsonlab-ic/eqtl-report:latest`
+  - Used for: Generating final HTML reports with results
+
+These containers are managed through GitHub Container Registry (GHCR) and are automatically used by the pipeline without requiring manual Docker installation.
+
+### Building Custom Containers
+
+If you need to modify the Docker images, the Dockerfiles are available in the `Images/` directory:
+
+```bash
+# To build locally (from the repository root)
+cd Images
+docker build -t local/eqtl-expression:latest -f Dockerfile.expression .
+docker build -t local/eqtl-genotype:latest -f Dockerfile.genotype .
+docker build -t local/eqtl-report:latest -f Dockerfile.reports .
+```
+
+To use your custom images, modify the `nextflow.config` file to point to your local images.
+
+## Repository Information
+
+This pipeline is maintained in the following public repository:
+- **Public Repository**: [johnsonlab-ic/sc-eQTL-pipeline](https://github.com/johnsonlab-ic/sc-eQTL-pipeline)
+
+### Contributing
+
+If you'd like to contribute to this project:
+
+1. Open an issue describing the feature or bug
+2. Fork the repository
+3. Create a branch for your changes
+4. Submit a pull request
+
+For major changes, please discuss them first via issues.
