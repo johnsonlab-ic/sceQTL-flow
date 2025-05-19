@@ -1,110 +1,173 @@
-# Welcome
+# 🧬 sc-eQTL Pipeline
 
-This pipeline is designed for eQTL (expression Quantitative Trait Loci) analysis using single-cell RNA sequencing data. It integrates genotype data with single-cell expression data to identify genetic variants that influence gene expression at the single-cell level.
+> **A Nextflow pipeline for single-cell expression Quantitative Trait Loci analysis**
 
-## Required Input Files
+This pipeline integrates genotype data with single-cell RNA sequencing data to identify genetic variants that influence gene expression at the single-cell level.
 
-- **Genotype GDS File**: A GDS (Genomic Data Structure) file containing genotype data.
-- **Single-Cell Data File**: An RDS file containing single-cell RNA sequencing data in a Seurat object format.
+---
 
-## Pipeline Functionality
+## 📋 Overview
 
-The pipeline performs the following steps:
+<img src="https://img.shields.io/badge/Nextflow-v22.10.0+-green.svg" alt="Nextflow Version">
+<img src="https://img.shields.io/badge/R-v4.3.0+-blue.svg" alt="R Version">
+<img src="https://img.shields.io/badge/Containers-Docker%2FSingularity-orange.svg" alt="Container Support">
 
-1. **Data Preprocessing**: Reads and preprocesses the input genotype and single-cell data files.
-2. **Pseudobulking**: Aggregates single-cell data into pseudobulk samples based on cell types and individuals.
-3. **eQTL Analysis**: Conducts eQTL analysis to identify genetic variants associated with gene expression levels.
-4. **Result Optimization**: Optionally optimizes the number of principal components for the eQTL analysis.
-5. **Output Generation**: Produces results including significant eQTLs, summary statistics, and diagnostic plots.
+* **Integrates** genotype and scRNA-seq data
+* **Performs** cell-type-specific eQTL analysis
+* **Optimizes** principal components automatically
+* **Generates** comprehensive reports and visualizations
 
-## Usage
+## 📥 Required Input Files
 
-Make sure you have nextflow installed! `curl -s https://get.nextflow.io | bash` 
+| File Type | Description | Format |
+|-----------|-------------|--------|
+| **Genotype Data** | Contains SNP information | GDS file |
+| **Single-Cell Data** | Expression data with metadata | Seurat object (RDS) |
 
-To run the pipeline with its most basic parameters (on the Imperial HPC):
+## 🔍 Pipeline Functionality
 
-```sh
-nextflow run johnsonlab-ic/sc-eQTL-pipeline \
---gds_file path_to_genotype_gds_file \
---single_cell_file path_to_single_cell_file \
---outdir path_to_output_directory 
+The pipeline performs these key steps:
+
+1. **Data Preprocessing** 
+   * Reads and processes input files
+   * Performs quality control on genotype data
+
+2. **Pseudobulking**
+   * Aggregates single-cell data by cell type and individual
+   * Normalizes expression data
+
+3. **eQTL Analysis**
+   * Identifies genetic variants associated with gene expression
+   * Conducts statistical testing with MatrixEQTL
+
+4. **Result Optimization**
+   * Optimizes principal components for each cell type
+   * Enhances detection power and accuracy
+
+5. **Output Generation**
+   * Produces significant eQTLs lists
+   * Creates summary statistics and diagnostic plots
+
+---
+
+## 🚀 Quick Start
+
+### Installation
+
+```bash
+# Install Nextflow
+curl -s https://get.nextflow.io | bash
 ```
 
-## Input Files / Output Directories
+### Running the Pipeline
 
-- **outdir**: Output directory for the pipeline results. Default: `/rds/general/user/ah3918/projects/puklandmarkproject/ephemeral/tmp/`
-- **gds_file**: Path to the GDS file containing genotype data. Default: `/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/TEST_DATA/test_geno.gds`
-- **single_cell_file**: Path to the single-cell data file. Default: `/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/TEST_DATA/roche_ms_decontx.rds`
+```bash
+nextflow run johnsonlab-ic/sc-eQTL-pipeline \
+  --gds_file path_to_genotype_gds_file \
+  --single_cell_file path_to_single_cell_file \
+  --outdir path_to_output_directory 
+```
 
-## Run Parameters / Flags
+## 📁 Input Files & Parameters
 
-You don't need to add the parameters necessarily, there are default values.
+### Input and Output Paths
 
-- **--counts_assay**: Assay used for counts. Default: `RNA`
-- **--counts_slot**: Slot used for counts. Default: `counts`
-- **--celltype_column**: Column name for cell types within the Seurat object. Default: `CellType`
-- **--individual_column**: Column name for individual IDs. Default: `Individual_ID`
-- **--min_cells**: Minimum number of cells for pseudobulking. Default: `10`
-- **--min_expression**: Minimum expression percentage for genes. Genes expressed in less than this percentage of individuals excluded. Default: `0.05`
-- **--cis_distance**: Cis distance for eQTL analysis. Default: `1e6`
-- **--fdr_threshold**: FDR threshold for eQTL results. Default: `0.05`
-- **--optimize_pcs**: Boolean to optimize principal components. This iteratively runs MatrixEQTL to find optimal PCs. Default: `true`
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `--outdir` | Output directory | `/rds/general/user/ah3918/projects/puklandmarkproject/ephemeral/tmp/` |
+| `--gds_file` | Genotype data file | `/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/TEST_DATA/test_geno.gds` |
+| `--single_cell_file` | Seurat object file | `/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/TEST_DATA/roche_ms_decontx.rds` |
 
-## Other Useful Flags
+### Analysis Parameters
 
-- **-w**: Working directory. This is where nextflow stages input files. Needs lots of space! Default: `/rds/general/user/$USER/ephemeral/`
-- **-N <email.address>**: Email address to send notifications to on run completion. For example: `a.haglund19@imperial.ac.uk`.
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `--counts_assay` | Assay for counts | `RNA` |
+| `--counts_slot` | Slot for counts | `counts` |
+| `--celltype_column` | Column for cell types | `CellType` |
+| `--individual_column` | Column for individual IDs | `Individual_ID` |
+| `--min_cells` | Min cells for pseudobulking | `10` |
+| `--min_expression` | Min expression percentage | `0.05` |
+| `--cis_distance` | Cis distance for eQTL analysis | `1e6` |
+| `--fdr_threshold` | FDR threshold | `0.05` |
+| `--optimize_pcs` | Optimize principal components | `true` |
+
+### Runtime Options
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `-w` | Working directory | `/rds/general/user/$USER/ephemeral/` |
+| `-N` | Email for notifications | _none_ |
+
+---
 
 
 
-## Notes / warnings!!
+## ⚠️ Notes & Warnings
 
-This is designed to be run on the Imperial College HPC system (for the time being) due to being very memory-intensive but will vary by dataset.
+> **System Requirements**: This pipeline is computationally intensive and best run on HPC systems.
 
-## Docker Images
+This pipeline is optimized for the Imperial College HPC system due to its memory-intensive operations, but it can be adapted to other systems with sufficient resources.
 
-This pipeline uses Docker/Singularity containers to ensure reproducibility across environments. The following containers are used:
+---
 
-- **eqtl-genotype**: Contains R packages and tools for handling genotype data, including SNP processing, quality control, and Matrix-eQTL integration.
-  - Repository: `ghcr.io/johnsonlab-ic/eqtl-genotype:latest`
-  - Used for: Genotype QC, PC optimization, MatrixEQTL analysis
+## 🐳 Docker Images
 
-- **eqtl-expression**: Contains Seurat and other R packages for single-cell data analysis and pseudobulking.
-  - Repository: `ghcr.io/johnsonlab-ic/eqtl-expression:latest`
-  - Used for: Pseudobulking, expression QC, normalization
+The pipeline uses containerization to ensure reproducibility across environments:
 
-- **eqtl-report**: Contains R markdown, knitr, and visualization packages for generating reports.
-  - Repository: `ghcr.io/johnsonlab-ic/eqtl-report:latest`
-  - Used for: Generating final HTML reports with results
-
-These containers are managed through GitHub Container Registry (GHCR) and are automatically used by the pipeline without requiring manual Docker installation.
+| Container | Purpose | Repository |
+|-----------|---------|------------|
+| **eqtl-genotype** | Genotype processing & eQTL analysis | `ghcr.io/johnsonlab-ic/eqtl-genotype:latest` |
+| **eqtl-expression** | Single-cell data & pseudobulking | `ghcr.io/johnsonlab-ic/eqtl-expression:latest` |
+| **eqtl-report** | Report generation & visualization | `ghcr.io/johnsonlab-ic/eqtl-report:latest` |
 
 ### Building Custom Containers
 
-If you need to modify the Docker images, the Dockerfiles are available in the `Images/` directory:
-
 ```bash
-# To build locally (from the repository root)
+# Build containers locally
 cd Images
 docker build -t local/eqtl-expression:latest -f Dockerfile.expression .
 docker build -t local/eqtl-genotype:latest -f Dockerfile.genotype .
 docker build -t local/eqtl-report:latest -f Dockerfile.reports .
 ```
 
-To use your custom images, modify the `nextflow.config` file to point to your local images.
+To use custom images, modify the corresponding entries in `nextflow.config`.
 
-## Repository Information
+---
 
-This pipeline is maintained in the following public repository:
-- **Public Repository**: [johnsonlab-ic/sc-eQTL-pipeline](https://github.com/johnsonlab-ic/sc-eQTL-pipeline)
+## 📚 Repository Information
+
+<img src="https://img.shields.io/badge/GitHub-johnsonlab--ic-lightgrey?logo=github" alt="GitHub Repo">
+
+This pipeline is maintained in a public repository:
+- [johnsonlab-ic/sc-eQTL-pipeline](https://github.com/johnsonlab-ic/sc-eQTL-pipeline)
 
 ### Contributing
 
-If you'd like to contribute to this project:
+We welcome contributions! Please follow these steps:
 
-1. Open an issue describing the feature or bug
-2. Fork the repository
-3. Create a branch for your changes
-4. Submit a pull request
+1. 🔍 **Open an issue** describing the feature or bug
+2. 🍴 **Fork** the repository
+3. 🌿 **Create a branch** for your changes
+4. 🔄 **Submit a pull request**
 
 For major changes, please discuss them first via issues.
+
+---
+
+## 📊 Output Details
+
+The pipeline generates these key outputs:
+
+- **eQTL results**: Lists of significant eQTLs for each cell type
+- **Visualization reports**: Interactive HTML reports with plots
+- **Optimization data**: PC optimization results if enabled
+- **QC metrics**: Quality control information for genotype and expression data
+
+---
+
+## 📞 Support
+
+For questions or issues, please:
+- Open an issue on the [GitHub repository](https://github.com/johnsonlab-ic/sc-eQTL-pipeline/issues)
+- Contact the Johnson Lab at Imperial College London

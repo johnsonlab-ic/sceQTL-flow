@@ -34,6 +34,9 @@ process select_pcs {
     exp_pcs <- t(exp_pcs)
 
     # Write the PC covariate matrix to a file
-    write.table("exp_pcs_${celltype}.txt")
+    write.table(exp_pcs, file="optimal_pcs_${celltype}.txt", quote=FALSE, sep="\t", col.names=TRUE, row.names=TRUE)
+    
+    # Also save information about how many PCs were chosen
+    writeLines(paste("Cell type:", "${celltype}", "\nOptimal number of PCs:", n_pcs), "pc_info_${celltype}.txt")
     """
 }
