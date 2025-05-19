@@ -1,6 +1,6 @@
 indir=/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines//TEST_DATA/
 
-git pull;nextflow run -c nextflow.config main.nf \
+nextflow run HaglundA/eQTL_PIPELINE -r dev \
 -profile imperial \
 --outdir /rds/general/user/ah3918/ephemeral/eqtl_pipepline_outs/test_data \
 --gds_file ${indir}/final_geno_440samples.gds \
