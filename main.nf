@@ -81,7 +81,7 @@ workflow {
 
     ==============================================
 
-    This is the stable release.
+    This is the DEV branch. 
 
     """
     create_genotype(gds_file= params.gds_file, 
