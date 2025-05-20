@@ -22,7 +22,7 @@ process get_residuals {
     exp_mat = fread("$expression_mat") %>% tibble::column_to_rownames(var="geneid")
     cov_file="$cov_file"
     if(file.size(cov_file) > 0){
-        cov_mat = fread(cov_file,head=T) %>% tibble::column_to_rownames(var="V1")
+        cov_mat = fread(cov_file,head=T)
 
         #extract all colnames except "Individual_ID"
         covs_to_include = colnames(cov_mat)[!colnames(cov_mat) %in% c("Individual_ID")]
