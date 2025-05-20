@@ -51,6 +51,7 @@ workflow {
     Input Seurat File: ${params.single_cell_file}
     WorkDir: ${workflow.workDir}
     Using profile: ${workflow.profile}
+    Covariate file: ${params.cov_file}
 
     ==============================================
 

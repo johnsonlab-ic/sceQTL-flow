@@ -47,7 +47,7 @@ process run_matrixeQTL {
     
     cov_file="$cov_file"
     if(file.size(cov_file) > 0){
-        covmat=read.table(covmat, header=TRUE, row.names=1)
+        covmat=read.csv(cov_file, header=TRUE, row.names=1)
     }else{
         covmat = NULL
     }
