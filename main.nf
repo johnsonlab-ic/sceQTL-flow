@@ -169,8 +169,7 @@ workflow {
         qc_genotype.out.qc_genotype_mat,
         qc_genotype.out.qc_snp_chromlocations,
         get_residuals.out.residuals_results.flatten(),  // Changed to use residuals
-        pseudobulk_singlecell.out.gene_locations,
-        params.cov_file
+        pseudobulk_singlecell.out.gene_locations
     )
 
     combine_eqtls(eqtls= run_matrixeQTL.out.eqtl_results.collect())

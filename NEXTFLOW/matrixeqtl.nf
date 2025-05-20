@@ -11,7 +11,6 @@ process run_matrixeQTL {
     path snp_locations
     path expression_mat
     path gene_locations
-    path cov_file
 
     output:
     path "*_cis_MatrixEQTLout.rds", emit: eqtl_results
@@ -44,20 +43,10 @@ process run_matrixeQTL {
     geno_mat = geno_mat[complete.cases(geno_mat), ]
     geno_loc = geno_loc[rownames(geno_mat), ]
     geno_loc = geno_loc %>% mutate(annot = rownames(geno_loc)) %>% select(annot, chrom, position)
-    
-    cov_file="$cov_file"
-    if(file.size(cov_file) > 0){
-        covmat=data.table::fread(cov_file, header=TRUE)
-        row.names(covmat) = covmat\$V1
-        covmat = covmat %>% select(-V1)
-        covmat = covmat %>% select(all_of(common_samples))
-        
-        message("Covariate matrix loaded. N individuals: ", ncol(covmat))
-        message("common samples: ", length(common_samples))
-        
-    }else{
-        covmat = NULL
-    }    
+
+ 
+    message("Covariates fixed at get_residuals step")
+    covmat=NULL
     message("calculating eQTLs")
   
 

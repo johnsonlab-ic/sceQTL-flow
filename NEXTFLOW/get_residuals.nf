@@ -20,7 +20,7 @@ process get_residuals {
     library(dplyr)
 
     exp_mat = fread("$expression_mat") %>% tibble::column_to_rownames(var="geneid")
-    
+    cov_file="$cov_file"
     if(file.size(cov_file) > 0){
         cov_mat = fread(cov_file,head=T) %>% tibble::column_to_rownames(var="V1")
 
