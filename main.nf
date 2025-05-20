@@ -28,11 +28,13 @@ include { create_genotype } from './NEXTFLOW/genotype.nf'
 include { qc_genotype } from './NEXTFLOW/genotype.nf'
 include { pseudobulk_singlecell } from './NEXTFLOW/pseudobulk.nf'
 include { qc_expression } from './NEXTFLOW/qc_expression.nf'
+include { get_residuals } from './NEXTFLOW/get_residuals.nf'
 include { run_matrixeQTL } from './NEXTFLOW/matrixeqtl.nf'
 include { combine_eqtls } from './NEXTFLOW/combine_eqtls.nf'
 include { final_report } from './NEXTFLOW/final_report.nf'
 include { optimize_pcs } from './NEXTFLOW/optimize/optimize_pcs.nf'
 include { select_pcs } from './NEXTFLOW/optimize/select_pcs.nf'
+
 
 // default parameters 
 
@@ -93,22 +95,30 @@ workflow {
     pseudobulk_singlecell(params.single_cell_file, params.pseudobulk_source_functions)
     pseudobulk_ch = pseudobulk_singlecell.out.pseudobulk_counts.flatten()
     qc_expression(pseudobulk_file= pseudobulk_ch)
+    
+    // Add get_residuals step
+    get_residuals(
+        qc_expression.out.pseudobulk_normalised.flatten(),
+        params.cov_file,
+        params.pseudobulk_source_functions
+    )
 
     if (params.optimize_pcs) {
         // Define the n_pcs channel
         n_pcs_ch = Channel.from(1..3)
 
-        // Combine pseudobulk_ch with n_pcs_ch
-        qc_expression.out.pseudobulk_normalised.flatten()
+        // Combine with get_residuals output instead of qc_expression output
+        get_residuals.out.residuals_results.flatten()
             .combine(n_pcs_ch)
             .set { combined_ch }
 
+        
         // Run the optimize_pcs process
         optimize_pcs(
             params.eqtl_source_functions,  // source_R
             qc_genotype.out.qc_genotype_mat,  // genotype_mat
             qc_genotype.out.qc_snp_chromlocations,  // snp_locations
-            combined_ch.map { it[0] },  // expression_mat (file from pseudobulk_ch)
+            combined_ch.map { it[0] },  // expression_mat (now from get_residuals)
             pseudobulk_singlecell.out.gene_locations, // gene_locations
             params.cov_file, // cov_file
             combined_ch.map { it[1] },// n_pcs (value from n_pcs_ch)
@@ -158,7 +168,7 @@ workflow {
         params.eqtl_source_functions,
         qc_genotype.out.qc_genotype_mat,
         qc_genotype.out.qc_snp_chromlocations,
-        qc_expression.out.pseudobulk_normalised.flatten(),
+        get_residuals.out.residuals_results.flatten(),  // Changed to use residuals
         pseudobulk_singlecell.out.gene_locations,
         params.cov_file
     )
@@ -173,7 +183,6 @@ workflow {
             optimization_results = collected_results
         )
     }
-    // ...existing code...
 }
 
 workflow.onComplete {
@@ -181,6 +190,8 @@ workflow.onComplete {
     ========================================
     Pipeline Completed!
     ========================================
+
+    eQTL report generated at: ${params.outdir}/eQTL_outputs/final_report.html
 
     """
 }
