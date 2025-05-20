@@ -46,20 +46,7 @@ process optimize_pcs {
     geno_loc = geno_loc[rownames(geno_mat), ]
     geno_loc = geno_loc %>% mutate(annot = rownames(geno_loc)) %>% select(annot, chrom, position)
 
-    ##ADD COVMAT CODE HERE
-    cov_file="$cov_file"
-    if(file.size(cov_file) > 0){
-        covmat=data.table::fread(cov_file, header=TRUE)
-        row.names(covmat) = covmat\$V1
-        covmat = covmat %>% select(-V1)
-        covmat = covmat %>% select(all_of(common_samples))
-        
-        message("Covariate matrix loaded. N individuals: ", ncol(covmat))
-        message("common samples: ", length(common_samples))
-        
-    }else{
-        covmat = NULL
-    }   
+    covmat = NULL
 
     exp_pcs = prcomp(t(exp_mat), scale. = TRUE)
     exp_pcs = exp_pcs\$x[, 1:${n_pcs}]
