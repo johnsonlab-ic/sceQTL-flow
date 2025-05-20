@@ -1,6 +1,6 @@
 process get_residuals {
     tag "${expression_mat}"
-    label "process_high_memory"
+    label "process_high"
     publishDir "${params.outdir}/residuals/", mode: 'copy'
 
     input:
