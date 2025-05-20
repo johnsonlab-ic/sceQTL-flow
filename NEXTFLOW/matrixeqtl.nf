@@ -47,19 +47,9 @@ process run_matrixeQTL {
 
     # Load optimized PCs as covariates
     message("Loading optimized PCs from: $optimized_pcs")
-    covmat = tryCatch({
-        read.table("$optimized_pcs", header=TRUE, row.names=1)
-    }, error = function(e) {
-        message("Error loading optimized PCs: ", e$message)
-        NULL
-    })
-    
-    if(is.null(covmat) || nrow(covmat) == 0) {
-        message("Warning: No valid covariates found. Running without covariates.")
-        covmat = NULL
-    } else {
-        message("Using ", nrow(covmat), " optimized PCs as covariates")
-    }
+    covmat = read.table("$optimized_pcs", header=TRUE, row.names=1)
+
+    message("Using ", nrow(covmat), " optimized PCs as covariates")
 
     message("Calculating eQTLs")
     outs=calculate_ciseqtl(
