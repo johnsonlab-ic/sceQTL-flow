@@ -95,7 +95,7 @@ workflow {
 
     if (params.optimize_pcs) {
         // Define the n_pcs channel
-        n_pcs_ch = Channel.from(1..5)
+        n_pcs_ch = Channel.from(1..3)
 
         // Combine pseudobulk_ch with n_pcs_ch
         qc_expression.out.pseudobulk_normalised.flatten()
