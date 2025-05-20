@@ -8,7 +8,7 @@ process select_pcs {
     tuple val(celltype), path(exp_matrix)
 
     output:
-    tuple val(celltype), path("optimal_pcs_${celltype}.txt"), emit: exp_pcs
+    tuple val(celltype), path("*_pcs.txt"), emit: exp_pcs
 
     script:
     """
@@ -34,7 +34,7 @@ process select_pcs {
     exp_pcs <- t(exp_pcs)
 
     # Write the PC covariate matrix to a file
-    write.table(exp_pcs, file="optimal_pcs_${celltype}.txt", quote=FALSE, sep="\t", col.names=TRUE, row.names=TRUE)
+    write.table(exp_pcs, file=paste0(n_pcs,"_pcs.txt"), quote=FALSE, sep="\t", col.names=TRUE, row.names=TRUE)
     
     # Also save information about how many PCs were chosen
     writeLines(paste("Cell type:", "${celltype}", "\nOptimal number of PCs:", n_pcs), "pc_info_${celltype}.txt")
