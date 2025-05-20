@@ -10,6 +10,7 @@ process run_matrixeQTL {
     path snp_locations
     path expression_mat
     path gene_locations
+    path optimized_pcs
 
     output:
     path "*_cis_MatrixEQTLout.rds", emit: eqtl_results
@@ -44,20 +45,32 @@ process run_matrixeQTL {
     geno_loc = geno_loc[rownames(geno_mat), ]
     geno_loc = geno_loc %>% mutate(annot = rownames(geno_loc)) %>% select(annot, chrom, position)
 
-    message("Covariates fixed at get_residuals step")
-    covmat=NULL
-    message("calculating eQTLs")
-  
+    # Load optimized PCs as covariates
+    message("Loading optimized PCs from: $optimized_pcs")
+    covmat = tryCatch({
+        read.table("$optimized_pcs", header=TRUE, row.names=1)
+    }, error = function(e) {
+        message("Error loading optimized PCs: ", e$message)
+        NULL
+    })
+    
+    if(is.null(covmat) || nrow(covmat) == 0) {
+        message("Warning: No valid covariates found. Running without covariates.")
+        covmat = NULL
+    } else {
+        message("Using ", nrow(covmat), " optimized PCs as covariates")
+    }
 
+    message("Calculating eQTLs")
     outs=calculate_ciseqtl(
         exp_mat = exp_mat,
         exp_loc = exp_loc,
         geno_mat = geno_mat,
         geno_loc = geno_loc,
         name = celltype,
-        pvOutputThreshold =0,
-        cisDist = as.numeric(${params.cis_distance}),
-        optimize_pcs = as.logical("${params.optimize_pcs}")
+        covmat = covmat,
+        pvOutputThreshold = 0,
+        cisDist = as.numeric(${params.cis_distance})
     )
 
     save_eqtls <- function(eqtls, prefix) {

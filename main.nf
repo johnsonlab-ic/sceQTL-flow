@@ -22,7 +22,7 @@ params.counts_slot="counts"
 params.cis_distance=1000000
 params.fdr_threshold=0.05
 params.filter_chr = "all" // Optional parameter for filtering by chromosome. use "chr6"
-params.optimize_pcs = true
+
 
 include { create_genotype } from './NEXTFLOW/genotype.nf'
 include { qc_genotype } from './NEXTFLOW/genotype.nf'
@@ -72,7 +72,6 @@ workflow {
 
     Cis distance: ${params.cis_distance}
     FDR threshold: ${params.fdr_threshold}
-    Optimize PCs: ${params.optimize_pcs}
     Chromosomes used: ${params.filter_chr}
 
     If "optimize PCs" is set to TRUE, the pipeline will run longer.
@@ -103,66 +102,64 @@ workflow {
         params.pseudobulk_source_functions
     )
 
-    if (params.optimize_pcs) {
-        // Define the n_pcs channel
-        n_pcs_ch = Channel.from(1..3)
+    // Define the n_pcs channel - always runs now
+    n_pcs_ch = Channel.from(1..3)
 
-        // Combine with get_residuals output instead of qc_expression output
-        get_residuals.out.residuals_results.flatten()
-            .combine(n_pcs_ch)
-            .set { combined_ch }
+    // Combine with get_residuals output
+    get_residuals.out.residuals_results.flatten()
+        .combine(n_pcs_ch)
+        .set { combined_ch }
 
-        // Run the optimize_pcs process
-        optimize_pcs(
-            params.eqtl_source_functions,  // source_R
-            qc_genotype.out.qc_genotype_mat,  // genotype_mat
-            qc_genotype.out.qc_snp_chromlocations,  // snp_locations
-            combined_ch.map { it[0] },  // expression_mat (now from get_residuals)
-            pseudobulk_singlecell.out.gene_locations, // gene_locations
-            params.cov_file, // cov_file
-            combined_ch.map { it[1] },// n_pcs (value from n_pcs_ch)
-        )
+    // Run the optimize_pcs process
+    optimize_pcs(
+        params.eqtl_source_functions,
+        qc_genotype.out.qc_genotype_mat,
+        qc_genotype.out.qc_snp_chromlocations,
+        combined_ch.map { it[0] },
+        pseudobulk_singlecell.out.gene_locations,
+        params.cov_file,
+        combined_ch.map { it[1] }
+    )
 
-        // Collect all egenes_results into a single list
-        optimize_pcs.out.egenes_results
-            .map { file -> 
-                // Extract cell type from the file name
-                celltype = file.name.replaceAll(/_egenes_vs_.+\.txt$/, "")
-                [celltype, file]
-            }
-            .groupTuple(by: 0)  // Group by cell type
-            .set { grouped_results }
-            
-        // Map the residual files by celltype for joining with select_pcs output
-        get_residuals.out.residuals_results.flatten()
-            .map { file ->
-                def celltype = file.getBaseName().replace("_residuals", "")
-                [celltype, file]
-            }
-            .set { ch_residual_matrices }
-   
-        // this is for the markdown file
-        optimize_pcs.out.egenes_results
-            .collect()
-            .set { collected_results }
+    // Collect all egenes_results into a single list
+    optimize_pcs.out.egenes_results
+        .map { file -> 
+            // Extract cell type from the file name
+            celltype = file.name.replaceAll(/_egenes_vs_.+\.txt$/, "")
+            [celltype, file]
+        }
+        .groupTuple(by: 0)  // Group by cell type
+        .set { grouped_results }
+        
+    // Map the residual files by celltype
+    get_residuals.out.residuals_results.flatten()
+        .map { file ->
+            def celltype = file.getBaseName().replace("_residuals", "")
+            [celltype, file]
+        }
+        .set { ch_residual_matrices }
 
-        // Run the select_pcs process with residual matrices
-        select_pcs(grouped_results, ch_residual_matrices)
-            
-    } else {
-        // Define a dummy file for optimization_results
-        dummy_file = file("dummy_optimization_results.txt")
+    // For the markdown file
+    optimize_pcs.out.egenes_results
+        .collect()
+        .set { collected_results }
 
-        // Initialize collected_results with the dummy file
-        collected_results = Channel.from(dummy_file)
-    }
+    // Run the select_pcs process
+    select_pcs(grouped_results, ch_residual_matrices)
+    
+    // Join the residual matrices with their corresponding optimal PCs
+    ch_residual_matrices
+        .join(select_pcs.out.exp_pcs)
+        .set { residuals_with_pcs }
 
+    // Run matrixeQTL with optimized PCs for each cell type
     run_matrixeQTL(
         params.eqtl_source_functions,
         qc_genotype.out.qc_genotype_mat,
         qc_genotype.out.qc_snp_chromlocations,
-        get_residuals.out.residuals_results.flatten(),  // Changed to use residuals
-        pseudobulk_singlecell.out.gene_locations
+        residuals_with_pcs.map { it[1] },  // expression file
+        pseudobulk_singlecell.out.gene_locations,
+        residuals_with_pcs.map { it[2] }   // optimized PCs file
     )
 
     combine_eqtls(eqtls= run_matrixeQTL.out.eqtl_results.collect())

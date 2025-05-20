@@ -65,8 +65,7 @@ process optimize_pcs {
         geno_mat = geno_mat,
         geno_loc = geno_loc,
         name = celltype,
-        cisDist = ${params.cis_distance},
-        optimize_pcs = as.logical("${params.optimize_pcs}")
+        cisDist = ${params.cis_distance}
     )
     
     n_egenes = outs %>% filter(FDR<0.05) %>% pull(gene) %>% unique() %>% length()

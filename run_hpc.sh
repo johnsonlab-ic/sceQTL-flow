@@ -11,7 +11,6 @@ nextflow run main.nf \
 --individual_column "Individual_ID" \
 --counts_slot "counts" \
 --counts_assay "decontXcounts" \
---optimize_pcs true \
 -with-report pipeline_report.html \
 --report true
 
