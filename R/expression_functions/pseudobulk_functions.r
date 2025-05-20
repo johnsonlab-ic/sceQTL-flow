@@ -109,9 +109,9 @@ convert_geneids=function(genelist,
 
 }
 
-get_residuals=function(exp_mat,covs_to_include,cov_file){
+get_residuals=function(exp_mat,covs_to_include,covmat){
 
-  covmat=read.table(cov_file)
+
   message(paste0("Correcting expression matrix for known covariates.\nUser-defined covariates: '",paste(covs_to_include,collapse=", "),"'"))  
   rownames(covmat)=covmat$Individual_ID
   ##
