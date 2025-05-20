@@ -48,6 +48,9 @@ process run_matrixeQTL {
     cov_file="$cov_file"
     if(file.size(cov_file) > 0){
         covmat=read.csv(cov_file, header=TRUE, row.names=1)
+        covmat = covmat %>% select(all_of(common_samples))
+        message("Covariate matrix loaded. N individuals: ", ncol(covmat))
+        message("common samples: ", length(common_samples))
     }else{
         covmat = NULL
     }
