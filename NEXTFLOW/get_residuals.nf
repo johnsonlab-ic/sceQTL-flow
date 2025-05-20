@@ -28,7 +28,9 @@ process get_residuals {
         #extract all colnames except "Individual_ID"
         covs_to_include = colnames(cov_mat)[!colnames(cov_mat) %in% c("Individual_ID")]
 
-        exp_mat=get_residuals(exp_mat,cov_mat,covs_to_include=covs_to_include) %>% mutate(geneid=row.names(.))
+        exp_mat=get_residuals(exp_mat,cov_mat,covs_to_include=covs_to_include) %>% 
+        as.data.frame() %>% 
+        mutate(geneid=row.names(.))
     }else{
         exp_mat = exp_mat %>% mutate(geneid=row.names(.))
     }
