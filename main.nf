@@ -109,8 +109,9 @@ workflow {
             qc_genotype.out.qc_genotype_mat,  // genotype_mat
             qc_genotype.out.qc_snp_chromlocations,  // snp_locations
             combined_ch.map { it[0] },  // expression_mat (file from pseudobulk_ch)
-            pseudobulk_singlecell.out.gene_locations,  // gene_locations
-            combined_ch.map { it[1] }  // n_pcs (value from n_pcs_ch)
+            pseudobulk_singlecell.out.gene_locations, // gene_locations
+            params.cov_file, // cov_file
+            combined_ch.map { it[1] },// n_pcs (value from n_pcs_ch)
         )
 
         // Collect all egenes_results into a single list

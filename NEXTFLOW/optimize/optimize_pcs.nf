@@ -10,6 +10,7 @@ process optimize_pcs {
     path snp_locations
     path expression_mat
     path gene_locations
+    path cov_file
 
     val n_pcs
 
@@ -46,8 +47,12 @@ process optimize_pcs {
     geno_loc = geno_loc %>% mutate(annot = rownames(geno_loc)) %>% select(annot, chrom, position)
 
     ##ADD COVMAT CODE HERE
-    covmat=NULL 
-    #covmat=read.table("covmat.txt")
+    cov_file="$cov_file"
+    if(file.size(cov_file) > 0){
+        covmat=read.csv(cov_file, header=TRUE, row.names=1)
+    }else{
+        covmat = NULL
+    }
 
     exp_pcs = prcomp(t(exp_mat), scale. = TRUE)
     exp_pcs = exp_pcs\$x[, 1:${n_pcs}]
