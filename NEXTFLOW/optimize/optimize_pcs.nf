@@ -52,7 +52,7 @@ process optimize_pcs {
         covmat=data.table::fread(cov_file, header=TRUE)
         row.names(covmat) = covmat\$V1
         covmat = covmat %>% select(-V1)
-        covmat = covmat %>% select(all_of(common_samples))
+        covmat = covmat %>% select(all_of(common_samples)
         
         message("Covariate matrix loaded. N individuals: ", ncol(covmat))
         message("common samples: ", length(common_samples))

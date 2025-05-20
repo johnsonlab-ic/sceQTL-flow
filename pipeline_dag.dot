@@ -1,0 +1,198 @@
+digraph "pipeline_dag" {
+v0 [shape=point,label="",fixedsize=true,width=0.1];
+v2 [label="create_genotype"];
+v0 -> v2 [label="gds_file"];
+
+v1 [shape=point,label="",fixedsize=true,width=0.1];
+v2 [label="create_genotype"];
+v1 -> v2 [label="source_R"];
+
+v2 [label="create_genotype"];
+v5 [label="qc_genotype"];
+v2 -> v5 [label="genotype_mat"];
+
+v2 [label="create_genotype"];
+v5 [label="qc_genotype"];
+v2 -> v5 [label="snp_chromlocations"];
+
+v2 [label="create_genotype"];
+v3 [shape=point];
+v2 -> v3;
+
+v4 [shape=point,label="",fixedsize=true,width=0.1];
+v5 [label="qc_genotype"];
+v4 -> v5 [label="filter_chr"];
+
+v5 [label="qc_genotype"];
+v19 [label="optimize_pcs"];
+v5 -> v19;
+
+v5 [label="qc_genotype"];
+v19 [label="optimize_pcs"];
+v5 -> v19;
+
+v6 [shape=point,label="",fixedsize=true,width=0.1];
+v8 [label="pseudobulk_singlecell"];
+v6 -> v8 [label="single_cell_file"];
+
+v7 [shape=point,label="",fixedsize=true,width=0.1];
+v8 [label="pseudobulk_singlecell"];
+v7 -> v8 [label="source_R"];
+
+v8 [label="pseudobulk_singlecell"];
+v9 [shape=point];
+v8 -> v9;
+
+v8 [label="pseudobulk_singlecell"];
+v10 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="flatten"];
+v8 -> v10;
+
+v8 [label="pseudobulk_singlecell"];
+v19 [label="optimize_pcs"];
+v8 -> v19;
+
+v10 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="flatten"];
+v11 [label="qc_expression"];
+v10 -> v11 [label="pseudobulk_file"];
+
+v11 [label="qc_expression"];
+v13 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="flatten"];
+v11 -> v13;
+
+v12 [shape=point,label="",fixedsize=true,width=0.1,xlabel="Channel.from"];
+v14 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="combine"];
+v12 -> v14 [label="n_pcs_ch"];
+
+v13 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="flatten"];
+v14 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="combine"];
+v13 -> v14;
+
+v14 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="combine"];
+v15 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v14 -> v15 [label="combined_ch"];
+
+v15 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v19 [label="optimize_pcs"];
+v15 -> v19;
+
+v14 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="combine"];
+v16 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v14 -> v16 [label="combined_ch"];
+
+v16 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v19 [label="optimize_pcs"];
+v16 -> v19;
+
+v17 [shape=point,label="",fixedsize=true,width=0.1];
+v19 [label="optimize_pcs"];
+v17 -> v19 [label="source_R"];
+
+v18 [shape=point,label="",fixedsize=true,width=0.1];
+v19 [label="optimize_pcs"];
+v18 -> v19 [label="cov_file"];
+
+v19 [label="optimize_pcs"];
+v20 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v19 -> v20;
+
+v20 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v21 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="groupTuple"];
+v20 -> v21;
+
+v21 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="groupTuple"];
+v28 [label="select_pcs"];
+v21 -> v28 [label="grouped_results"];
+
+v11 [label="qc_expression"];
+v22 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="flatten"];
+v11 -> v22;
+
+v22 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="flatten"];
+v23 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v22 -> v23;
+
+v23 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v24 [shape=point];
+v23 -> v24 [label="ch_exp_matrices"];
+
+v19 [label="optimize_pcs"];
+v25 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="collect"];
+v19 -> v25;
+
+v25 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="collect"];
+v38 [label="final_report"];
+v25 -> v38 [label="optimization_results"];
+
+v11 [label="qc_expression"];
+v26 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="flatten"];
+v11 -> v26;
+
+v26 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="flatten"];
+v27 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v26 -> v27;
+
+v27 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v28 [label="select_pcs"];
+v27 -> v28 [label="ch_exp_matrices"];
+
+v28 [label="select_pcs"];
+v29 [shape=point];
+v28 -> v29;
+
+v11 [label="qc_expression"];
+v30 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="flatten"];
+v11 -> v30;
+
+v30 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="flatten"];
+v33 [label="run_matrixeQTL"];
+v30 -> v33;
+
+v31 [shape=point,label="",fixedsize=true,width=0.1];
+v33 [label="run_matrixeQTL"];
+v31 -> v33 [label="source_R"];
+
+v5 [label="qc_genotype"];
+v33 [label="run_matrixeQTL"];
+v5 -> v33 [label="genotype_mat"];
+
+v5 [label="qc_genotype"];
+v33 [label="run_matrixeQTL"];
+v5 -> v33 [label="snp_locations"];
+
+v8 [label="pseudobulk_singlecell"];
+v33 [label="run_matrixeQTL"];
+v8 -> v33 [label="gene_locations"];
+
+v32 [shape=point,label="",fixedsize=true,width=0.1];
+v33 [label="run_matrixeQTL"];
+v32 -> v33 [label="cov_file"];
+
+v33 [label="run_matrixeQTL"];
+v35 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="collect"];
+v33 -> v35;
+
+v33 [label="run_matrixeQTL"];
+v34 [shape=point];
+v33 -> v34;
+
+v35 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="collect"];
+v36 [label="combine_eqtls"];
+v35 -> v36 [label="eqtls"];
+
+v36 [label="combine_eqtls"];
+v38 [label="final_report"];
+v36 -> v38 [label="eqtl_results"];
+
+v36 [label="combine_eqtls"];
+v38 [label="final_report"];
+v36 -> v38 [label="eqtl_results_filtered"];
+
+v37 [shape=point,label="",fixedsize=true,width=0.1];
+v38 [label="final_report"];
+v37 -> v38 [label="report_file"];
+
+v38 [label="final_report"];
+v39 [shape=point];
+v38 -> v39;
+
+}
