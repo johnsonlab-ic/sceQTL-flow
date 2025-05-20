@@ -103,7 +103,7 @@ workflow {
     )
 
     // Define the n_pcs channel - always runs now
-    n_pcs_ch = Channel.from(1..3)
+    n_pcs_ch = Channel.from(1..20)
 
     // Combine with get_residuals output
     get_residuals.out.residuals_results.flatten()
