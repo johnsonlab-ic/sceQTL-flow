@@ -45,7 +45,7 @@ process run_matrixeQTL {
     geno_loc = geno_loc %>% mutate(annot = rownames(geno_loc)) %>% select(annot, chrom, position)
 
  
-    message("Covariates fixed at get_residuals step")
+    #message("Covariates fixed at get_residuals step")
     covmat=NULL
     message("calculating eQTLs")
   
