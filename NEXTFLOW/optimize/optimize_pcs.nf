@@ -56,9 +56,10 @@ process optimize_pcs {
         
         message("Covariate matrix loaded. N individuals: ", ncol(covmat))
         message("common samples: ", length(common_samples))
+        
     }else{
         covmat = NULL
-    }
+    }   
 
     exp_pcs = prcomp(t(exp_mat), scale. = TRUE)
     exp_pcs = exp_pcs\$x[, 1:${n_pcs}]

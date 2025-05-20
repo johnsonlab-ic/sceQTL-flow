@@ -54,9 +54,11 @@ process run_matrixeQTL {
         
         message("Covariate matrix loaded. N individuals: ", ncol(covmat))
         message("common samples: ", length(common_samples))
+        
     }else{
         covmat = NULL
-    }    message("calculating eQTLs")
+    }    
+    message("calculating eQTLs")
   
 
     outs=calculate_ciseqtl(
