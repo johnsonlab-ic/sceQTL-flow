@@ -112,7 +112,6 @@ workflow {
             .combine(n_pcs_ch)
             .set { combined_ch }
 
-        
         // Run the optimize_pcs process
         optimize_pcs(
             params.eqtl_source_functions,  // source_R
@@ -133,31 +132,25 @@ workflow {
             }
             .groupTuple(by: 0)  // Group by cell type
             .set { grouped_results }
-        // Pass the collected results to select_pcs
-        ch_exp_matrices = qc_expression.out.pseudobulk_normalised.flatten()
+            
+        // Map the residual files by celltype for joining with select_pcs output
+        get_residuals.out.residuals_results.flatten()
             .map { file ->
-                def celltype = file.getBaseName().replace("_pseudobulk_normalised", "")
+                def celltype = file.getBaseName().replace("_residuals", "")
                 [celltype, file]
             }
+            .set { ch_residual_matrices }
    
-        
         // this is for the markdown file
         optimize_pcs.out.egenes_results
             .collect()
             .set { collected_results }
 
-        ch_exp_matrices = qc_expression.out.pseudobulk_normalised.flatten()
-            .map { file ->
-                def celltype = file.getBaseName().replace("_pseudobulk_normalised", "")
-                [celltype, file]
-            }
-
-        // Run the select_pcs process with two separate input channels
-        select_pcs(grouped_results, ch_exp_matrices)
-
+        // Run the select_pcs process with residual matrices
+        select_pcs(grouped_results, ch_residual_matrices)
             
-    }else{
-            // Define a dummy file for optimization_results
+    } else {
+        // Define a dummy file for optimization_results
         dummy_file = file("dummy_optimization_results.txt")
 
         // Initialize collected_results with the dummy file

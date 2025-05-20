@@ -11,10 +11,7 @@ process optimize_pcs {
     path expression_mat
     path gene_locations
     path cov_file
-
     val n_pcs
-
-
 
     output:
     path "*egenes*.txt" , emit: egenes_results
@@ -31,7 +28,8 @@ process optimize_pcs {
     geno_loc = fread("$snp_locations")
     exp_loc = fread("$gene_locations")
 
-    celltype = gsub("_pseudobulk_normalised.csv", "", "$expression_mat")
+    # Update to handle residuals file naming pattern
+    celltype = gsub("_residuals.csv", "", basename("$expression_mat"))
     common_samples = intersect(colnames(exp_mat), colnames(geno_mat))
 
     exp_mat = exp_mat %>% select(all_of(common_samples))
@@ -60,7 +58,6 @@ process optimize_pcs {
         covmat = exp_pcs
     }
 
-
     outs=calculate_ciseqtl(
         exp_mat = exp_mat,
         covmat=covmat,
@@ -74,9 +71,5 @@ process optimize_pcs {
     
     n_egenes = outs %>% filter(FDR<0.05) %>% pull(gene) %>% unique() %>% length()
     write.table(data.frame(celltype=celltype,n_pcs=${n_pcs}, n_egenes=n_egenes), file=paste0(celltype,"_egenes_vs_",${n_pcs},".txt"), sep="\t", quote=FALSE, row.names=FALSE)
-
-
-
-
     """
 }

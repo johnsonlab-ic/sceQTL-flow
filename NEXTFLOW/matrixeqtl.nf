@@ -1,5 +1,4 @@
 process run_matrixeQTL {
-
   
     tag "${expression_mat}"
     label "process_high_memory"
@@ -28,7 +27,8 @@ process run_matrixeQTL {
     geno_loc = fread("$snp_locations")
     exp_loc = fread("$gene_locations")
 
-    celltype = gsub("_pseudobulk_normalised.csv", "", "$expression_mat")
+    # Update to handle residuals file naming pattern
+    celltype = gsub("_residuals.csv", "", basename("$expression_mat"))
     common_samples = intersect(colnames(exp_mat), colnames(geno_mat))
 
     exp_mat = exp_mat %>% select(all_of(common_samples))
@@ -44,7 +44,6 @@ process run_matrixeQTL {
     geno_loc = geno_loc[rownames(geno_mat), ]
     geno_loc = geno_loc %>% mutate(annot = rownames(geno_loc)) %>% select(annot, chrom, position)
 
- 
     message("Covariates fixed at get_residuals step")
     covmat=NULL
     message("calculating eQTLs")
