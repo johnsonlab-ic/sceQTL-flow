@@ -34,7 +34,7 @@ process final_report {
         cis_distance = ${params.cis_distance},
         filter_chr="${params.filter_chr}",
         fdr_threshold = ${params.fdr_threshold},
-        optimize_pcs = ${params.optimize_pcs ? 'TRUE' : 'FALSE'},
+        optimize_pcs = TRUE,
         optimization_results = "$optimization_results"
     ))
     """
