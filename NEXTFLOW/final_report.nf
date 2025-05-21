@@ -1,6 +1,6 @@
 process final_report {
     label "process_high"
-    publishDir "${baseDir}", mode: 'copy'
+    publishDir "${params.outdir}", mode: 'copy'
 
     input: 
     path eqtl_results_filtered
@@ -9,7 +9,8 @@ process final_report {
     path optimization_results
 
     output: 
-    path "report.html"
+    path "eqtl_report.html"
+
     script:
     """
     #!/usr/bin/env Rscript
@@ -18,7 +19,7 @@ process final_report {
     } else {
         optimization_results <- "$optimization_results"
     }
-    rmarkdown::render(input = "$report_file", output_file = "report.html", params = list(
+    rmarkdown::render(input = "$report_file", output_file = "eqtl_report.html", params = list(
         eqtl_results_filtered = "$eqtl_results_filtered",
         eqtl_results = "$eqtl_results",
         outdir = "${params.outdir}",

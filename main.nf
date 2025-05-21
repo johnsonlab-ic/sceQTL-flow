@@ -180,7 +180,7 @@ workflow.onComplete {
     Pipeline Completed!
     ========================================
 
-    eQTL report generated at: ${params.outdir}/eQTL_outputs/final_report.html
+    eQTL report generated at: ${params.outdir}/eQTL_outputs/eqtl_report.html
 
     """
 }
