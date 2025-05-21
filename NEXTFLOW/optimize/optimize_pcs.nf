@@ -58,6 +58,11 @@ process optimize_pcs {
         covmat = exp_pcs
     }
 
+    ##finally, re-order inputs to same column order
+    exp_mat = exp_mat[, common_samples]
+    geno_mat = geno_mat[, common_samples]
+    covmat = covmat[, common_samples]
+    
     outs=calculate_ciseqtl(
         exp_mat = exp_mat,
         covmat=covmat,

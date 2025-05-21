@@ -51,6 +51,11 @@ process run_matrixeQTL {
 
     message("Using ", nrow(covmat), " optimized PCs as covariates")
 
+    ##finally, re-order inputs to same column order
+    exp_mat = exp_mat[, common_samples]
+    geno_mat = geno_mat[, common_samples]
+    covmat = covmat[, common_samples]
+
     message("Calculating eQTLs")
     outs=calculate_ciseqtl(
         exp_mat = exp_mat,
