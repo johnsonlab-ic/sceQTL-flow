@@ -37,8 +37,8 @@ include { select_pcs } from './NEXTFLOW/optimize/select_pcs.nf'
 
 
 // default parameters 
-
-
+// Add a new parameter for specifying which covariates to include
+params.covariates_to_include = "all" // Default to include all covariates
 
 workflow {
     println """
@@ -95,11 +95,12 @@ workflow {
     pseudobulk_ch = pseudobulk_singlecell.out.pseudobulk_counts.flatten()
     qc_expression(pseudobulk_file= pseudobulk_ch)
     
-    // Add get_residuals step
+    // Add get_residuals step with the new covariates parameter
     get_residuals(
         qc_expression.out.pseudobulk_normalised.flatten(),
         params.cov_file,
-        params.pseudobulk_source_functions
+        params.pseudobulk_source_functions,
+        params.covariates_to_include
     )
 
     // Define the n_pcs channel - always runs now

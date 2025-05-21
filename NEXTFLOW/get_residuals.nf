@@ -8,6 +8,7 @@ process get_residuals {
     path expression_mat
     path cov_file
     path source_R
+    val covariates_to_include
 
     output:
     path "*_residuals.csv", emit: residuals_results
@@ -25,8 +26,12 @@ process get_residuals {
         cov_mat = fread(cov_file,head=T)
         cov_mat=as.data.frame(cov_mat)
 
-        #extract all colnames except "Individual_ID"
-        covs_to_include = colnames(cov_mat)[!colnames(cov_mat) %in% c("Individual_ID")]
+        # Parse the covariates provided from the command line
+        covs_to_include = unlist(strsplit("${covariates_to_include}", ","))
+        if(length(covs_to_include) == 0 || (length(covs_to_include) == 1 && covs_to_include[1] == "all")) {
+            # If no covariates specified or "all" specified, include all except Individual_ID
+            covs_to_include = colnames(cov_mat)[!colnames(cov_mat) %in% c("Individual_ID")]
+        }
 
         exp_mat=get_residuals(exp_mat,cov_mat,covs_to_include=covs_to_include) %>% 
         as.data.frame() %>% 
