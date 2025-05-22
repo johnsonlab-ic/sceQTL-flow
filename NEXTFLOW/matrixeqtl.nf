@@ -47,14 +47,14 @@ process run_matrixeQTL {
 
     # Load optimized PCs as covariates
     message("Loading optimized PCs from: $optimized_pcs")
-    covmat = read.table("$optimized_pcs", header=TRUE, row.names=1)
+    covmat = fread("$optimized_pcs",data.table=F) %>% tibble::column_to_rownames(var="V1")
 
     message("Using ", nrow(covmat), " optimized PCs as covariates")
 
     ##finally, re-order inputs to same column order
     exp_mat = exp_mat[, common_samples]
     geno_mat = geno_mat[, common_samples]
-    covmat = covmat[, common_samples]
+    covmat = covmat[, common_samples] 
 
     message("Calculating eQTLs")
     outs=calculate_ciseqtl(
