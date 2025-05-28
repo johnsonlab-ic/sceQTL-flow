@@ -28,3 +28,26 @@ git pull;nextflow run -c nextflow.config main.nf \
 --counts_assay "RNA" \
 --optimize_pcs true \
 --report true
+
+
+
+
+#### epilepsy 
+
+outdir=/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/projects/epilepsy_eqtls/sc_eqtls
+export NXF_LOG_FILE="$EPHEMERAL/NEXTFLOW/nextflow.log"
+cov_file=$outdir/epilepsy_metadata_matrixeqtl.csv
+
+nextflow run -c nextflow.config main.nf \
+-profile imperial \
+--outdir $outdir \
+--gds_file ${outdir}/BONN_post_imputation_QC.gds \
+--single_cell_file ${outdir}/matched_seurat_demuxlet.rds \
+--cov_file $cov_file \
+--celltype_column "cell_type" \
+--individual_column "Individual_ID" \
+--counts_assay "originalexp" \
+--counts_slot "counts" \
+-with-report pipeline_report.html \
+--report true \
+--covariates_to_include "Sex,Pathology,AgeAtSurgery"

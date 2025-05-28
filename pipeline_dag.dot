@@ -1,0 +1,218 @@
+digraph "pipeline_dag" {
+v0 [shape=point,label="",fixedsize=true,width=0.1];
+v2 [label="create_genotype"];
+v0 -> v2 [label="gds_file"];
+
+v1 [shape=point,label="",fixedsize=true,width=0.1];
+v2 [label="create_genotype"];
+v1 -> v2 [label="source_R"];
+
+v2 [label="create_genotype"];
+v5 [label="qc_genotype"];
+v2 -> v5 [label="genotype_mat"];
+
+v2 [label="create_genotype"];
+v5 [label="qc_genotype"];
+v2 -> v5 [label="snp_chromlocations"];
+
+v2 [label="create_genotype"];
+v3 [shape=point];
+v2 -> v3;
+
+v4 [shape=point,label="",fixedsize=true,width=0.1];
+v5 [label="qc_genotype"];
+v4 -> v5 [label="filter_chr"];
+
+v5 [label="qc_genotype"];
+v25 [label="optimize_pcs"];
+v5 -> v25;
+
+v5 [label="qc_genotype"];
+v25 [label="optimize_pcs"];
+v5 -> v25;
+
+v6 [shape=point,label="",fixedsize=true,width=0.1];
+v8 [label="pseudobulk_singlecell"];
+v6 -> v8 [label="single_cell_file"];
+
+v7 [shape=point,label="",fixedsize=true,width=0.1];
+v8 [label="pseudobulk_singlecell"];
+v7 -> v8 [label="source_R"];
+
+v8 [label="pseudobulk_singlecell"];
+v9 [shape=point];
+v8 -> v9;
+
+v8 [label="pseudobulk_singlecell"];
+v10 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="flatten"];
+v8 -> v10;
+
+v8 [label="pseudobulk_singlecell"];
+v25 [label="optimize_pcs"];
+v8 -> v25;
+
+v10 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="flatten"];
+v11 [label="qc_expression"];
+v10 -> v11 [label="pseudobulk_file"];
+
+v11 [label="qc_expression"];
+v12 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="flatten"];
+v11 -> v12;
+
+v12 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="flatten"];
+v16 [label="get_residuals"];
+v12 -> v16;
+
+v13 [shape=point,label="",fixedsize=true,width=0.1];
+v16 [label="get_residuals"];
+v13 -> v16 [label="cov_file"];
+
+v14 [shape=point,label="",fixedsize=true,width=0.1];
+v16 [label="get_residuals"];
+v14 -> v16 [label="source_R"];
+
+v15 [shape=point,label="",fixedsize=true,width=0.1];
+v16 [label="get_residuals"];
+v15 -> v16 [label="covariates_to_include"];
+
+v16 [label="get_residuals"];
+v17 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="flatten"];
+v16 -> v17;
+
+v17 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="flatten"];
+v18 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v17 -> v18;
+
+v18 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v19 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="transpose"];
+v18 -> v19;
+
+v19 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="transpose"];
+v20 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v19 -> v20;
+
+v20 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v21 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v20 -> v21 [label="dynamic_pcs_ch"];
+
+v21 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v25 [label="optimize_pcs"];
+v21 -> v25;
+
+v20 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v22 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v20 -> v22 [label="dynamic_pcs_ch"];
+
+v22 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v25 [label="optimize_pcs"];
+v22 -> v25;
+
+v23 [shape=point,label="",fixedsize=true,width=0.1];
+v25 [label="optimize_pcs"];
+v23 -> v25 [label="source_R"];
+
+v24 [shape=point,label="",fixedsize=true,width=0.1];
+v25 [label="optimize_pcs"];
+v24 -> v25 [label="cov_file"];
+
+v25 [label="optimize_pcs"];
+v26 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v25 -> v26;
+
+v26 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v27 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="groupTuple"];
+v26 -> v27;
+
+v27 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="groupTuple"];
+v31 [label="select_pcs"];
+v27 -> v31 [label="grouped_results"];
+
+v16 [label="get_residuals"];
+v28 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="flatten"];
+v16 -> v28;
+
+v28 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="flatten"];
+v29 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v28 -> v29;
+
+v29 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v31 [label="select_pcs"];
+v29 -> v31 [label="ch_residual_matrices"];
+
+v25 [label="optimize_pcs"];
+v30 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="collect"];
+v25 -> v30;
+
+v30 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="collect"];
+v41 [label="final_report"];
+v30 -> v41 [label="optimization_results"];
+
+v31 [label="select_pcs"];
+v32 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="join"];
+v31 -> v32;
+
+v29 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v32 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="join"];
+v29 -> v32 [label="ch_residual_matrices"];
+
+v32 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="join"];
+v33 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v32 -> v33 [label="residuals_with_pcs"];
+
+v33 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v36 [label="run_matrixeQTL"];
+v33 -> v36;
+
+v32 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="join"];
+v34 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v32 -> v34 [label="residuals_with_pcs"];
+
+v34 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+v36 [label="run_matrixeQTL"];
+v34 -> v36;
+
+v35 [shape=point,label="",fixedsize=true,width=0.1];
+v36 [label="run_matrixeQTL"];
+v35 -> v36 [label="source_R"];
+
+v5 [label="qc_genotype"];
+v36 [label="run_matrixeQTL"];
+v5 -> v36 [label="genotype_mat"];
+
+v5 [label="qc_genotype"];
+v36 [label="run_matrixeQTL"];
+v5 -> v36 [label="snp_locations"];
+
+v8 [label="pseudobulk_singlecell"];
+v36 [label="run_matrixeQTL"];
+v8 -> v36 [label="gene_locations"];
+
+v36 [label="run_matrixeQTL"];
+v38 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="collect"];
+v36 -> v38;
+
+v36 [label="run_matrixeQTL"];
+v37 [shape=point];
+v36 -> v37;
+
+v38 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="collect"];
+v39 [label="combine_eqtls"];
+v38 -> v39 [label="eqtls"];
+
+v39 [label="combine_eqtls"];
+v41 [label="final_report"];
+v39 -> v41 [label="eqtl_results"];
+
+v39 [label="combine_eqtls"];
+v41 [label="final_report"];
+v39 -> v41 [label="eqtl_results_filtered"];
+
+v40 [shape=point,label="",fixedsize=true,width=0.1];
+v41 [label="final_report"];
+v40 -> v41 [label="report_file"];
+
+v41 [label="final_report"];
+v42 [shape=point];
+v41 -> v42;
+
+}
