@@ -22,11 +22,6 @@ params.counts_slot="counts"
 params.cis_distance=1000000
 params.fdr_threshold=0.05
 params.filter_chr = "all" // Optional parameter for filtering by chromosome. use "chr6"
-params.expected_samples = 100
-
-// Add parameter to control PC step size
-params.pc_step_size = 5
-params.max_pc_percent = 0.5  // Maximum PCs as percentage of sample count
 
 
 include { create_genotype } from './NEXTFLOW/genotype.nf'
@@ -108,39 +103,23 @@ workflow {
         params.covariates_to_include
     )
 
-    // Process each residual file to determine the appropriate PC range
-    get_residuals.out.residuals_results.flatten().map { file ->
-        // Get sample count using the helper script
-        def sample_count = "${baseDir}/bin/count_samples.sh ${file}".execute().text.trim().toInteger()
-        
-        // Calculate max PCs based on sample count (limit to 50% of samples)
-        def max_pcs = Math.min(Math.floor(sample_count * params.max_pc_percent), 50).intValue()
-        
-        // Generate PC values in steps of params.pc_step_size
-        def pc_values = []
-        for (int i = params.pc_step_size; i <= max_pcs; i += params.pc_step_size) {
-            pc_values.add(i)
-        }
-        
-        // If empty (e.g., very few samples), use at least one value
-        if (pc_values.isEmpty()) {
-            pc_values.add(Math.min(1, max_pcs))
-        }
-        
-        return [file, pc_values]
-    }.transpose()  // Convert to one element per PC value
-    .map { file, pc -> [file, pc] }
-    .set { dynamic_pcs_ch }
+    // Define the n_pcs channel - always runs now
+    n_pcs_ch = Channel.from(2..20)
 
-    // Run the optimize_pcs process with dynamic PC values
+    // Combine with get_residuals output
+    get_residuals.out.residuals_results.flatten()
+        .combine(n_pcs_ch)
+        .set { combined_ch }
+
+    // Run the optimize_pcs process
     optimize_pcs(
         params.eqtl_source_functions,
         qc_genotype.out.qc_genotype_mat,
         qc_genotype.out.qc_snp_chromlocations,
-        dynamic_pcs_ch.map { it[0] },  // expression file
+        combined_ch.map { it[0] },
         pseudobulk_singlecell.out.gene_locations,
         params.cov_file,
-        dynamic_pcs_ch.map { it[1] }   // pc value
+        combined_ch.map { it[1] }
     )
 
     // Collect all egenes_results into a single list

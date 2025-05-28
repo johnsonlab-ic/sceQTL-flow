@@ -1,5 +1,5 @@
 process final_report {
-    label "process_high_memory"
+    label "process_high"
     publishDir "${params.outdir}", mode: 'copy'
 
     input: 
