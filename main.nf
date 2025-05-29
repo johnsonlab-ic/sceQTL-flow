@@ -34,6 +34,7 @@ include { combine_eqtls } from './NEXTFLOW/combine_eqtls.nf'
 include { final_report } from './NEXTFLOW/final_report.nf'
 include { optimize_pcs } from './NEXTFLOW/optimize/optimize_pcs.nf'
 include { select_pcs } from './NEXTFLOW/optimize/select_pcs.nf'
+include { count_individuals } from './NEXTFLOW/optimize/count_individuals.nf'
 
 
 // default parameters 
@@ -103,23 +104,26 @@ workflow {
         params.covariates_to_include
     )
 
-    // Define the n_pcs channel - always runs now
-    n_pcs_ch = Channel.from(2..20)
-
-    // Combine with get_residuals output
-    get_residuals.out.residuals_results.flatten()
-        .combine(n_pcs_ch)
-        .set { combined_ch }
-
-    // Run the optimize_pcs process
+    // Count individuals in each residuals file and determine PC values to test
+    count_individuals(get_residuals.out.residuals_results.flatten())
+    
+    // Create a channel for dynamic PC values
+    dynamic_pcs_ch = count_individuals.out.residuals_with_pcs
+        .flatMap { file, pc_file -> 
+            // Read PC values from the file
+            def pc_values = pc_file.text.trim().split('\n')
+            pc_values.collect { pc -> [file, pc.toInteger()] }
+        }
+        
+    // Run the optimize_pcs process with dynamic PC values based on sample count
     optimize_pcs(
         params.eqtl_source_functions,
         qc_genotype.out.qc_genotype_mat,
         qc_genotype.out.qc_snp_chromlocations,
-        combined_ch.map { it[0] },
+        dynamic_pcs_ch.map { it[0] },  // expression file
         pseudobulk_singlecell.out.gene_locations,
         params.cov_file,
-        combined_ch.map { it[1] }
+        dynamic_pcs_ch.map { it[1] }   // pc value
     )
 
     // Collect all egenes_results into a single list
