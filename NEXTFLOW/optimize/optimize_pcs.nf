@@ -1,7 +1,7 @@
 process optimize_pcs {
     tag "${expression_mat} and ${n_pcs} PCs"
 
-    label "process_high_memory"
+    label "process_eqtl"
     publishDir "${params.outdir}/optimization/", mode: 'copy'
 
     input:

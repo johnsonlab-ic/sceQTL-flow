@@ -1,7 +1,7 @@
 process run_matrixeQTL {
   
     tag "${expression_mat} and ${optimized_pcs}"
-    label "process_high_memory"
+    label "process_eqtl"
     publishDir "${params.outdir}/eQTL_outputs/", mode: 'copy'
 
     input:

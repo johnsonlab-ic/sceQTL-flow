@@ -37,6 +37,18 @@ format_cis_distance <- function(distance) {
 }
 ```
 
+## eQTL Analysis Report
+
+**Report Generated:** `r format(Sys.time(), "%d %B %Y, %H:%M:%S")`
+
+This report was generated using the Nextflow eQTL Pipeline, a comprehensive tool for conducting expression quantitative trait loci (eQTL) analysis on single-cell RNA-seq data.
+
+**GitHub Repository:** [https://github.com/johnsonlab-ic/sc-eQTL-pipeline](https://github.com/johnsonlab-ic/sc-eQTL-pipeline)
+
+**Contact:** For questions or support regarding this pipeline, please contact Alexander Haglund (GitHub: [HaglundA](https://github.com/HaglundA))
+
+---
+
 ### Pipeline Settings
 
 The following settings were used in the pipeline:
@@ -68,7 +80,7 @@ num_celltypes <- length(cell_types)
 
 # Average number of genes tested
 genes_list <- lapply(eqtl_results, function(df) unique(df$gene))
-all_genes <- unique(unlist(genes_list))
+all_genes <- unlist(genes_list)
 avg_genes_tested <- length(all_genes) / num_celltypes
 
 # Number of SNPs tested
@@ -131,13 +143,12 @@ total_unique_genes <- function(cell_list) {
   })
 }
 
-mateqtlouts <- readRDS(params$eqtl_results)
+mateqtlouts <- readRDS(params$eqtl_results_filtered)
 
 mateqtlouts_filt <- lapply(mateqtlouts, function(x) {
   x <- x %>% 
     mutate(se = beta / t.stat, fstat = t.stat^2) 
   top_snps <- x %>%
-    filter(FDR < 0.05) %>%
     group_by(gene) %>%
     arrange(p.value) %>%
     slice_head(n = 1) %>%
