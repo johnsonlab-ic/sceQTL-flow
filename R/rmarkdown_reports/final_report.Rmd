@@ -93,7 +93,7 @@ num_snps_tested <- length(all_snps)
 
 - **Number of cell-types tested:** `r num_celltypes`
 - **Names of cell-types tested:** `r paste(cell_types, collapse=", ")`
-- **Average number of genes tested per cell-type:** `r round(avg_genes_tested)`
+- **Average number of genes tested per cell-type:** `r avg_genes_tested`
 - **Number of SNPs tested:** `r num_snps_tested`
 
 `r if (params$optimize_pcs) "### PC optimization results"`
@@ -108,7 +108,7 @@ if (params$optimize_pcs) {
 
   # Plot pc optimization results
   plot <- ggplot(results, aes(x = n_pcs, y = n_egenes)) +
-      geom_point() +
+      geom_point(size=0.5,colour=black,shape=21,fill=celltype) +
       geom_line() +
       facet_wrap(~ celltype) +
       xlab("Number of Principal Components") +
