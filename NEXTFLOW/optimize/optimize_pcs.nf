@@ -10,7 +10,6 @@ process optimize_pcs {
     path snp_locations
     path expression_mat
     path gene_locations
-    path cov_file
     val n_pcs
 
     output:

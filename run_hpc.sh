@@ -51,3 +51,24 @@ nextflow run -c nextflow.config main.nf \
 -with-report pipeline_report.html \
 --report true \
 --covariates_to_include "Sex,Pathology,AgeAtSurgery"
+
+
+
+### yazar
+
+outdir=/rds/general/user/ah3918/ephemeral/YAZAR_OUTS
+indir=/rds/general/user/ah3918/projects/puklandmarkproject/ephemeral/Liv_Yazar/
+export NXF_LOG_FILE="$EPHEMERAL/NEXTFLOW/nextflow.log"
+
+nextflow run -c nextflow.config main.nf \
+-profile imperial \
+--outdir $outdir \
+--gds_file ${indir}/merge_test_seqArray.gds \
+--single_cell_file ${indir}/Yazar_annotateddata.rds \
+--celltype_column "eight_Cell_Types" \
+--individual_column "donor_id" \
+--counts_slot "data" \
+--counts_assay "RNA" \
+-with-report pipeline_report.html \
+--report true 
+

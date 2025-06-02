@@ -4,7 +4,7 @@ nextflow.enable.dsl=2
 params.outdir="/rds/general/user/ah3918/projects/puklandmarkproject/ephemeral/tmp/"
 params.gds_file="/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/TEST_DATA/test_geno.gds"
 params.single_cell_file="/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/TEST_DATA/roche_ms_decontx.rds"
-params.cov_file="${baseDir}/R/cov.txt"
+params.cov_file="none"
 
 
 // source functions for easy troubleshooting
@@ -74,6 +74,7 @@ workflow {
     Cis distance: ${params.cis_distance}
     FDR threshold: ${params.fdr_threshold}
     Chromosomes used: ${params.filter_chr}
+    Calculating residuals: ${params.cov_file != "none" && params.cov_file != "" ? "YES" : "NO"}
 
     If "optimize PCs" is set to TRUE, the pipeline will run longer.
 
@@ -96,16 +97,27 @@ workflow {
     pseudobulk_ch = pseudobulk_singlecell.out.pseudobulk_counts.flatten()
     qc_expression(pseudobulk_file= pseudobulk_ch)
     
-    // Add get_residuals step with the new covariates parameter
-    get_residuals(
-        qc_expression.out.pseudobulk_normalised.flatten(),
-        params.cov_file,
-        params.pseudobulk_source_functions,
-        params.covariates_to_include
-    )
+    // Create a channel for expression data - either residuals or normalized data
+    
+    
+    // Conditionally run get_residuals only if a covariate file is provided
+    if (params.cov_file != "none" && params.cov_file != "") {
+        // Run get_residuals when covariates are provided
+        get_residuals(
+            qc_expression.out.pseudobulk_normalised.flatten(),
+            params.cov_file,
+            params.pseudobulk_source_functions,
+            params.covariates_to_include
+        )
+        // Use residuals for downstream analysis
+        expression_files_ch = get_residuals.out.residuals_results.flatten()
+    } else {
+        // Use normalized expression data directly if no covariates
+        expression_files_ch = qc_expression.out.pseudobulk_normalised.flatten()
+    }
 
-    // Count individuals in each residuals file and determine PC values to test
-    count_individuals(get_residuals.out.residuals_results.flatten())
+    // Count individuals in each expression file and determine PC values to test
+    count_individuals(expression_files_ch)
     
     // Create a channel for dynamic PC values
     dynamic_pcs_ch = count_individuals.out.residuals_with_pcs
@@ -122,7 +134,6 @@ workflow {
         qc_genotype.out.qc_snp_chromlocations,
         dynamic_pcs_ch.map { it[0] },  // expression file
         pseudobulk_singlecell.out.gene_locations,
-        params.cov_file,
         dynamic_pcs_ch.map { it[1] }   // pc value
     )
 
@@ -136,10 +147,16 @@ workflow {
         .groupTuple(by: 0)  // Group by cell type
         .set { grouped_results }
         
-    // Map the residual files by celltype
-    get_residuals.out.residuals_results.flatten()
+    // Map the expression files by celltype
+    expression_files_ch
         .map { file ->
-            def celltype = file.getBaseName().replace("_residuals", "")
+            // Handle different file naming patterns based on whether it's from residuals or normalized expression
+            def celltype
+            if (file.name.contains("_residuals")) {
+                celltype = file.getBaseName().replace("_residuals", "")
+            } else {
+                celltype = file.getBaseName().replace("_pseudobulk_normalised", "")
+            }
             [celltype, file]
         }
         .set { ch_residual_matrices }
