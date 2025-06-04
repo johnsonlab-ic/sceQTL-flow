@@ -108,7 +108,7 @@ if (params$optimize_pcs) {
 
   # Plot pc optimization results
   plot <- ggplot(results, aes(x = n_pcs, y = n_egenes)) +
-      geom_point(size=0.5,colour=black,shape=21,fill=celltype) +
+      geom_point(size=0.5,colour="black",shape=21,fill=celltype) +
       geom_line() +
       facet_wrap(~ celltype) +
       xlab("Number of Principal Components") +
