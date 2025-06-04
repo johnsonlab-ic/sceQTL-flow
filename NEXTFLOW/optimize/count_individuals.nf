@@ -20,10 +20,10 @@ process count_individuals {
     n_samples = ncol(exp_mat) - 1  # Subtract 1 for geneid column
     
     # Calculate the maximum number of PCs as 50% of sample count, capped at 20
-    max_pcs = min(floor(n_samples * 0.8), 100)
+    max_pcs = min(floor(n_samples * 0.5), 100)
     
     # Generate PC values in steps of 2 (adjust step size as needed)
-    pc_values = seq(5, max_pcs, by = 5)
+    pc_values = seq(2, max_pcs, by = 2)
     
     # If very few samples, ensure at least one PC value is tested
     if(length(pc_values) == 0) {
