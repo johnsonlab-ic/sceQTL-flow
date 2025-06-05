@@ -23,7 +23,7 @@ process count_individuals {
     max_pcs = min(floor(n_samples * 0.5), 100)
     
     # Generate PC values in steps of 2 (adjust step size as needed)
-    pc_values = seq(2, max_pcs, by = 2)
+    pc_values = seq(5, max_pcs, by = 5)
     
     # If very few samples, ensure at least one PC value is tested
     if(length(pc_values) == 0) {

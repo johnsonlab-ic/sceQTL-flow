@@ -166,12 +166,32 @@ workflow {
         .collect()
         .set { collected_results }
 
+    // Debug: Print the cell types in each channel
+    grouped_results.map { celltype, files -> 
+        println "Grouped results for cell type: $celltype with ${files.size()} files"
+        return [celltype, files]
+    }.set { grouped_results_debug }
+    
+    ch_residual_matrices.map { celltype, file -> 
+        println "Expression file for cell type: $celltype - ${file.name}"
+        return [celltype, file]
+    }.set { ch_residual_matrices_debug }
+    
     // Run the select_pcs process
-    select_pcs(grouped_results, ch_residual_matrices)
+    grouped_results_debug
+        .join(ch_residual_matrices_debug, failOnDuplicate: true, failOnMismatch: true)
+        .map { celltype, egenes_files, exp_file ->
+            println "Successfully paired: $celltype with ${egenes_files.size()} egenes files and ${exp_file.name}"
+            return [celltype, egenes_files, exp_file]
+        }
+        .set { paired_data }
+    
+    select_pcs(paired_data.map { celltype, egenes_files, exp_file -> [celltype, egenes_files] }, 
+              paired_data.map { celltype, egenes_files, exp_file -> [celltype, exp_file] })
     
     // Join the residual matrices with their corresponding optimal PCs
     ch_residual_matrices
-        .join(select_pcs.out.exp_pcs)
+        .join(select_pcs.out.exp_pcs, failOnDuplicate: true, failOnMismatch: true)
         .set { residuals_with_pcs }
 
     // Run matrixeQTL with optimized PCs for each cell type
