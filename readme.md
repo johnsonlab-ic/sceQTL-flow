@@ -1,54 +1,14 @@
 # 🧬 sceQTL-flow
 
-> **A Nextflow pipeline for single-cell expression Quantitative Trait Loci analysis**
-
-This pipeline integrates genotype data with single-cell RNA sequencing data to identify genetic variants that influence gene expression at the single-cell level.
-
----
-
-## 📋 Overview
-
 <img src="https://img.shields.io/badge/Nextflow-v22.10.0+-green.svg" alt="Nextflow Version">
 <img src="https://img.shields.io/badge/R-v4.3.0+-blue.svg" alt="R Version">
 <img src="https://img.shields.io/badge/Containers-Docker%2FSingularity-orange.svg" alt="Container Support">
 
-* **Integrates** genotype and scRNA-seq data
-* **Performs** cell-type-specific eQTL analysis
-* **Optimizes** principal components automatically
-* **Generates** comprehensive reports and visualizations
 
-## 📥 Required Input Files
+**A Nextflow pipeline for single-cell expression Quantitative Trait Loci analysis**
 
-| File Type | Description | Format |
-|-----------|-------------|--------|
-| **Genotype Data** | Contains SNP information | GDS file |
-| **Single-Cell Data** | Expression data with metadata | Seurat object (RDS) |
+This pipeline integrates genotype data with single-cell RNA sequencing data to identify genetic variants that influence gene expression at the single-cell level.
 
-## 🔍 Pipeline Functionality
-
-The pipeline performs these key steps:
-
-1. **Data Preprocessing** 
-   * Reads and processes input files
-   * Performs quality control on genotype data
-
-2. **Pseudobulking**
-   * Aggregates single-cell data by cell type and individual
-   * Normalizes expression data
-
-3. **eQTL Analysis**
-   * Identifies genetic variants associated with gene expression
-   * Conducts statistical testing with MatrixEQTL
-
-4. **Result Optimization**
-   * Optimizes principal components for each cell type
-   * Enhances detection power and accuracy
-
-5. **Output Generation**
-   * Produces significant eQTLs lists
-   * Creates summary statistics and diagnostic plots
-
----
 
 ## 🚀 Quick Start
 
@@ -101,6 +61,31 @@ nextflow run johnsonlab-ic/sceQTL-flow \
 
 ---
 
+---
+
+## 📋 Overview
+
+The pipeline performs these key steps:
+
+1. **Data Preprocessing** 
+   * Reads and processes input files
+   * Performs quality control on genotype data
+
+2. **Pseudobulking**
+   * Aggregates single-cell data by cell type and individual
+   * Normalizes expression data
+
+3. **eQTL Analysis**
+   * Identifies genetic variants associated with gene expression
+   * Conducts statistical testing with MatrixEQTL
+
+4. **Result Optimization**
+   * Optimizes principal components for each cell type
+   * Enhances detection power and accuracy
+
+5. **Output Generation**
+   * Produces significant eQTLs lists
+   * Creates summary statistics and diagnostic plots
 
 
 ## ⚠️ Notes & Warnings
