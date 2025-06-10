@@ -1,4 +1,4 @@
-# 🧬 sc-eQTL Pipeline
+# 🧬 sceQTL-flow
 
 > **A Nextflow pipeline for single-cell expression Quantitative Trait Loci analysis**
 
@@ -62,7 +62,7 @@ curl -s https://get.nextflow.io | bash
 ### Running the Pipeline
 
 ```bash
-nextflow run johnsonlab-ic/sc-eQTL-pipeline \
+nextflow run johnsonlab-ic/sceQTL-flow \
   --gds_file path_to_genotype_gds_file \
   --single_cell_file path_to_single_cell_file \
   --outdir path_to_output_directory 
@@ -137,10 +137,10 @@ To use custom images, modify the corresponding entries in `nextflow.config`.
 
 ## 📚 Repository Information
 
-<img src="https://img.shields.io/badge/GitHub-johnsonlab--ic-lightgrey?logo=github" alt="GitHub Repo">
+<img src="https://img.shields.io/badge/GitHub-sceQTL--flow-lightgrey?logo=github" alt="GitHub Repo">
 
 This pipeline is maintained in a public repository:
-- [johnsonlab-ic/sc-eQTL-pipeline](https://github.com/johnsonlab-ic/sc-eQTL-pipeline)
+- [johnsonlab-ic/sceQTL-flow](https://github.com/johnsonlab-ic/sceQTL-flow)
 
 ### Contributing
 
@@ -169,5 +169,5 @@ The pipeline generates these key outputs:
 ## 📞 Support
 
 For questions or issues, please:
-- Open an issue on the [GitHub repository](https://github.com/johnsonlab-ic/sc-eQTL-pipeline/issues)
+- Open an issue on the [GitHub repository](https://github.com/johnsonlab-ic/sceQTL-flow/issues)
 - Contact the Johnson Lab at Imperial College London

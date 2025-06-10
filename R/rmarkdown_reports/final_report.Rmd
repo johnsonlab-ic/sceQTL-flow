@@ -43,7 +43,7 @@ format_cis_distance <- function(distance) {
 
 This report was generated using the Nextflow eQTL Pipeline, a comprehensive tool for conducting expression quantitative trait loci (eQTL) analysis on single-cell RNA-seq data.
 
-**GitHub Repository:** [https://github.com/johnsonlab-ic/sc-eQTL-pipeline](https://github.com/johnsonlab-ic/sc-eQTL-pipeline)
+**GitHub Repository:** [https://github.com/johnsonlab-ic/sceQTL-flow](https://github.com/johnsonlab-ic/sceQTL-flow)
 
 **Contact:** For questions or support regarding this pipeline, please contact Alexander Haglund (GitHub: [HaglundA](https://github.com/HaglundA))
 
