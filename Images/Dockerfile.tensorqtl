@@ -1,0 +1,14 @@
+# Start from the existing eqtl-genotype image
+
+FROM ghcr.io/johnsonlab-ic/eqtl-genotype:latest
+
+# Install python3-pip (required for pip3 commands)
+RUN apt-get update && apt-get install -y python3-pip && rm -rf /var/lib/apt/lists/*
+
+# Install TensorQTL and Pgenlib using pip (latest instructions)
+RUN pip3 install --upgrade pip \
+    && pip3 install tensorqtl Pgenlib
+
+WORKDIR /data
+
+CMD ["bash"]

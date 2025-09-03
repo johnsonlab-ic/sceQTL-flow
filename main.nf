@@ -82,8 +82,6 @@ workflow {
 
     ==============================================
 
-    This is the DEV branch. 
-
     """
     create_genotype(gds_file= params.gds_file, 
     params.genotype_source_functions)
