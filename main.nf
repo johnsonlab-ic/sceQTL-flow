@@ -138,7 +138,7 @@ workflow {
     // Collect all egenes_results into a single list
     optimize_pcs.out.egenes_results
         .map { file -> 
-            // Extract cell type from the file name
+            // Extract cell type from the file name - remove the egenes_vs_XX.txt suffix
             celltype = file.name.replaceAll(/_egenes_vs_.+\.txt$/, "")
             [celltype, file]
         }
@@ -150,10 +150,13 @@ workflow {
         .map { file ->
             // Handle different file naming patterns based on whether it's from residuals or normalized expression
             def celltype
-            if (file.name.contains("_residuals")) {
-                celltype = file.getBaseName().replace("_residuals", "")
+            if (file.name.contains("_residuals.csv")) {
+                celltype = file.name.replace("_residuals.csv", "")
+            } else if (file.name.contains("_pseudobulk_normalised.csv")) {
+                celltype = file.name.replace("_pseudobulk_normalised.csv", "")
             } else {
-                celltype = file.getBaseName().replace("_pseudobulk_normalised", "")
+                // Fallback: use basename without extension
+                celltype = file.getBaseName()
             }
             [celltype, file]
         }

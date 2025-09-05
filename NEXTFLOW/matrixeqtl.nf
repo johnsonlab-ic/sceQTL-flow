@@ -28,8 +28,15 @@ process run_matrixeQTL {
     geno_loc = fread("$snp_locations")
     exp_loc = fread("$gene_locations")
 
-    # Update to handle residuals file naming pattern
-    celltype = gsub("_residuals.csv", "", basename("$expression_mat"))
+    # Update to handle both residuals and normalized file naming patterns
+    if (grepl("_residuals.csv\$", basename("$expression_mat"))) {
+        celltype = gsub("_residuals.csv", "", basename("$expression_mat"))
+    } else if (grepl("_pseudobulk_normalised.csv\$", basename("$expression_mat"))) {
+        celltype = gsub("_pseudobulk_normalised.csv", "", basename("$expression_mat"))
+    } else {
+        # Fallback: remove .csv extension
+        celltype = gsub(".csv\$", "", basename("$expression_mat"))
+    }
     common_samples = intersect(colnames(exp_mat), colnames(geno_mat))
 
     exp_mat = exp_mat %>% select(all_of(common_samples))
