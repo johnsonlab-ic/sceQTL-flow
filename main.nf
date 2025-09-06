@@ -22,6 +22,8 @@ params.counts_slot="counts"
 params.cis_distance=1000000
 params.fdr_threshold=0.05
 params.filter_chr = "all" // Optional parameter for filtering by chromosome. use "chr6"
+params.optimize_pcs = true // Whether to optimize PCs or use a fixed number
+params.fixed_pcs = 10 // Number of PCs to use when not optimizing
 
 
 include { create_genotype } from './NEXTFLOW/genotype.nf'
@@ -35,6 +37,7 @@ include { final_report } from './NEXTFLOW/final_report.nf'
 include { optimize_pcs } from './NEXTFLOW/optimize/optimize_pcs.nf'
 include { select_pcs } from './NEXTFLOW/optimize/select_pcs.nf'
 include { count_individuals } from './NEXTFLOW/optimize/count_individuals.nf'
+include { generate_fixed_pcs } from './NEXTFLOW/optimize/generate_fixed_pcs.nf'
 
 
 // default parameters 
@@ -75,6 +78,7 @@ workflow {
     FDR threshold: ${params.fdr_threshold}
     Chromosomes used: ${params.filter_chr}
     Calculating residuals: ${params.cov_file != "none" && params.cov_file != "" ? "YES" : "NO"}
+    Optimize PCs: ${params.optimize_pcs ? "YES" : "NO (using " + params.fixed_pcs + " PCs)"}
 
     If "optimize PCs" is set to TRUE, the pipeline will run longer.
 
@@ -114,95 +118,128 @@ workflow {
         expression_files_ch = qc_expression.out.pseudobulk_normalised.flatten()
     }
 
-    // Count individuals in each expression file and determine PC values to test
-    count_individuals(expression_files_ch)
-    
-    // Create a channel for dynamic PC values
-    dynamic_pcs_ch = count_individuals.out.residuals_with_pcs
-        .flatMap { file, pc_file -> 
-            // Read PC values from the file
-            def pc_values = pc_file.text.trim().split('\n')
-            pc_values.collect { pc -> [file, pc.toInteger()] }
-        }
+    // Conditional PC handling: optimize or use fixed number
+    if (params.optimize_pcs) {
+        // Count individuals in each expression file and determine PC values to test
+        count_individuals(expression_files_ch)
         
-    // Run the optimize_pcs process with dynamic PC values based on sample count
-    optimize_pcs(
-        params.eqtl_source_functions,
-        qc_genotype.out.qc_genotype_mat,
-        qc_genotype.out.qc_snp_chromlocations,
-        dynamic_pcs_ch.map { it[0] },  // expression file
-        pseudobulk_singlecell.out.gene_locations,
-        dynamic_pcs_ch.map { it[1] }   // pc value
-    )
-
-    // Collect all egenes_results into a single list
-    optimize_pcs.out.egenes_results
-        .map { file -> 
-            // Extract cell type from the file name - remove the egenes_vs_XX.txt suffix
-            celltype = file.name.replaceAll(/_egenes_vs_.+\.txt$/, "")
-            [celltype, file]
-        }
-        .groupTuple(by: 0)  // Group by cell type
-        .set { grouped_results }
-        
-    // Map the expression files by celltype
-    expression_files_ch
-        .map { file ->
-            // Handle different file naming patterns based on whether it's from residuals or normalized expression
-            def celltype
-            if (file.name.contains("_residuals.csv")) {
-                celltype = file.name.replace("_residuals.csv", "")
-            } else if (file.name.contains("_pseudobulk_normalised.csv")) {
-                celltype = file.name.replace("_pseudobulk_normalised.csv", "")
-            } else {
-                // Fallback: use basename without extension
-                celltype = file.getBaseName()
+        // Create a channel for dynamic PC values
+        dynamic_pcs_ch = count_individuals.out.residuals_with_pcs
+            .flatMap { file, pc_file -> 
+                // Read PC values from the file
+                def pc_values = pc_file.text.trim().split('\n')
+                pc_values.collect { pc -> [file, pc.toInteger()] }
             }
-            [celltype, file]
-        }
-        .set { ch_residual_matrices }
+            
+        // Run the optimize_pcs process with dynamic PC values based on sample count
+        optimize_pcs(
+            params.eqtl_source_functions,
+            qc_genotype.out.qc_genotype_mat,
+            qc_genotype.out.qc_snp_chromlocations,
+            dynamic_pcs_ch.map { it[0] },  // expression file
+            pseudobulk_singlecell.out.gene_locations,
+            dynamic_pcs_ch.map { it[1] }   // pc value
+        )
 
-    // For the markdown file
-    optimize_pcs.out.egenes_results
-        .collect()
-        .set { collected_results }
+        // Collect all egenes_results into a single list
+        optimize_pcs.out.egenes_results
+            .map { file -> 
+                // Extract cell type from the file name - remove the egenes_vs_XX.txt suffix
+                celltype = file.name.replaceAll(/_egenes_vs_.+\.txt$/, "")
+                [celltype, file]
+            }
+            .groupTuple(by: 0)  // Group by cell type
+            .set { grouped_results }
+            
+        // Map the expression files by celltype
+        expression_files_ch
+            .map { file ->
+                // Handle different file naming patterns based on whether it's from residuals or normalized expression
+                def celltype
+                if (file.name.contains("_residuals.csv")) {
+                    celltype = file.name.replace("_residuals.csv", "")
+                } else if (file.name.contains("_pseudobulk_normalised.csv")) {
+                    celltype = file.name.replace("_pseudobulk_normalised.csv", "")
+                } else {
+                    // Fallback: use basename without extension
+                    celltype = file.getBaseName()
+                }
+                [celltype, file]
+            }
+            .set { ch_residual_matrices }
 
-    // Debug: Print the cell types in each channel
-    grouped_results.map { celltype, files -> 
-        println "Grouped results for cell type: $celltype with ${files.size()} files"
-        return [celltype, files]
-    }.set { grouped_results_debug }
-    
-    ch_residual_matrices.map { celltype, file -> 
-        println "Expression file for cell type: $celltype - ${file.name}"
-        return [celltype, file]
-    }.set { ch_residual_matrices_debug }
-    
-    // Run the select_pcs process
-    grouped_results_debug
-        .join(ch_residual_matrices_debug, failOnDuplicate: true, failOnMismatch: true)
-        .map { celltype, egenes_files, exp_file ->
-            println "Successfully paired: $celltype with ${egenes_files.size()} egenes files and ${exp_file.name}"
-            return [celltype, egenes_files, exp_file]
-        }
-        .set { paired_data }
-    
-    select_pcs(paired_data.map { celltype, egenes_files, exp_file -> [celltype, egenes_files] }, 
-              paired_data.map { celltype, egenes_files, exp_file -> [celltype, exp_file] })
-    
-    // Join the residual matrices with their corresponding optimal PCs
-    ch_residual_matrices
-        .join(select_pcs.out.exp_pcs, failOnDuplicate: true, failOnMismatch: true)
-        .set { residuals_with_pcs }
+        // For the markdown file
+        optimize_pcs.out.egenes_results
+            .collect()
+            .set { collected_results }
 
-    // Run matrixeQTL with optimized PCs for each cell type
+        // Debug: Print the cell types in each channel
+        grouped_results.map { celltype, files -> 
+            println "Grouped results for cell type: $celltype with ${files.size()} files"
+            return [celltype, files]
+        }.set { grouped_results_debug }
+        
+        ch_residual_matrices.map { celltype, file -> 
+            println "Expression file for cell type: $celltype - ${file.name}"
+            return [celltype, file]
+        }.set { ch_residual_matrices_debug }
+        
+        // Run the select_pcs process
+        grouped_results_debug
+            .join(ch_residual_matrices_debug, failOnDuplicate: true, failOnMismatch: true)
+            .map { celltype, egenes_files, exp_file ->
+                println "Successfully paired: $celltype with ${egenes_files.size()} egenes files and ${exp_file.name}"
+                return [celltype, egenes_files, exp_file]
+            }
+            .set { paired_data }
+        
+        select_pcs(paired_data.map { celltype, egenes_files, exp_file -> [celltype, egenes_files] }, 
+                  paired_data.map { celltype, egenes_files, exp_file -> [celltype, exp_file] })
+        
+        // Join the residual matrices with their corresponding optimal PCs
+        ch_residual_matrices
+            .join(select_pcs.out.exp_pcs, failOnDuplicate: true, failOnMismatch: true)
+            .set { residuals_with_pcs }
+            
+    } else {
+        // Use fixed number of PCs - skip optimization
+        println "Skipping PC optimization, using ${params.fixed_pcs} PCs for all cell types"
+        
+        // Generate fixed PCs for each expression file
+        generate_fixed_pcs(expression_files_ch, params.fixed_pcs)
+        
+        // Map expression files by celltype for joining
+        expression_files_ch
+            .map { file ->
+                def celltype
+                if (file.name.contains("_residuals.csv")) {
+                    celltype = file.name.replace("_residuals.csv", "")
+                } else if (file.name.contains("_pseudobulk_normalised.csv")) {
+                    celltype = file.name.replace("_pseudobulk_normalised.csv", "")
+                } else {
+                    celltype = file.getBaseName()
+                }
+                [celltype, file]
+            }
+            .set { ch_residual_matrices }
+        
+        // Join the residual matrices with their corresponding fixed PCs
+        ch_residual_matrices
+            .join(generate_fixed_pcs.out.exp_pcs, failOnDuplicate: true, failOnMismatch: true)
+            .set { residuals_with_pcs }
+            
+        // Set empty collected_results for consistency
+        Channel.empty().set { collected_results }
+    }
+
+    // Run matrixeQTL with PCs (either optimized or fixed)
     run_matrixeQTL(
         params.eqtl_source_functions,
         qc_genotype.out.qc_genotype_mat,
         qc_genotype.out.qc_snp_chromlocations,
         residuals_with_pcs.map { it[1] },  // expression file
         pseudobulk_singlecell.out.gene_locations,
-        residuals_with_pcs.map { it[2] }   // optimized PCs file
+        residuals_with_pcs.map { it[2] }   // PCs file (optimized or fixed)
     )
 
     combine_eqtls(eqtls= run_matrixeQTL.out.eqtl_results.collect())

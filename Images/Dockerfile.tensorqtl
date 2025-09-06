@@ -1,14 +1,24 @@
-# Start from the existing eqtl-genotype image
-
 FROM ghcr.io/johnsonlab-ic/eqtl-genotype:latest
 
-# Install python3-pip (required for pip3 commands)
-RUN apt-get update && apt-get install -y python3-pip && rm -rf /var/lib/apt/lists/*
+# Remove any problematic APT::Default-Release settings
+RUN rm -f /etc/apt/apt.conf.d/docker-clean || true && \
+    (sed -i '/APT::Default-Release/d' /etc/apt/apt.conf /etc/apt/apt.conf.d/* 2>/dev/null || true)
 
-# Install TensorQTL and Pgenlib using pip (latest instructions)
-RUN pip3 install --upgrade pip \
-    && pip3 install tensorqtl Pgenlib
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    libcurl4-openssl-dev \
+    libssl-dev \
+    libxml2-dev \
+    libhdf5-dev \
+    procps \
+    pkg-config \
+    wget \
+    make \
+    gcc \
+    bzip2 \
+    python3 \
+    python3-pip \
+    bcftools \
+    unzip
 
-WORKDIR /data
-
-CMD ["bash"]
+# (Add your R and Python package installation steps here)
