@@ -1,11 +1,11 @@
 nextflow.enable.dsl=2
 
-//default inputfiles
+// default inputs
 params.outdir="/rds/general/user/ah3918/projects/puklandmarkproject/ephemeral/tmp/"
 params.gds_file="/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/TEST_DATA/test_geno.gds"
 params.single_cell_file="/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/TEST_DATA/roche_ms_decontx.rds"
 params.cov_file="none"
-
+params.help = false
 
 // source functions for easy troubleshooting
 params.genotype_source_functions="${baseDir}/R/genotype_functions/genotype_functions.r"
@@ -25,24 +25,56 @@ params.filter_chr = "all" // Optional parameter for filtering by chromosome. use
 params.optimize_pcs = true // Whether to optimize PCs or use a fixed number
 params.fixed_pcs = 10 // Number of PCs to use when not optimizing
 
+include { create_genotype; qc_genotype } from './modules/genotype/genotype.nf'
+include { pseudobulk_singlecell } from './modules/expression/pseudobulk.nf'
+include { qc_expression } from './modules/expression/qc_expression.nf'
+include { get_residuals } from './modules/residuals/get_residuals.nf'
+include { run_matrixeQTL } from './modules/eqtl/matrixeqtl.nf'
+include { combine_eqtls } from './modules/eqtl/combine_eqtls.nf'
+include { final_report } from './modules/reports/final_report.nf'
+include { optimize_pcs } from './modules/optimize/optimize_pcs.nf'
+include { select_pcs } from './modules/optimize/select_pcs.nf'
+include { count_individuals } from './modules/optimize/count_individuals.nf'
+include { generate_fixed_pcs } from './modules/optimize/generate_fixed_pcs.nf'
 
-include { create_genotype } from './NEXTFLOW/genotype.nf'
-include { qc_genotype } from './NEXTFLOW/genotype.nf'
-include { pseudobulk_singlecell } from './NEXTFLOW/pseudobulk.nf'
-include { qc_expression } from './NEXTFLOW/qc_expression.nf'
-include { get_residuals } from './NEXTFLOW/get_residuals.nf'
-include { run_matrixeQTL } from './NEXTFLOW/matrixeqtl.nf'
-include { combine_eqtls } from './NEXTFLOW/combine_eqtls.nf'
-include { final_report } from './NEXTFLOW/final_report.nf'
-include { optimize_pcs } from './NEXTFLOW/optimize/optimize_pcs.nf'
-include { select_pcs } from './NEXTFLOW/optimize/select_pcs.nf'
-include { count_individuals } from './NEXTFLOW/optimize/count_individuals.nf'
-include { generate_fixed_pcs } from './NEXTFLOW/optimize/generate_fixed_pcs.nf'
+// Help message similar to scQC-flow style
+def helpMessage() {
+        log.info """
+        ========================================
+        sceQTL-flow
+        ========================================
+
+        Usage:
+            nextflow run main.nf \\
+                --gds_file <path.gds> \\
+                --single_cell_file <seurat.rds> \\
+                --outdir <output_dir> \\
+                --celltype_column <column> \\
+                --individual_column <column> \\
+                [--cov_file covariates.csv] \\
+                [--covariates_to_include <comma list|all>] \\
+                [--optimize_pcs true|false] \\
+                [--fixed_pcs 10]
+
+        Flags:
+            --help              Show this message
+            --report            Render the HTML report
+
+        Notes:
+            Residuals are calculated automatically when --cov_file is provided.
+            Set --optimize_pcs false to force a fixed number of PCs (default 10).
+        """
+}
 
 
 // default parameters 
 // Add a new parameter for specifying which covariates to include
 params.covariates_to_include = "all" // Default to include all covariates
+
+if (params.help) {
+    helpMessage()
+    System.exit(0)
+}
 
 workflow {
     println """
