@@ -16,3 +16,5 @@ DSI_setup/
 report.html
 docker_build*
 run*sh
+.github/
+personal/
