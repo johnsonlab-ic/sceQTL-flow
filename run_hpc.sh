@@ -1,4 +1,4 @@
-indir=/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines//TEST_DATA/
+indir=/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/projects/pipelines/TEST_DATA
 export NXF_LOG_FILE="$EPHEMERAL/NEXTFLOW/nextflow.log"
 
 
