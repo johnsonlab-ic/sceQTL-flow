@@ -24,6 +24,7 @@ params.fdr_threshold=0.05
 params.filter_chr = "all" // Optional parameter for filtering by chromosome. use "chr6"
 params.optimize_pcs = true // Whether to optimize PCs or use a fixed number
 params.fixed_pcs = 10 // Number of PCs to use when not optimizing
+params.report = false
 
 include { create_genotype; qc_genotype } from './modules/genotype/genotype.nf'
 include { pseudobulk_singlecell } from './modules/expression/pseudobulk.nf'

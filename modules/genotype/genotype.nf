@@ -46,7 +46,7 @@ process qc_genotype {
             message("Filtering genotype matrix and snp_chromlocations by chromosome $filter_chr")
             filter_chr_vector = unlist(strsplit("$filter_chr", ","))
             snp_chromlocations = snp_chromlocations %>% filter(chrom %in% filter_chr_vector)
-            geno_mat = geno_mat %>% filter(snp %in% snp_chromlocations$annot)
+            geno_mat = geno_mat %>% filter(snp %in% snp_chromlocations\$annot)
         }
     data.table::fwrite(geno_mat, "qc_genotype_mat.csv")
     data.table::fwrite(snp_chromlocations, "qc_snp_chromlocations.csv")

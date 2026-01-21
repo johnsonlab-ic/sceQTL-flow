@@ -11,6 +11,7 @@ process generate_fixed_pcs {
     tuple val(celltype), path("*_pcs.txt"), emit: exp_pcs
 
     script:
+    celltype = expression_file.baseName.replaceAll('_residuals$', '').replaceAll('_pseudobulk_normalised$', '')
     """
     #!/usr/bin/env Rscript
     library(data.table)
@@ -18,19 +19,12 @@ process generate_fixed_pcs {
 
     exp_mat <- fread("${expression_file}") %>% tibble::column_to_rownames(var = "geneid")
 
-    # Derive celltype from filename
-    celltype <- basename("${expression_file}")
-    celltype <- gsub("_residuals.csv", "", celltype)
-    celltype <- gsub("_pseudobulk_normalised.csv", "", celltype)
-    celltype <- gsub(".csv\$", "", celltype)
-
-    # Compute PCs
-    pcs <- prcomp(t(exp_mat), scale. = TRUE)$x[, 1:${n_pcs}]
+    pc_obj <- prcomp(t(exp_mat), scale. = TRUE)
+    pcs <- pc_obj\$x[, 1:${n_pcs}]
     pcs <- as.data.frame(pcs)
     colnames(pcs) <- paste0("PC", 1:${n_pcs})
     pcs <- t(pcs)
 
-    out_file <- paste0(celltype, "_", ${n_pcs}, "_pcs.txt")
-    write.table(pcs, file = out_file, quote = FALSE, sep = "\t", col.names = TRUE, row.names = TRUE)
+    write.table(pcs, file = "${celltype}_${n_pcs}_pcs.txt", quote = FALSE, sep = "\t", col.names = TRUE, row.names = TRUE)
     """
 }
