@@ -1,12 +1,12 @@
 process final_report {
     label "process_high"
-    publishDir "${params.outdir}", mode: 'copy'
+    publishDir "${params.outdir}/eQTL_outputs/", mode: 'copy'
 
     input: 
     path eqtl_results_filtered
     path eqtl_results
     path report_file
-    path optimization_results
+    val optimization_results
 
     output: 
     path "eqtl_report.html"
@@ -14,11 +14,8 @@ process final_report {
     script:
     """
     #!/usr/bin/env Rscript
-     if (length("$optimization_results") == 0) {
-        optimization_results <- NULL
-    } else {
-        optimization_results <- "$optimization_results"
-    }
+    opt_res <- "${optimization_results ?: ''}"
+    if (opt_res == "") opt_res <- NULL
     rmarkdown::render(input = "$report_file", output_file = "eqtl_report.html", params = list(
         eqtl_results_filtered = "$eqtl_results_filtered",
         eqtl_results = "$eqtl_results",
@@ -34,8 +31,8 @@ process final_report {
         cis_distance = ${params.cis_distance},
         filter_chr="${params.filter_chr}",
         fdr_threshold = ${params.fdr_threshold},
-        optimize_pcs = TRUE,
-        optimization_results = "$optimization_results"
+        optimize_pcs = ${params.optimize_pcs ? 'TRUE' : 'FALSE'},
+        optimization_results = opt_res
     ))
     """
 }
