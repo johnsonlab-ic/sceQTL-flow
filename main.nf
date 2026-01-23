@@ -4,6 +4,7 @@ nextflow.enable.dsl=2
 params.outdir="/rds/general/user/ah3918/projects/puklandmarkproject/ephemeral/tmp/"
 params.gds_file="/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/TEST_DATA/test_geno.gds"
 params.single_cell_file="/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/TEST_DATA/roche_ms_decontx.rds"
+params.single_cell_file_list="none"
 params.cov_file="none"
 params.help = false
 params.workflow = 'matrixeqtl'
@@ -42,7 +43,7 @@ def helpMessage() {
             nextflow run main.nf \\
                 --workflow matrixeqtl|tensorqtl \\
                 --gds_file <path.gds> \\
-                --single_cell_file <seurat.rds> \\
+                --single_cell_file <seurat.rds> OR --single_cell_file_list <file1.rds,file2.rds,...> \\
                 --outdir <output_dir> \\
                 --celltype_column <column> \\
                 --individual_column <column> \\

@@ -1,6 +1,7 @@
 // MatrixEQTL workflow (extracted from main.nf)
 
 include { create_genotype; qc_genotype } from '../modules/genotype/genotype.nf'
+include { merge_seurat_objects } from '../modules/expression/merge_seurat.nf'
 include { pseudobulk_singlecell } from '../modules/expression/pseudobulk.nf'
 include { qc_expression } from '../modules/expression/qc_expression.nf'
 include { get_residuals } from '../modules/residuals/get_residuals.nf'
@@ -13,6 +14,11 @@ include { count_individuals } from '../modules/optimize/count_individuals.nf'
 include { generate_fixed_pcs } from '../modules/optimize/generate_fixed_pcs.nf'
 
 workflow matrixeqtl {
+    // Determine which input mode is being used
+    def seurat_input_msg = params.single_cell_file_list != "none" && params.single_cell_file_list != "" ? 
+        "Multiple Seurat Files (will be merged): ${params.single_cell_file_list}" : 
+        "Single Seurat File: ${params.single_cell_file}"
+    
     println """
     ========================================
     Welcome to the Nextflow eQTL pipeline
@@ -22,7 +28,7 @@ workflow matrixeqtl {
 
     Output Directory: ${params.outdir}
     GDS File: ${params.gds_file}
-    Input Seurat File: ${params.single_cell_file}
+    ${seurat_input_msg}
     WorkDir: ${workflow.workDir}
     Using profile: ${workflow.profile}
     Covariate file: ${params.cov_file}
@@ -63,7 +69,18 @@ workflow matrixeqtl {
         filter_chr=params.filter_chr  // Pass the optional parameter
     )
 
-    pseudobulk_singlecell(params.single_cell_file, params.pseudobulk_source_functions)
+    // Handle single file vs multiple files
+    if (params.single_cell_file_list != "none" && params.single_cell_file_list != "") {
+        // Multiple Seurat objects - need to merge first
+        seurat_files_ch = Channel.fromPath(params.single_cell_file_list.split(',') as List)
+        merge_seurat_objects(seurat_files_ch.collect(), params.pseudobulk_source_functions)
+        seurat_input = merge_seurat_objects.out.merged_seurat
+    } else {
+        // Single Seurat object - use directly
+        seurat_input = params.single_cell_file
+    }
+
+    pseudobulk_singlecell(seurat_input, params.pseudobulk_source_functions)
     pseudobulk_ch = pseudobulk_singlecell.out.pseudobulk_counts.flatten()
     qc_expression(pseudobulk_file= pseudobulk_ch)
     
