@@ -10,7 +10,8 @@ include { get_residuals } from '../modules/residuals/get_residuals.nf'
 include { run_matrixeQTL } from '../modules/eqtl/matrixeqtl.nf'
 include { combine_eqtls } from '../modules/eqtl/combine_eqtls.nf'
 include { final_report } from '../modules/reports/final_report.nf'
-include { optimize_pcs } from '../modules/optimize/optimize_pcs.nf'
+include { optimize_pcs as optimize_pcs_coarse } from '../modules/optimize/optimize_pcs.nf'
+include { optimize_pcs as optimize_pcs_fine } from '../modules/optimize/optimize_pcs.nf'
 include { select_pcs } from '../modules/optimize/select_pcs.nf'
 include { select_pcs_coarse } from '../modules/optimize/select_pcs_coarse.nf'
 include { count_individuals } from '../modules/optimize/count_individuals.nf'
@@ -146,7 +147,7 @@ workflow matrixeqtl {
             }
 
         // Run the optimize_pcs process on the coarse grid
-        def optimize_coarse = optimize_pcs(
+        optimize_pcs_coarse(
             params.eqtl_source_functions,
             qc_genotype.out.qc_genotype_mat,
             qc_genotype.out.qc_snp_chromlocations,
@@ -156,9 +157,9 @@ workflow matrixeqtl {
             "coarse"
         )
 
-        optimize_coarse.out.egenes_results
+        optimize_pcs_coarse.out.egenes_results
             .map { file ->
-                celltype = file.name.replaceAll(/_egenes_vs_.+\.txt$/, "")
+                celltype = file.name.replaceAll(/_egenes_vs_.+_coarse\.txt$/, "")
                 [celltype, file]
             }
             .groupTuple(by: 0)
@@ -201,8 +202,8 @@ workflow matrixeqtl {
             }
             .set { dynamic_pcs_fine_ch }
 
-        // Run the optimize_pcs process on the fine grid
-        def optimize_fine = optimize_pcs(
+        // Run the optimize_pcs process on the fine grid (second invocation with alias)
+        optimize_pcs_fine(
             params.eqtl_source_functions,
             qc_genotype.out.qc_genotype_mat,
             qc_genotype.out.qc_snp_chromlocations,
@@ -212,16 +213,16 @@ workflow matrixeqtl {
             "fine"
         )
 
-        optimize_fine.out.egenes_results
+        optimize_pcs_fine.out.egenes_results
             .map { file ->
-                celltype = file.name.replaceAll(/_egenes_vs_.+\.txt$/, "")
+                celltype = file.name.replaceAll(/_egenes_vs_.+_fine\.txt$/, "")
                 [celltype, file]
             }
             .groupTuple(by: 0)
             .set { grouped_results_fine }
 
         // For the markdown file
-        optimize_fine.out.egenes_results
+        optimize_pcs_fine.out.egenes_results
             .collect()
             .set { collected_results }
 
