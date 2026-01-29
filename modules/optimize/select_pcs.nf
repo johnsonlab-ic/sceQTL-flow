@@ -21,10 +21,10 @@ process select_pcs {
     file_list <- unlist(strsplit("${egenes_files}", " "))
     results <- rbindlist(lapply(file_list, fread))
 
-    # Find the optimal n_pcs for the cell type (row with max n_egenes)
-    optimal_idx <- which.max(results\$n_egenes)
+    # Find the optimal n_pcs for the cell type (row with max n_assoc)
+    optimal_idx <- which.max(results\$n_assoc)
     n_pcs <- results[optimal_idx, ]\$n_pcs
-    cat("Selected n_pcs:", n_pcs, "with n_egenes:", results[optimal_idx, ]\$n_egenes, "\n")
+    cat("Selected n_pcs:", n_pcs, "with n_assoc:", results[optimal_idx, ]\$n_assoc, "\n")
 
     # Perform PCA on the expression matrix
     exp_mat <- fread("${exp_matrix}") %>% tibble::column_to_rownames(var="geneid")

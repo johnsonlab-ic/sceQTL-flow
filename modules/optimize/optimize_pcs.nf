@@ -79,7 +79,7 @@ process optimize_pcs {
         cisDist = ${params.cis_distance}
     )
     
-    n_egenes = outs %>% filter(FDR<0.05) %>% pull(gene) %>% unique() %>% length()
-    write.table(data.frame(celltype=celltype,n_pcs=${n_pcs}, n_egenes=n_egenes), file=paste0(celltype,"_egenes_vs_",${n_pcs},".txt"), sep="\t", quote=FALSE, row.names=FALSE)
+    n_assoc = outs %>% filter(FDR<0.05) %>% nrow()
+    write.table(data.frame(celltype=celltype,n_pcs=${n_pcs}, n_assoc=n_assoc), file=paste0(celltype,"_egenes_vs_",${n_pcs},".txt"), sep="\t", quote=FALSE, row.names=FALSE)
     """
 }
