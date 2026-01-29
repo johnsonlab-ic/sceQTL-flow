@@ -28,6 +28,17 @@ params.optimize_pcs = true // Whether to optimize PCs or use a fixed number
 params.fixed_pcs = 10 // Number of PCs to use when not optimizing
 params.report = false
 
+// PC optimization strategy parameters
+params.pc_max_fraction = 0.5
+params.pc_max_cap = 100
+params.pc_min = 2
+params.pc_coarse_step = 10
+params.pc_fine_step = 2
+params.pc_fine_window = 10
+params.pc_elbow_tol = 0.02 // 2% within max
+params.pc_early_stop_tol = 0.01 // 1% improvement threshold
+params.pc_early_stop_patience = 2
+
 // default parameters 
 // Add a new parameter for specifying which covariates to include
 params.covariates_to_include = "all" // Default to include all covariates
@@ -52,7 +63,13 @@ def helpMessage() {
                 [--cov_file covariates.csv] \\
                 [--covariates_to_include <comma list|all>] \\
                 [--optimize_pcs true|false] \\
-                [--fixed_pcs 10]
+                [--fixed_pcs 10] \\
+                [--pc_coarse_step 10] \\
+                [--pc_fine_step 2] \\
+                [--pc_fine_window 10] \\
+                [--pc_elbow_tol 0.02] \\
+                [--pc_early_stop_tol 0.01] \\
+                [--pc_early_stop_patience 2]
 
         Flags:
             --help              Show this message

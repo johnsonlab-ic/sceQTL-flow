@@ -21,10 +21,23 @@ process select_pcs {
     file_list <- unlist(strsplit("${egenes_files}", " "))
     results <- rbindlist(lapply(file_list, fread))
 
-    # Find the optimal n_pcs for the cell type (row with max n_assoc)
-    optimal_idx <- which.max(results\$n_assoc)
-    n_pcs <- results[optimal_idx, ]\$n_pcs
-    cat("Selected n_pcs:", n_pcs, "with n_assoc:", results[optimal_idx, ]\$n_assoc, "\n")
+    # Find the optimal n_pcs using elbow tolerance (smallest n_pcs within tol of max)
+    results\$n_pcs <- as.integer(results\$n_pcs)
+    results\$n_assoc <- as.numeric(results\$n_assoc)
+    results <- results[order(results\$n_pcs)]
+
+    max_assoc <- max(results\$n_assoc, na.rm = TRUE)
+    threshold <- max_assoc * (1 - ${params.pc_elbow_tol})
+    candidates <- results[results\$n_assoc >= threshold, ]
+
+    if (nrow(candidates) == 0) {
+        optimal_idx <- which.max(results\$n_assoc)
+        n_pcs <- results[optimal_idx, ]\$n_pcs
+    } else {
+        n_pcs <- candidates\$n_pcs[1]
+    }
+
+    cat("Selected n_pcs:", n_pcs, "max_n_assoc:", max_assoc, "threshold:", threshold, "\n")
 
     # Perform PCA on the expression matrix
     exp_mat <- fread("${exp_matrix}") %>% tibble::column_to_rownames(var="geneid")
