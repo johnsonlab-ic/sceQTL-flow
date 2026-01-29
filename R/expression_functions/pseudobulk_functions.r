@@ -47,7 +47,27 @@ pseudobulk_counts <- function(seuratlist, min.cells = 100, indiv_col = "Sample_I
     Seurat::DefaultAssay(x) <- assay
     metadata <- x[[]]
 
-    counts <- Seurat::GetAssayData(x, slot = slot)
+    # Handle Seurat v5 multi-layer assays
+    # Check if there are multiple layers in the assay
+    assay_obj <- x[[assay]]
+    layers <- tryCatch(SeuratObject::Layers(assay_obj), error = function(e) NULL)
+    
+    if (!is.null(layers) && length(layers) > 1) {
+      # Seurat v5 with multiple layers - join them first
+      cat(sprintf("  Joining %d layers in assay %s...\\n", length(layers), assay))
+      x <- SeuratObject::JoinLayers(x, assay = assay)
+      assay_obj <- x[[assay]]
+    }
+    
+    # Get counts - try layer first (v5), then fall back to slot (v4)
+    counts <- tryCatch(
+      SeuratObject::GetAssayData(object = assay_obj, layer = slot),
+      error = function(e) {
+        # Fallback for Seurat v4 or when layer doesn't exist
+        Seurat::GetAssayData(x, slot = slot)
+      }
+    )
+    
     unique_ids <- unique(metadata[[indiv_col]])
     indiv_table <- metadata %>% dplyr::count(get(indiv_col))
     indiv_table <- indiv_table %>% dplyr::filter(n > min.cells)

@@ -53,7 +53,7 @@ process optimize_pcs {
     covmat = NULL
 
     exp_pcs = prcomp(t(exp_mat), scale. = TRUE)
-    exp_pcs = exp_pcs$x[, 1:${n_pcs}]
+    exp_pcs = exp_pcs\$x[, 1:${n_pcs}]
     exp_pcs = as.data.frame(exp_pcs)
     colnames(exp_pcs) = paste0("PC", 1:${n_pcs})
     exp_pcs = t(exp_pcs)

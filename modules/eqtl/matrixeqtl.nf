@@ -38,6 +38,11 @@ process run_matrixeQTL {
         celltype = gsub(".csv\$", "", basename("$expression_mat"))
     }
     common_samples = intersect(colnames(exp_mat), colnames(geno_mat))
+    
+    cat(sprintf("[eQTL] %s: Testing %d individuals\\n", celltype, length(common_samples)))
+    if (length(common_samples) < 20) {
+        cat(sprintf("[eQTL] ⚠️  WARNING: Only %d individuals for %s (eQTL may be underpowered)\\n", length(common_samples), celltype))
+    }
 
     exp_mat = exp_mat %>% select(all_of(common_samples))
     geno_mat = geno_mat %>% select(all_of(common_samples))

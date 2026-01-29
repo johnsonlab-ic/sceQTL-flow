@@ -4,6 +4,8 @@ include { create_genotype; qc_genotype } from '../modules/genotype/genotype.nf'
 include { merge_seurat_objects } from '../modules/expression/merge_seurat.nf'
 include { pseudobulk_singlecell } from '../modules/expression/pseudobulk.nf'
 include { qc_expression } from '../modules/expression/qc_expression.nf'
+include { preflight_check } from '../modules/qc/preflight_check.nf'
+include { subset_samples } from '../modules/qc/subset_samples.nf'
 include { get_residuals } from '../modules/residuals/get_residuals.nf'
 include { run_matrixeQTL } from '../modules/eqtl/matrixeqtl.nf'
 include { combine_eqtls } from '../modules/eqtl/combine_eqtls.nf'
@@ -53,6 +55,7 @@ workflow matrixeqtl {
     Chromosomes used: ${params.filter_chr}
     Calculating residuals: ${params.cov_file != "none" && params.cov_file != "" ? "YES" : "NO"}
     Optimize PCs: ${params.optimize_pcs ? "YES" : "NO (using " + params.fixed_pcs + " PCs)"}
+    Sample subsetting: ${params.subset_column != "none" && params.subset_values != "none" ? "YES (" + params.subset_column + " = " + params.subset_values + ")" : "NO"}
 
     If "optimize PCs" is set to TRUE, the pipeline will run longer.
 
@@ -84,6 +87,31 @@ workflow matrixeqtl {
     pseudobulk_ch = pseudobulk_singlecell.out.pseudobulk_counts.flatten()
     qc_expression(pseudobulk_file= pseudobulk_ch)
     
+    // =============================================
+    // RUN PREFLIGHT CHECK
+    // =============================================
+    has_cov = params.cov_file != "none" && params.cov_file != ""
+    preflight_check(
+        genotype_mat = qc_genotype.out.qc_genotype_mat,
+        cov_file = has_cov ? params.cov_file : "",
+        pseudobulk_files = qc_expression.out.pseudobulk_normalised.collect(),
+        has_cov_file = has_cov
+    )
+    
+    // =============================================
+    // CONDITIONALLY SUBSET SAMPLES
+    // =============================================
+    def cov_file_to_use = params.cov_file
+    if (params.subset_column != "none" && params.subset_values != "none" && params.cov_file != "none" && params.cov_file != "") {
+        subset_samples(
+            params.cov_file,
+            params.subset_column,
+            params.subset_values
+        )
+        cov_file_to_use = subset_samples.out.filtered_cov
+        log.info "Subsetting samples by ${params.subset_column} = ${params.subset_values}"
+    }
+    
     // Create a channel for expression data - either residuals or normalized data
     
     
@@ -92,7 +120,7 @@ workflow matrixeqtl {
         // Run get_residuals when covariates are provided
         get_residuals(
             qc_expression.out.pseudobulk_normalised.flatten(),
-            params.cov_file,
+            cov_file_to_use,
             params.pseudobulk_source_functions,
             params.covariates_to_include
         )

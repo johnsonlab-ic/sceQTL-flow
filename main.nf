@@ -31,6 +31,8 @@ params.report = false
 // default parameters 
 // Add a new parameter for specifying which covariates to include
 params.covariates_to_include = "all" // Default to include all covariates
+params.subset_column = "none" // Column to subset by (e.g., "Diagnosis")
+params.subset_values = "none" // Values to keep (e.g., "Control" or "Control,AD")
 
 // Help message similar to scQC-flow style
 def helpMessage() {

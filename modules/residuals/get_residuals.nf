@@ -16,35 +16,73 @@ process get_residuals {
     script:
     """
     #!/usr/bin/env Rscript
-    source("$source_R")
     library(data.table)
     library(dplyr)
 
     exp_mat = fread("$expression_mat") %>% tibble::column_to_rownames(var="geneid")
+    celltype = gsub("_pseudobulk_normalised.csv", "", "$expression_mat")
+    cat(sprintf("[%s] Loaded expression matrix: %d genes × %d individuals\\n", celltype, nrow(exp_mat), ncol(exp_mat)))
+    
     cov_file="$cov_file"
     if(file.size(cov_file) > 0){
-        cov_mat = fread(cov_file,head=T)
-        cov_mat=as.data.frame(cov_mat)
-
-        # Parse the covariates provided from the command line
+        cov_mat = fread(cov_file, head=T) %>% as.data.frame()
+        cat(sprintf("[%s] Loaded covariate matrix: %d individuals\\n", celltype, nrow(cov_mat)))
+        
+        # Normalize sample IDs to handle different separators (dash, slash, period)
+        normalize_ids <- function(ids) {
+            gsub("[-/.]", "_", as.character(ids))
+        }
+        
+        exp_samples_norm <- normalize_ids(colnames(exp_mat))
+        cov_samples_norm <- normalize_ids(cov_mat[["Individual_ID"]])
+        
+        # Find common samples
+        common_norm <- intersect(exp_samples_norm, cov_samples_norm)
+        exp_idx <- which(exp_samples_norm %in% common_norm)
+        cov_idx <- match(exp_samples_norm[exp_idx], cov_samples_norm)
+        
+        cat(sprintf("[%s] Common samples: %d / %d\\n", celltype, length(common_norm), ncol(exp_mat)))
+        
+        # Subset to common samples in matching order
+        exp_mat <- exp_mat[, exp_idx]
+        cov_mat <- cov_mat[cov_idx, ]
+        
+        # Parse covariates to include
         covs_to_include = unlist(strsplit("${covariates_to_include}", ","))
         if(length(covs_to_include) == 0 || (length(covs_to_include) == 1 && covs_to_include[1] == "all")) {
-            # If no covariates specified or "all" specified, include all except Individual_ID
             covs_to_include = colnames(cov_mat)[!colnames(cov_mat) %in% c("Individual_ID")]
         }
-
-        exp_mat=get_residuals(exp_mat,cov_mat,covs_to_include=covs_to_include) %>% 
-        as.data.frame() %>% 
-        mutate(geneid=row.names(.))
+        cat(sprintf("[%s] Regressing out: %s\\n", celltype, paste(covs_to_include, collapse=", ")))
+        
+        # Relevel factors to use most frequent level as reference
+        for (col_name in covs_to_include) {
+            if (is.character(cov_mat[[col_name]])) {
+                cov_mat[[col_name]] <- as.factor(cov_mat[[col_name]])
+            }
+            if (is.factor(cov_mat[[col_name]])) {
+                ref_level <- names(sort(table(cov_mat[[col_name]]), decreasing = TRUE))[1]
+                cov_mat[[col_name]] <- relevel(cov_mat[[col_name]], ref = ref_level)
+            }
+        }
+        
+        # Calculate residuals for each gene
+        lm_formula = paste0("gene ~ ", paste(covs_to_include, collapse = " + "))
+        exp_mat <- t(apply(exp_mat, 1, function(gene_exp) {
+            lm_data <- data.frame(gene = gene_exp)
+            lm_data <- cbind(lm_data, cov_mat[, covs_to_include, drop=FALSE])
+            fit <- lm(lm_formula, data = lm_data)
+            resid(fit)
+        }))
+        
+        cat(sprintf("[%s] Residuals calculated: %d genes × %d individuals\\n", celltype, nrow(exp_mat), ncol(exp_mat)))
+        
+        exp_mat <- exp_mat %>% as.data.frame() %>% mutate(geneid=row.names(.))
     }else{
         exp_mat = exp_mat %>% mutate(geneid=row.names(.))
+        cat(sprintf("[%s] No covariate file\\n", celltype))
     }
 
-    celltype = gsub("_pseudobulk_normalised.csv", "", "$expression_mat")
     data.table::fwrite(exp_mat, paste0(celltype, "_residuals.csv"))
-    
-
-
     """
 
 }

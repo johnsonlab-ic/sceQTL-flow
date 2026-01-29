@@ -22,6 +22,28 @@ process pseudobulk_singlecell {
     source("$source_R")
 
     seuratobj=readRDS("$single_cell_file")
+
+    # Diagnostics: print object structure, assays, default assay, and layers
+    cat("[PB] ==== Seurat Object Diagnostics ====\n")
+    cat("[PB] File:", "$single_cell_file", "\n")
+    cat("[PB] Class:", paste(class(seuratobj), collapse=","), "\n")
+    cat("[PB] Assays:", paste(names(seuratobj@assays), collapse=","), "\n")
+    cat("[PB] Default assay:", Seurat::DefaultAssay(seuratobj), "\n")
+    lyr_info <- tryCatch(SeuratObject::Layers(seuratobj[["${params.counts_assay}"]]), error=function(e) NULL)
+    if (is.null(lyr_info)) {
+        cat("[PB] Layers in assay ${params.counts_assay}:", "<none or not available>", "\n")
+    } else {
+        cat("[PB] Layers in assay ${params.counts_assay}:", paste(lyr_info, collapse=","), "\n")
+    }
+    cat("[PB] Cells:", ncol(seuratobj), "\n")
+    # Safe counts preview
+    counts_preview <- tryCatch(Seurat::GetAssayData(seuratobj, slot="${params.counts_slot}"), error=function(e) {
+        cat("[PB] Counts preview retrieval error:", conditionMessage(e), "\n"); NULL
+    })
+    if (!is.null(counts_preview)) {
+        cat("[PB] Counts preview dims:", nrow(counts_preview), "genes x", ncol(counts_preview), "cells\n")
+    }
+
     celltypelist=Seurat::SplitObject(seuratobj,split.by="${params.celltype_column}")
     aggregated_counts_list=pseudobulk_counts(celltypelist,
     min.cells=as.numeric(${params.min_cells}),
