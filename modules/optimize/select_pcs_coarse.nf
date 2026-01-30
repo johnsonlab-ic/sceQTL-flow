@@ -8,6 +8,7 @@ process select_pcs_coarse {
 
     output:
     tuple val(celltype), path("pc_values_fine.txt"), emit: fine_pc_values
+    tuple val(celltype), path("*_coarse_summary.csv"), emit: coarse_summary
 
     script:
     """
@@ -50,8 +51,8 @@ process select_pcs_coarse {
     fine_window <- ${params.pc_fine_window}
     fine_step <- ${params.pc_fine_step}
 
-    min_pcs <- min(results$n_pcs)
-    max_pcs <- max(results$n_pcs)
+    min_pcs <- min(results\$n_pcs)
+    max_pcs <- max(results\$n_pcs)
 
     fine_min <- max(min_pcs, center - fine_window)
     fine_max <- min(max_pcs, center + fine_window)
@@ -72,5 +73,14 @@ process select_pcs_coarse {
         "\nStop at n_pcs:", max_eval_pcs,
         "\nCoarse best n_pcs:", center
     ), "pc_info_${celltype}_coarse.txt")
+
+    # Output detailed summary CSV for visualization
+    results_summary <- results
+    results_summary\$gain <- c(NA, (results\$n_assoc[-1] - results\$n_assoc[-nrow(results)]) / pmax(results\$n_assoc[-nrow(results)], 1))
+    results_summary\$gain_pct <- results_summary\$gain * 100
+    results_summary\$below_threshold <- results_summary\$gain_pct < (early_tol * 100)
+    results_summary\$is_ceiling <- results_summary\$n_pcs == max_eval_pcs
+    results_summary\$is_best <- results_summary\$n_pcs == center
+    write.csv(results_summary, file = paste0("${celltype}_coarse_summary.csv"), row.names = FALSE, quote = TRUE)
     """
 }

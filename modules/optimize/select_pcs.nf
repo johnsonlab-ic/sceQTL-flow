@@ -9,6 +9,7 @@ process select_pcs {
 
     output:
     tuple val(celltype), path("*_pcs.txt"), emit: exp_pcs
+    tuple val(celltype), path("*_fine_summary.csv"), emit: fine_summary
 
     script:
     """
@@ -52,5 +53,11 @@ process select_pcs {
     
     # Also save information about how many PCs were chosen
     writeLines(paste("Cell type:", "${celltype}", "\nOptimal number of PCs:", n_pcs), "pc_info_${celltype}.txt")
+
+    # Output detailed summary CSV for visualization
+    results\$threshold <- max_assoc * (1 - ${params.pc_elbow_tol})
+    results\$within_elbow <- results\$n_assoc >= results\$threshold
+    results\$is_selected <- results\$n_pcs == n_pcs
+    write.csv(results, file = paste0("${celltype}_fine_summary.csv"), row.names = FALSE, quote = TRUE)
     """
 }

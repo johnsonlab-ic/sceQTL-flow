@@ -10,6 +10,7 @@ include { get_residuals } from '../modules/residuals/get_residuals.nf'
 include { run_matrixeQTL } from '../modules/eqtl/matrixeqtl.nf'
 include { combine_eqtls } from '../modules/eqtl/combine_eqtls.nf'
 include { final_report } from '../modules/reports/final_report.nf'
+include { organize_pc_optimization } from '../modules/reports/organize_pc_optimization.nf'
 include { optimize_pcs as optimize_pcs_coarse } from '../modules/optimize/optimize_pcs.nf'
 include { optimize_pcs as optimize_pcs_fine } from '../modules/optimize/optimize_pcs.nf'
 include { select_pcs } from '../modules/optimize/select_pcs.nf'
@@ -193,6 +194,11 @@ workflow matrixeqtl {
         // Select coarse best and generate fine PC grid
         select_pcs_coarse(grouped_results_coarse_debug)
 
+        // Collect coarse summary CSVs for reporting
+        select_pcs_coarse.out.coarse_summary
+            .collect()
+            .set { collected_coarse_summaries }
+
         // Build fine PC values per celltype
         ch_residual_matrices_debug
             .join(select_pcs_coarse.out.fine_pc_values, failOnDuplicate: true, failOnMismatch: true)
@@ -238,6 +244,11 @@ workflow matrixeqtl {
         select_pcs(paired_data_fine.map { celltype, egenes_files, exp_file -> [celltype, egenes_files] },
                   paired_data_fine.map { celltype, egenes_files, exp_file -> [celltype, exp_file] })
 
+        // Collect fine summary CSVs for reporting
+        select_pcs.out.fine_summary
+            .collect()
+            .set { collected_fine_summaries }
+
         // Join the residual matrices with their corresponding optimal PCs
         ch_residual_matrices
             .join(select_pcs.out.exp_pcs, failOnDuplicate: true, failOnMismatch: true)
@@ -270,8 +281,10 @@ workflow matrixeqtl {
             .join(generate_fixed_pcs.out.exp_pcs, failOnDuplicate: true, failOnMismatch: true)
             .set { residuals_with_pcs }
 
-        // Provide a placeholder value so downstream reporting still runs
+        // Provide placeholder values so downstream reporting still runs
         Channel.value("").set { collected_results }
+        Channel.empty().set { collected_coarse_summaries }
+        Channel.empty().set { collected_fine_summaries }
     }
 
     // Run matrixeQTL with PCs (either optimized or fixed)
@@ -285,6 +298,14 @@ workflow matrixeqtl {
     )
 
     combine_eqtls(eqtls= run_matrixeQTL.out.eqtl_results.collect())
+
+    // Organize optimization CSVs if PC optimization was performed
+    if(params.optimize_pcs) {
+        organize_pc_optimization(
+            collected_coarse_summaries,
+            collected_fine_summaries
+        )
+    }
 
     if(params.report){
         final_report(
