@@ -68,6 +68,7 @@ The following settings were used in the pipeline:
 - **Optimize Principal Components**: `r params$optimize_pcs`
 
 ```{r echo=FALSE}
+"""
 # Load the filtered eQTL results
 eqtl_results_filtered <- readRDS(params$eqtl_results_filtered)
 
@@ -87,6 +88,14 @@ avg_genes_tested <- length(all_genes) / num_celltypes
 snps_list <- lapply(eqtl_results, function(df) unique(df$SNP))
 all_snps <- unique(unlist(snps_list))
 num_snps_tested <- length(all_snps)
+"""
+
+---
+
+## PC Optimization Results
+
+```{r child='../quarto_reports/pc_optimization_report.qmd'}
+```
 ```
 
 ### Input Overview

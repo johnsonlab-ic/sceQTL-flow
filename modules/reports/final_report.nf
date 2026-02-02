@@ -2,13 +2,10 @@ process final_report {
     label "process_high"
     publishDir "${params.outdir}/eQTL_outputs/", mode: 'copy'
 
-    input: 
-    path eqtl_results_filtered
-    path eqtl_results
-    path report_file
-    val optimization_results
+    input:
+    tuple path(eqtl_results_filtered), path(eqtl_results), path(report_file), val(optimization_results)
 
-    output: 
+    output:
     path "eqtl_report.html"
 
     script:

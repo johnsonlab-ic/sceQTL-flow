@@ -194,8 +194,9 @@ workflow matrixeqtl {
         // Select coarse best and generate fine PC grid
         select_pcs_coarse(grouped_results_coarse_debug)
 
-        // Collect coarse summary CSVs for reporting
+        // Collect coarse summary CSVs for reporting (only file paths)
         select_pcs_coarse.out.coarse_summary
+            .map { tuple -> tuple[1] ?: tuple } // If tuple, get file path; else pass as is
             .collect()
             .set { collected_coarse_summaries }
 
@@ -244,8 +245,9 @@ workflow matrixeqtl {
         select_pcs(paired_data_fine.map { celltype, egenes_files, exp_file -> [celltype, egenes_files] },
                   paired_data_fine.map { celltype, egenes_files, exp_file -> [celltype, exp_file] })
 
-        // Collect fine summary CSVs for reporting
+        // Collect fine summary CSVs for reporting (only file paths)
         select_pcs.out.fine_summary
+            .map { tuple -> tuple[1] ?: tuple } // If tuple, get file path; else pass as is
             .collect()
             .set { collected_fine_summaries }
 
@@ -308,12 +310,20 @@ workflow matrixeqtl {
     }
 
     if(params.report){
-        final_report(
-            eqtl_results_filtered = combine_eqtls.out.mateqtlouts_FDR_filtered,
-            eqtl_results = combine_eqtls.out.mateqtlouts,
-            report_file = params.quarto_report,
-            optimization_results = collected_results
-        )
+        // Use the unified report template
+        def unified_report_file = "R/rmarkdown_reports/unified_final_report.Rmd"
+        def report_inputs = combine_eqtls.out.mateqtlouts_FDR_filtered
+            .ifEmpty(Channel.value('dummy_FDR_filtered.rds'))
+            .combine(combine_eqtls.out.mateqtlouts.ifEmpty(Channel.value('dummy_mateqtlouts.rds')))
+            .combine(Channel.value(unified_report_file))
+            .combine(
+                params.optimize_pcs
+                ? organize_pc_optimization.out.summary_csvs
+                    .map { files -> files instanceof List ? files.join(' ') : files }
+                    .ifEmpty(Channel.value(''))
+                : Channel.value("")
+            )
+        report_inputs | final_report
     }
 }
 
