@@ -7,6 +7,7 @@ params:
   outdir: NULL
   gds_file: NULL
   single_cell_file: NULL
+  single_cell_file_list: NULL
   counts_assay: NULL
   counts_slot: NULL
   celltype_column: NULL
@@ -16,8 +17,20 @@ params:
   cis_distance: NULL
   filter_chr: NULL
   fdr_threshold: NULL
+  cov_file: NULL
+  covariates_to_include: NULL
+  subset_column: NULL
+  subset_values: NULL
   optimize_pcs: NULL
-  optimization_results: NULL
+  fixed_pcs: NULL
+  pc_coarse_step: NULL
+  pc_fine_step: NULL
+  pc_fine_window: NULL
+  pc_elbow_tol: NULL
+  pc_early_stop_tol: NULL
+  pc_early_stop_patience: NULL
+  workflow: NULL
+  profile: NULL
 ---
 
 ```{r setup, include=FALSE}
@@ -28,6 +41,7 @@ library(ggplot2)
 library(tidyr)
 library(tidyverse)
 library(gridExtra)
+library(scales)
 format_cis_distance <- function(distance) {
   if (distance >= 1e6) {
     return(paste0(distance / 1e6, "Mb"))
@@ -57,36 +71,101 @@ This report was generated using the Nextflow eQTL Pipeline, a comprehensive tool
 
 The following settings were used in the pipeline:
 
-- **Output Directory**: `r params$outdir`
-- **GDS File**: `r params$gds_file`
-- **Single-Cell Data File**: `r params$single_cell_file`
-- **Counts Assay**: `r params$counts_assay`
-- **Counts Slot**: `r params$counts_slot`
-- **Cell-Type Column**: `r params$celltype_column`
-- **Individual Column**: `r params$individual_column`
-- **Minimum Cells for Pseudobulking**: `r params$min_cells`
-- **Minimum Expression Percentage for Genes**: `r params$min_expression`
-- **Cis Distance for eQTL Analysis**: `r format_cis_distance(params$cis_distance)`
-- **Chromosomes tested**: `r params$filter_chr`
-- **FDR Threshold for eQTL Results**: `r params$fdr_threshold`
-- **Optimize Principal Components**: `r params$optimize_pcs`
+```{r params-table, echo=FALSE}
+params_tbl <- tibble::tibble(
+  Parameter = c(
+    "Output directory",
+    "Workflow",
+    "Profile",
+    "GDS file",
+    "Single-cell file",
+    "Single-cell file list",
+    "Counts assay",
+    "Counts slot",
+    "Cell-type column",
+    "Individual column",
+    "Min cells",
+    "Min expression",
+    "Cis distance",
+    "Chromosomes",
+    "FDR threshold",
+    "Covariate file",
+    "Covariates to include",
+    "Subset column",
+    "Subset values",
+    "Optimize PCs",
+    "Fixed PCs",
+    "PC coarse step",
+    "PC fine step",
+    "PC fine window",
+    "PC elbow tolerance",
+    "PC early-stop tolerance",
+    "PC early-stop patience"
+  ),
+  Value = c(
+    params$outdir,
+    params$workflow,
+    params$profile,
+    params$gds_file,
+    params$single_cell_file,
+    params$single_cell_file_list,
+    params$counts_assay,
+    params$counts_slot,
+    params$celltype_column,
+    params$individual_column,
+    params$min_cells,
+    params$min_expression,
+    format_cis_distance(params$cis_distance),
+    params$filter_chr,
+    params$fdr_threshold,
+    params$cov_file,
+    params$covariates_to_include,
+    params$subset_column,
+    params$subset_values,
+    params$optimize_pcs,
+    params$fixed_pcs,
+    params$pc_coarse_step,
+    params$pc_fine_step,
+    params$pc_fine_window,
+    params$pc_elbow_tol,
+    params$pc_early_stop_tol,
+    params$pc_early_stop_patience
+  )
+)
+
+knitr::kable(params_tbl, col.names = c("Parameter", "Value"))
+```
 
 ```{r eqtl-load, echo=FALSE}
 # Load the filtered eQTL results
-eqtl_results_filtered <- readRDS(params$eqtl_results_filtered)
+if (!is.null(params$eqtl_results_filtered) && file.exists(params$eqtl_results_filtered)) {
+  eqtl_results_filtered <- readRDS(params$eqtl_results_filtered)
+} else {
+  eqtl_results_filtered <- NULL
+}
+
 # Load the eQTL results
-eqtl_results <- readRDS(params$eqtl_results)
+if (!is.null(params$eqtl_results) && file.exists(params$eqtl_results)) {
+  eqtl_results <- readRDS(params$eqtl_results)
+} else {
+  eqtl_results <- NULL
+}
 # Number and names of cell-types tested
-cell_types <- names(eqtl_results_filtered)
+cell_types <- if (!is.null(eqtl_results_filtered)) names(eqtl_results_filtered) else character(0)
 num_celltypes <- length(cell_types)
-# Average number of genes tested
-genes_list <- lapply(eqtl_results, function(df) unique(df$gene))
-all_genes <- unlist(genes_list)
-avg_genes_tested <- length(all_genes) / num_celltypes
-# Number of SNPs tested
-snps_list <- lapply(eqtl_results, function(df) unique(df$SNP))
-all_snps <- unique(unlist(snps_list))
-num_snps_tested <- length(all_snps)
+
+if (!is.null(eqtl_results) && num_celltypes > 0) {
+  genes_list <- lapply(eqtl_results, function(df) unique(df$gene))
+  all_genes <- unlist(genes_list)
+  avg_genes_tested <- length(all_genes) / num_celltypes
+
+  snps_list <- lapply(eqtl_results, function(df) unique(df$SNP))
+  all_snps <- unique(unlist(snps_list))
+  num_snps_tested <- length(all_snps)
+} else {
+  avg_genes_tested <- NA
+  num_snps_tested <- NA
+}
 ```
 
 ### Input Overview
@@ -97,6 +176,88 @@ num_snps_tested <- length(all_snps)
 - **Number of SNPs tested:** `r num_snps_tested`
 
 ---
+
+## Total and Unique eGenes (5% FDR)
+
+```{r plot-total-unique-egenes, echo=FALSE}
+if (!is.null(eqtl_results_filtered)) {
+  total_genes <- function(cell_list) {
+    sapply(cell_list, function(df) length(unique(df$gene)))
+  }
+
+  total_unique_genes <- function(cell_list) {
+    sapply(cell_list, function(df) {
+      current_genes <- unique(df$gene)
+      other_genes <- unique(unlist(lapply(cell_list, function(other_df) {
+        if (identical(df, other_df)) return(NULL)
+        other_df$gene
+      })))
+      length(setdiff(current_genes, other_genes))
+    })
+  }
+
+  mateqtlouts <- eqtl_results_filtered
+
+  mateqtlouts_filt <- lapply(mateqtlouts, function(x) {
+    x <- x %>% mutate(se = beta / t.stat, fstat = t.stat^2)
+    x %>%
+      group_by(gene) %>%
+      arrange(p.value) %>%
+      slice_head(n = 1) %>%
+      ungroup() %>%
+      arrange(FDR)
+  })
+
+  tot_eGenes <- total_genes(mateqtlouts_filt)
+  tot_unique_eGenes <- total_unique_genes(mateqtlouts_filt)
+  df <- data.frame(tot_eGenes, tot_unique_eGenes)
+  df$celltype <- rownames(df)
+  df$celltype <- gsub("_", " ", df$celltype)
+
+  color_pal <- scales::hue_pal()(length(unique(df$celltype)))
+  colorvec <- setNames(color_pal, unique(df$celltype))
+  df$colorvec <- colorvec
+
+  df <- df[order(df$tot_eGenes, decreasing = TRUE), ]
+  df_long <- df %>%
+    pivot_longer(cols = c(tot_eGenes, tot_unique_eGenes), names_to = "gene_type", values_to = "count")
+  df_long$gene_type <- factor(df_long$gene_type, levels = c("tot_unique_eGenes", "tot_eGenes"))
+  df_long$celltype_col <- rep(c(2, 1), times = nrow(df_long) / 2)
+  df_long$celltype_col <- factor(df_long$celltype_col)
+  df_long$celltype <- factor(df_long$celltype, levels = rev(df$celltype))
+  df_long$celltype_col <- paste0(df_long$celltype, df_long$celltype_col)
+
+  make_lighter <- function(hex, fraction = 0.4) {
+    rgb <- col2rgb(hex)
+    new_rgb <- rgb + fraction * (255 - rgb)
+    rgb(new_rgb[1], new_rgb[2], new_rgb[3], maxColorValue = 255)
+  }
+
+  colorvec <- df_long$colorvec
+  new_colors <- c(rbind(colorvec[c(TRUE, FALSE)], sapply(colorvec[c(TRUE, FALSE)], make_lighter)))
+  names(new_colors) <- df_long$celltype_col
+  max_val <- max(df_long$count) + 0.12 * max(df_long$count)
+
+  g <- ggplot(df_long, aes(x = celltype, y = count, fill = celltype_col)) +
+    geom_bar(stat = "identity", position = position_dodge(), width = 0.8, colour = "black") +
+    geom_text(aes(label = count), position = position_dodge(width = 0.9), hjust = -0.2, size = 6 / .pt) +
+    scale_fill_manual(values = new_colors) +
+    labs(y = "Total vs unique eGenes (5% FDR)") +
+    coord_flip(ylim = c(NA, max_val)) +
+    theme_classic() +
+    theme(
+      axis.text.x = element_text(size = 6.5, colour = "black"),
+      axis.title.y = element_blank(),
+      axis.text.y = element_text(size = 6.5, colour = "black"),
+      axis.title.x = element_text(size = 7, face = "bold"),
+      legend.position = "none"
+    )
+
+  print(g)
+} else {
+  cat("Filtered eQTL results not available for eGene plot.\n")
+}
+```
 
 # PC Optimization Results
 

@@ -79,7 +79,7 @@ workflow matrixeqtl {
     // Handle single file vs multiple files
     if (params.single_cell_file_list != "none" && params.single_cell_file_list != "") {
         // Multiple Seurat objects - need to merge first
-        seurat_files_ch = Channel.fromPath(params.single_cell_file_list.split(',') as List)
+        seurat_files_ch = nextflow.Channel.fromPath(params.single_cell_file_list.split(',') as List)
         merge_seurat_objects(seurat_files_ch.collect(), params.pseudobulk_source_functions)
         seurat_input = merge_seurat_objects.out.merged_seurat
     } else {
@@ -284,9 +284,9 @@ workflow matrixeqtl {
             .set { residuals_with_pcs }
 
         // Provide placeholder values so downstream reporting still runs
-        Channel.value("").set { collected_results }
-        Channel.empty().set { collected_coarse_summaries }
-        Channel.empty().set { collected_fine_summaries }
+        nextflow.Channel.value("").set { collected_results }
+        nextflow.Channel.empty().set { collected_coarse_summaries }
+        nextflow.Channel.empty().set { collected_fine_summaries }
     }
 
     // Run matrixeQTL with PCs (either optimized or fixed)
@@ -310,19 +310,10 @@ workflow matrixeqtl {
     }
 
     if(params.report){
-        // Use the unified report template
-        def unified_report_file = "R/rmarkdown_reports/unified_final_report.Rmd"
+        def unified_report_file = params.quarto_report
         def report_inputs = combine_eqtls.out.mateqtlouts_FDR_filtered
-            .ifEmpty(Channel.value('dummy_FDR_filtered.rds'))
-            .combine(combine_eqtls.out.mateqtlouts.ifEmpty(Channel.value('dummy_mateqtlouts.rds')))
-            .combine(Channel.value(unified_report_file))
-            .combine(
-                params.optimize_pcs
-                ? organize_pc_optimization.out.summary_csvs
-                    .map { files -> files instanceof List ? files.join(' ') : files }
-                    .ifEmpty(Channel.value(''))
-                : Channel.value("")
-            )
+            .combine(combine_eqtls.out.mateqtlouts)
+            .combine(nextflow.Channel.value(unified_report_file))
         report_inputs | final_report
     }
 }
