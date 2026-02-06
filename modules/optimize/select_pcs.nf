@@ -1,7 +1,7 @@
 process select_pcs {
     tag "Selecting optimal PCs for ${celltype}"
     label "process_low_memory"
-    publishDir "${params.outdir}/eQTL_outputs/", mode: 'copy'
+    publishDir "${params.outdir}/optimization/", mode: 'copy'
 
     input:
     tuple val(celltype), path(egenes_files)

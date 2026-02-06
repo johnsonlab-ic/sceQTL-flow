@@ -181,15 +181,9 @@ workflow matrixeqtl {
             }
             .set { ch_residual_matrices }
 
-        grouped_results_coarse.map { celltype, files ->
-            println "Grouped coarse results for cell type: $celltype with ${files.size()} files"
-            return [celltype, files]
-        }.set { grouped_results_coarse_debug }
+        grouped_results_coarse.set { grouped_results_coarse_debug }
 
-        ch_residual_matrices.map { celltype, file ->
-            println "Expression file for cell type: $celltype - ${file.name}"
-            return [celltype, file]
-        }.set { ch_residual_matrices_debug }
+        ch_residual_matrices.set { ch_residual_matrices_debug }
 
         // Select coarse best and generate fine PC grid
         select_pcs_coarse(grouped_results_coarse_debug)
@@ -236,10 +230,6 @@ workflow matrixeqtl {
         // Run the select_pcs process on fine grid results
         grouped_results_fine
             .join(ch_residual_matrices_debug, failOnDuplicate: true, failOnMismatch: true)
-            .map { celltype, egenes_files, exp_file ->
-                println "Successfully paired (fine): $celltype with ${egenes_files.size()} egenes files and ${exp_file.name}"
-                return [celltype, egenes_files, exp_file]
-            }
             .set { paired_data_fine }
 
         select_pcs(paired_data_fine.map { celltype, egenes_files, exp_file -> [celltype, egenes_files] },
@@ -283,8 +273,7 @@ workflow matrixeqtl {
             .join(generate_fixed_pcs.out.exp_pcs, failOnDuplicate: true, failOnMismatch: true)
             .set { residuals_with_pcs }
 
-        // Provide placeholder values so downstream reporting still runs
-        nextflow.Channel.value("").set { collected_results }
+        // Provide empty channels for coarse/fine summaries since optimization was skipped
         nextflow.Channel.empty().set { collected_coarse_summaries }
         nextflow.Channel.empty().set { collected_fine_summaries }
     }
@@ -299,21 +288,21 @@ workflow matrixeqtl {
         residuals_with_pcs.map { it[2] }   // PCs file (optimized or fixed)
     )
 
-    combine_eqtls(eqtls= run_matrixeQTL.out.eqtl_results.collect())
+    // Collect covariate matrices used per cell type for reporting
+    run_matrixeQTL.out.covs_used
+        .collect()
+        .set { collected_covs_used }
 
-    // Organize optimization CSVs if PC optimization was performed
-    if(params.optimize_pcs) {
-        organize_pc_optimization(
-            collected_coarse_summaries,
-            collected_fine_summaries
-        )
-    }
+    combine_eqtls(eqtls= run_matrixeQTL.out.eqtl_results.collect())
 
     if(params.report){
         def unified_report_file = params.quarto_report
         def report_inputs = combine_eqtls.out.mateqtlouts_FDR_filtered
             .combine(combine_eqtls.out.mateqtlouts)
             .combine(nextflow.Channel.value(unified_report_file))
+            .combine(collected_coarse_summaries.map { files -> [files] })
+            .combine(collected_fine_summaries.map { files -> [files] })
+            .combine(collected_covs_used.map { files -> [files] })
         report_inputs | final_report
     }
 }

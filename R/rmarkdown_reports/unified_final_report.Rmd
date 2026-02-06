@@ -4,6 +4,9 @@ output: html_document
 params:
   eqtl_results_filtered: NULL
   eqtl_results: NULL
+  covs_used: NULL
+  coarse_summaries: NULL
+  fine_summaries: NULL
   outdir: NULL
   gds_file: NULL
   single_cell_file: NULL
@@ -34,12 +37,12 @@ params:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 library(data.table)
 library(dplyr)
 library(ggplot2)
 library(tidyr)
-library(tidyverse)
+library(purrr)
 library(gridExtra)
 library(scales)
 format_cis_distance <- function(distance) {
@@ -154,6 +157,12 @@ if (!is.null(params$eqtl_results) && file.exists(params$eqtl_results)) {
 cell_types <- if (!is.null(eqtl_results_filtered)) names(eqtl_results_filtered) else character(0)
 num_celltypes <- length(cell_types)
 
+celltype_colors <- if (length(cell_types) > 0) {
+  setNames(scales::hue_pal()(length(cell_types)), cell_types)
+} else {
+  NULL
+}
+
 if (!is.null(eqtl_results) && num_celltypes > 0) {
   genes_list <- lapply(eqtl_results, function(df) unique(df$gene))
   all_genes <- unlist(genes_list)
@@ -166,14 +175,73 @@ if (!is.null(eqtl_results) && num_celltypes > 0) {
   avg_genes_tested <- NA
   num_snps_tested <- NA
 }
+
+avg_genes_tested_display <- if (is.na(avg_genes_tested)) {
+  NA
+} else {
+  formatC(round(avg_genes_tested), format = "f", digits = 0, big.mark = ",")
+}
+
+covs_used_files <- params$covs_used
+covs_used_files <- covs_used_files[!is.null(covs_used_files) & covs_used_files != ""]
+
+if (length(covs_used_files) > 0) {
+  individuals_df <- map_df(covs_used_files, ~{
+    if (file.exists(.x)) {
+      celltype <- gsub("_covs_used.rds", "", basename(.x))
+      covmat <- readRDS(.x)
+      data.frame(celltype = celltype, n_individuals = ncol(covmat))
+    } else {
+      NULL
+    }
+  })
+  if (nrow(individuals_df) == 0) {
+    individuals_df <- NULL
+  }
+} else {
+  individuals_df <- NULL
+}
+
+avg_individuals <- if (is.null(individuals_df)) NA else mean(individuals_df$n_individuals)
+avg_individuals_display <- if (is.na(avg_individuals)) {
+  NA
+} else {
+  formatC(round(avg_individuals), format = "f", digits = 0, big.mark = ",")
+}
 ```
 
 ### Input Overview
 
 - **Number of cell-types tested:** `r num_celltypes`
 - **Names of cell-types tested:** `r paste(cell_types, collapse=", ")`
-- **Average number of genes tested per cell-type:** `r avg_genes_tested`
+- **Average number of genes tested per cell-type:** `r avg_genes_tested_display`
+- **Average number of individuals tested per cell-type:** `r avg_individuals_display`
 - **Number of SNPs tested:** `r num_snps_tested`
+
+```{r individuals-bar, fig.width=9, fig.height=4.5}
+if (!is.null(individuals_df)) {
+  plot_colors <- if (!is.null(celltype_colors)) {
+    celltype_colors
+  } else {
+    setNames(scales::hue_pal()(length(unique(individuals_df$celltype))), unique(individuals_df$celltype))
+  }
+  individuals_df %>%
+    mutate(celltype = factor(celltype, levels = names(plot_colors))) %>%
+    ggplot(aes(x = celltype, y = n_individuals, fill = celltype)) +
+    geom_col(width = 0.8, color = "black") +
+    geom_text(aes(label = n_individuals), vjust = -0.4, size = 3) +
+    scale_fill_manual(values = plot_colors, guide = "none") +
+    labs(x = "Cell Type", y = "Number of Individuals") +
+    theme_minimal() +
+    theme(
+      panel.grid.minor = element_blank(),
+      axis.text.x = element_text(angle = 45, hjust = 1),
+      axis.title = element_text(size = 10)
+    )
+} else {
+  cat("No covariate usage files available to summarize individuals.\n")
+}
+```
 
 ---
 
@@ -262,8 +330,16 @@ if (!is.null(eqtl_results_filtered)) {
 # PC Optimization Results
 
 ```{r pcopt-setup, echo=FALSE}
-outdir <- params$outdir
-opt_dir <- file.path(outdir, "optimization")
+# Use the passed coarse and fine summary files instead of searching in outdir
+coarse_summary_files <- params$coarse_summaries
+fine_summary_files <- params$fine_summaries
+
+# Filter out any empty or NULL values
+coarse_summary_files <- coarse_summary_files[!is.null(coarse_summary_files) & coarse_summary_files != ""]
+fine_summary_files <- fine_summary_files[!is.null(fine_summary_files) & fine_summary_files != ""]
+
+cat(sprintf("Received %d coarse summary files\n", length(coarse_summary_files)))
+cat(sprintf("Received %d fine summary files\n", length(fine_summary_files)))
 ```
 
 ## PC Optimization Strategy
@@ -284,69 +360,89 @@ The pipeline employs a **coarse-to-fine grid search** with **early stopping** an
 ## Coarse Grid Optimization
 
 ```{r coarse-load}
-coarse_files <- list.files(opt_dir, pattern = "_coarse_summary.csv$", full.names = TRUE)
-if (length(coarse_files) == 0) {
-  cat("No coarse optimization results found.\n")
-  coarse_data <- NULL
-} else {
-  coarse_data <- map_df(coarse_files, ~{
-    celltype <- gsub("_coarse_summary.csv", "", basename(.x))
-    fread(.x) %>% mutate(celltype = celltype)
+# Load coarse summary files passed from the workflow
+if (length(coarse_summary_files) > 0 && !is.null(coarse_summary_files)) {
+  coarse_data <- map_df(coarse_summary_files, ~{
+    if (file.exists(.x)) {
+      celltype <- gsub("_coarse_summary.csv", "", basename(.x))
+      fread(.x) %>% mutate(celltype = celltype)
+    } else {
+      NULL
+    }
   }, .id = "file") %>%
     select(-file) %>%
     as_tibble()
+  
+  if (nrow(coarse_data) == 0) {
+    coarse_data <- NULL
+  }
+} else {
+  cat("No coarse summary files provided from workflow.\n")
+  coarse_data <- NULL
 }
 ```
 
-### Coarse Results by Cell Type
+## Coarse Grid Optimization
 
-```{r coarse-table}
+The coarse grid evaluates a broad range of PC values in large steps (default step size = 10) to quickly identify the region with the best eQTL power. Early stopping halts the search when two consecutive steps show less than 1% improvement in associations, preventing unnecessary computation. The plots below show the total number of associations and percent gains at each PC value tested, with the best PC (selected for fine-tuning) highlighted in red.
+
+### Coarse Grid: Total Associations
+
+```{r coarse-assoc-plot, fig.width=14, fig.height=10}
 if (!is.null(coarse_data)) {
+  plot_colors <- if (exists("celltype_colors")) {
+    celltype_colors
+  } else {
+    setNames(scales::hue_pal()(length(unique(coarse_data$celltype))), unique(coarse_data$celltype))
+  }
   coarse_data %>%
-    select(celltype, n_pcs, n_assoc, gain_pct, below_threshold, is_ceiling, is_best) %>%
-    mutate(
-      gain_pct = round(gain_pct, 2),
-      n_pcs_label = paste0(n_pcs, if_else(is_ceiling, " ⬅️ CEILING", ""), 
-                           if_else(is_best, " ⭐ BEST", ""))
-    ) %>%
-    select(-is_ceiling, -is_best) %>%
-    knitr::kable(
-      caption = "Coarse Grid Results: All PC counts tested with gains and early-stop indicators",
-      col.names = c("Cell Type", "n_PCs", "n_Associations", "Gain (%)", "Below 1% Tol?", "n_PCs Label")
+    mutate(celltype = factor(celltype, levels = names(plot_colors))) %>%
+    arrange(n_pcs) %>%
+    ggplot(aes(x = n_pcs, y = n_assoc, color = celltype)) +
+    geom_line(size = 0.6) +
+    geom_point(size = 2) +
+    geom_point(data = coarse_data %>% filter(is_best), size = 2.8, color = "#d62728") +
+    scale_color_manual(values = plot_colors, guide = "none") +
+    facet_wrap(~celltype, scales = "free") +
+    labs(x = "Number of PCs", y = "Number of Associations") +
+    theme_minimal() +
+    theme(
+      panel.grid.minor = element_blank(),
+      strip.text = element_text(size = 10, face = "bold"),
+      axis.text = element_text(size = 9),
+      axis.title = element_text(size = 10)
     )
 } else {
-  cat("No coarse data available.\n")
+  cat("No coarse data for visualization.\n")
 }
 ```
 
-### Coarse Gains Visualization
+### Coarse Grid: Percent Gains
 
-```{r coarse-plot, fig.cap="Coarse grid gains: Shows % improvement in associations as PCs increase. Red line = early-stop threshold (1%). Red dashed line = ceiling PC (where 2 consecutive gains <1%)."}
+```{r coarse-gains-plot, fig.width=14, fig.height=10}
 if (!is.null(coarse_data)) {
-  p_list <- coarse_data %>%
-    group_by(celltype) %>%
-    group_map(~{
-      .x %>%
-        arrange(n_pcs) %>%
-        ggplot(aes(x = n_pcs, y = gain_pct, color = below_threshold)) +
-        geom_line(color = "gray60", size = 0.8) +
-        geom_point(size = 3, aes(color = below_threshold)) +
-        geom_hline(yintercept = 1, linetype = "dashed", color = "red", size = 1, alpha = 0.5) +
-        geom_vline(data = filter(.x, is_ceiling), aes(xintercept = n_pcs), 
-                   linetype = "dashed", color = "darkred", size = 1, alpha = 0.5) +
-        scale_color_manual(values = c("FALSE" = "steelblue", "TRUE" = "orange"),
-                          name = "Below 1%?") +
-        labs(
-          title = paste0("Cell Type: ", unique(.x$celltype)),
-          x = "Number of PCs",
-          y = "Gain (%)",
-          subtitle = "Red horizontal = threshold (1%), Red vertical = ceiling (early-stop)"
-        ) +
-        theme(legend.position = "bottom")
-    })
-  if (length(p_list) > 0) {
-    do.call(gridExtra::grid.arrange, c(p_list, ncol = 2))
+  plot_colors <- if (exists("celltype_colors")) {
+    celltype_colors
+  } else {
+    setNames(scales::hue_pal()(length(unique(coarse_data$celltype))), unique(coarse_data$celltype))
   }
+  coarse_data %>%
+    mutate(celltype = factor(celltype, levels = names(plot_colors))) %>%
+    arrange(n_pcs) %>%
+    ggplot(aes(x = n_pcs, y = gain_pct, color = celltype)) +
+    geom_line(size = 0.6) +
+    geom_point(size = 2) +
+    geom_point(data = coarse_data %>% filter(is_best), size = 2.8, color = "#d62728") +
+    scale_color_manual(values = plot_colors, guide = "none") +
+    facet_wrap(~celltype, scales = "free") +
+    labs(x = "Number of PCs", y = "Gain (%)") +
+    theme_minimal() +
+    theme(
+      panel.grid.minor = element_blank(),
+      strip.text = element_text(size = 10, face = "bold"),
+      axis.text = element_text(size = 9),
+      axis.title = element_text(size = 10)
+    )
 } else {
   cat("No coarse data for visualization.\n")
 }
@@ -357,99 +453,69 @@ if (!is.null(coarse_data)) {
 ## Fine Grid Optimization
 
 ```{r fine-load}
-fine_files <- list.files(opt_dir, pattern = "_fine_summary.csv$", full.names = TRUE)
-if (length(fine_files) == 0) {
-  cat("No fine optimization results found.\n")
-  fine_data <- NULL
-} else {
-  fine_data <- map_df(fine_files, ~{
-    celltype <- gsub("_fine_summary.csv", "", basename(.x))
-    fread(.x) %>% mutate(celltype = celltype)
+# Load fine summary files passed from the workflow
+if (length(fine_summary_files) > 0 && !is.null(fine_summary_files)) {
+  fine_data <- map_df(fine_summary_files, ~{
+    if (file.exists(.x)) {
+      celltype <- gsub("_fine_summary.csv", "", basename(.x))
+      fread(.x) %>% mutate(celltype = celltype)
+    } else {
+      NULL
+    }
   }, .id = "file") %>%
     select(-file) %>%
     as_tibble()
-}
-```
-
-### Fine Results by Cell Type
-
-```{r fine-table}
-if (!is.null(fine_data)) {
-  fine_data %>%
-    select(celltype, n_pcs, n_assoc, threshold, within_elbow, is_selected) %>%
-    mutate(
-      threshold = round(threshold, 0),
-      n_pcs_label = if_else(is_selected, paste0(n_pcs, " ⭐ SELECTED"), as.character(n_pcs))
-    ) %>%
-    select(-is_selected) %>%
-    knitr::kable(
-      caption = "Fine Grid Results: PC counts within the refined window with elbow tolerance applied",
-      col.names = c("Cell Type", "n_PCs", "n_Associations", "Elbow Threshold", "Within Elbow?", "Label")
-    )
+  
+  if (nrow(fine_data) == 0) {
+    fine_data <- NULL
+  }
 } else {
-  cat("No fine data available.\n")
+  cat("No fine summary files provided from workflow.\n")
+  fine_data <- NULL
 }
 ```
+
+## Fine Grid Optimization
+
+The fine grid refines the search around the best coarse PC, testing in smaller steps (default step size = 2) within a defined window (default ±10 PCs). The elbow rule then selects the smallest PC count that falls within 2% of the maximum observed associations, balancing eQTL power with model parsimony. The plot below shows the number of associations at each fine-grid PC, with the selected PC highlighted in red.
 
 ### Fine Grid Visualization with Elbow Rule
 
-```{r fine-plot, fig.cap="Fine grid results: Blue dots = tested PCs, green dot = selected PC (smallest within 2% of maximum), light blue band = elbow tolerance region."}
+```{r fine-plot, fig.width=14, fig.height=10}
 if (!is.null(fine_data)) {
-  p_list <- fine_data %>%
-    group_by(celltype) %>%
-    group_map(~{
-      max_assoc <- max(.x$n_assoc, na.rm = TRUE)
-      threshold <- unique(.x$threshold)[1]
-      selected_pc <- .x %>% filter(is_selected) %>% pull(n_pcs) %>% first()
-      .x %>%
-        arrange(n_pcs) %>%
-        ggplot(aes(x = n_pcs, y = n_assoc)) +
-        geom_rect(aes(xmin = -Inf, xmax = Inf, ymin = threshold, ymax = max_assoc),
-                 fill = "lightblue", alpha = 0.3, inherit.aes = FALSE) +
-        geom_line(color = "gray60", size = 0.8) +
-        geom_point(size = 3, color = "steelblue") +
-        geom_point(data = filter(.x, is_selected), size = 5, color = "darkgreen", shape = 17) +
-        geom_hline(yintercept = max_assoc, linetype = "dashed", color = "red", alpha = 0.5) +
-        labs(
-          title = paste0("Cell Type: ", unique(.x$celltype)),
-          x = "Number of PCs",
-          y = "Number of Significant Associations (FDR<0.05)",
-          subtitle = paste0("Selected n_PCs = ", selected_pc, " (smallest within 2% of max)")
-        )
-    })
-  if (length(p_list) > 0) {
-    do.call(gridExtra::grid.arrange, c(p_list, ncol = 2))
+  plot_colors <- if (exists("celltype_colors")) {
+    celltype_colors
+  } else {
+    setNames(scales::hue_pal()(length(unique(fine_data$celltype))), unique(fine_data$celltype))
   }
+  fine_data %>%
+    mutate(celltype = factor(celltype, levels = names(plot_colors))) %>%
+    arrange(n_pcs) %>%
+    ggplot(aes(x = n_pcs, y = n_assoc, color = celltype)) +
+    geom_line(size = 0.6) +
+    geom_point(size = 2) +
+    geom_point(data = fine_data %>% filter(is_selected == TRUE), 
+               size = 3.5, color = "#d62728", shape = 17) +
+    scale_color_manual(values = plot_colors, guide = "none") +
+    facet_wrap(~celltype, scales = "free") +
+    labs(x = "Number of PCs", y = "Number of eGenes") +
+    theme_minimal() +
+    theme(
+      panel.grid.minor = element_blank(),
+      strip.text = element_text(size = 10, face = "bold"),
+      axis.text = element_text(size = 9),
+      axis.title = element_text(size = 10)
+    )
 } else {
   cat("No fine data for visualization.\n")
 }
 ```
 
----
 
-## Summary: Selected PC Counts
-
-```{r summary-table}
-if (!is.null(fine_data)) {
-  selected_pcs <- fine_data %>%
-    filter(is_selected) %>%
-    select(celltype, n_pcs, n_assoc) %>%
-    rename(`Cell Type` = celltype, `Selected n_PCs` = n_pcs, `n_Associations at Selection` = n_assoc) %>%
-    arrange(`Cell Type`)
-  knitr::kable(
-    selected_pcs,
-    caption = "Final Selected PC Counts for Each Cell Type"
-  )
-} else {
-  cat("No selection data available.\n")
-}
-```
-
----
 
 ## Parameters Used
 
-```{r params-table}
+```{r pc-params-table}
 params_summary <- tibble(
   Parameter = c("Coarse Step", "Fine Step", "Fine Window", "Early Stop Tolerance", "Early Stop Patience", "Elbow Tolerance"),
   Value = c("10", "2", "±10", "1%", "2 consecutive steps", "2%"),
