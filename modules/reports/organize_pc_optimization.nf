@@ -7,7 +7,7 @@ process organize_pc_optimization {
     path fine_summaries
 
     output:
-    path "*.csv", emit: summary_csvs optional true
+    path "*.csv", emit: summary_csvs, optional: true
 
     script:
     """
