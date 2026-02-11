@@ -18,3 +18,4 @@ docker_build*
 run*sh
 .github/
 personal/
+.devcontainer/
