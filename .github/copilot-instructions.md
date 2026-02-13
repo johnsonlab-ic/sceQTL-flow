@@ -181,7 +181,7 @@ When modifying the pipeline:
 
 ## Container Management
 
-- Docker images defined in [Images/](Images/)
+- Docker images defined in [../Images/](../Images/)
 - Update container versions in `nextflow.config` when modifying images
 - Rebuild containers after changing Dockerfiles
 - Push to registry before running on HPC
