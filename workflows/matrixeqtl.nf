@@ -4,6 +4,8 @@ include { create_genotype; qc_genotype } from '../modules/genotype/genotype.nf'
 include { merge_seurat_objects } from '../modules/expression/merge_seurat.nf'
 include { pseudobulk_singlecell } from '../modules/expression/pseudobulk.nf'
 include { qc_expression } from '../modules/expression/qc_expression.nf'
+include { pseudobulk_atac } from '../modules/atac/pseudobulk_atac.nf'
+include { qc_atac } from '../modules/atac/qc_atac.nf'
 include { preflight_check } from '../modules/qc/preflight_check.nf'
 include { subset_samples } from '../modules/qc/subset_samples.nf'
 include { get_residuals } from '../modules/residuals/get_residuals.nf'
@@ -19,6 +21,11 @@ include { count_individuals } from '../modules/optimize/count_individuals.nf'
 include { generate_fixed_pcs } from '../modules/optimize/generate_fixed_pcs.nf'
 
 workflow matrixeqtl {
+    def data_type = params.data_type?.toString()?.toUpperCase() ?: 'RNA'
+    if (!(data_type in ['RNA', 'ATAC'])) {
+        error "Unknown data_type '${params.data_type}'. Choose 'RNA' or 'ATAC'."
+    }
+
     // Determine which input mode is being used
     def seurat_input_msg = params.single_cell_file_list != "none" && params.single_cell_file_list != "" ? 
         "Multiple Seurat Files (will be merged): ${params.single_cell_file_list}" : 
@@ -50,6 +57,7 @@ workflow matrixeqtl {
     Individual column: ${params.individual_column}
     Assay used: ${params.counts_assay}
     Slot used: ${params.counts_slot}
+    Data type: ${data_type}
 
     eQTL parameters:
 
@@ -87,9 +95,21 @@ workflow matrixeqtl {
         seurat_input = params.single_cell_file
     }
 
-    pseudobulk_singlecell(seurat_input, params.pseudobulk_source_functions)
-    pseudobulk_ch = pseudobulk_singlecell.out.pseudobulk_counts.flatten()
-    qc_expression(pseudobulk_file= pseudobulk_ch)
+    def pseudobulk_source_functions = data_type == 'ATAC' ? params.atac_source_functions : params.pseudobulk_source_functions
+
+    if (data_type == 'ATAC') {
+        pseudobulk_atac(seurat_input, pseudobulk_source_functions)
+        pseudobulk_ch = pseudobulk_atac.out.pseudobulk_counts.flatten()
+        gene_locations_ch = pseudobulk_atac.out.gene_locations
+        qc_atac(pseudobulk_file= pseudobulk_ch)
+        qc_output_ch = qc_atac.out.pseudobulk_normalised
+    } else {
+        pseudobulk_singlecell(seurat_input, pseudobulk_source_functions)
+        pseudobulk_ch = pseudobulk_singlecell.out.pseudobulk_counts.flatten()
+        gene_locations_ch = pseudobulk_singlecell.out.gene_locations
+        qc_expression(pseudobulk_file= pseudobulk_ch)
+        qc_output_ch = qc_expression.out.pseudobulk_normalised
+    }
     
     // =============================================
     // RUN PREFLIGHT CHECK
@@ -98,7 +118,7 @@ workflow matrixeqtl {
     preflight_check(
         genotype_mat = qc_genotype.out.qc_genotype_mat,
         cov_file = has_cov ? params.cov_file : "",
-        pseudobulk_files = qc_expression.out.pseudobulk_normalised.collect(),
+        pseudobulk_files = qc_output_ch.collect(),
         has_cov_file = has_cov
     )
     
@@ -123,7 +143,7 @@ workflow matrixeqtl {
     if (params.cov_file != "none" && params.cov_file != "") {
         // Run get_residuals when covariates are provided
         get_residuals(
-            qc_expression.out.pseudobulk_normalised.flatten(),
+            qc_output_ch.flatten(),
             cov_file_to_use,
             params.pseudobulk_source_functions,
             params.covariates_to_include
@@ -132,7 +152,7 @@ workflow matrixeqtl {
         expression_files_ch = get_residuals.out.residuals_results.flatten()
     } else {
         // Use normalized expression data directly if no covariates
-        expression_files_ch = qc_expression.out.pseudobulk_normalised.flatten()
+        expression_files_ch = qc_output_ch.flatten()
     }
 
     // Conditional PC handling: optimize or use fixed number
@@ -153,7 +173,7 @@ workflow matrixeqtl {
             qc_genotype.out.qc_genotype_mat,
             qc_genotype.out.qc_snp_chromlocations,
             dynamic_pcs_coarse_ch.map { it[0] },
-            pseudobulk_singlecell.out.gene_locations,
+            gene_locations_ch,
             dynamic_pcs_coarse_ch.map { it[1] },
             "coarse"
         )
@@ -209,7 +229,7 @@ workflow matrixeqtl {
             qc_genotype.out.qc_genotype_mat,
             qc_genotype.out.qc_snp_chromlocations,
             dynamic_pcs_fine_ch.map { it[0] },
-            pseudobulk_singlecell.out.gene_locations,
+            gene_locations_ch,
             dynamic_pcs_fine_ch.map { it[1] },
             "fine"
         )
@@ -284,7 +304,7 @@ workflow matrixeqtl {
         qc_genotype.out.qc_genotype_mat,
         qc_genotype.out.qc_snp_chromlocations,
         residuals_with_pcs.map { it[1] },  // expression file
-        pseudobulk_singlecell.out.gene_locations,
+        gene_locations_ch,
         residuals_with_pcs.map { it[2] }   // PCs file (optimized or fixed)
     )
 

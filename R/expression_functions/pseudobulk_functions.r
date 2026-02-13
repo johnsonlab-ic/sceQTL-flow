@@ -1,6 +1,14 @@
 # Import the pipe operator
 library(dplyr)
 
+# Function to sanitize cell type names for use in file paths
+sanitize_celltype_name <- function(celltype_name) {
+  sanitized <- gsub("[/:*?\"<>|\\\\]", "_", celltype_name)
+  sanitized <- gsub("_+", "_", sanitized)
+  sanitized <- gsub("^_+|_+$", "", sanitized)
+  return(sanitized)
+}
+
 
 
 get_gene_locations<-function(exp_mat){

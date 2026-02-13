@@ -12,6 +12,7 @@ params.workflow = 'matrixeqtl'
 // source functions for easy troubleshooting
 params.genotype_source_functions="${baseDir}/R/genotype_functions/genotype_functions.r"
 params.pseudobulk_source_functions="${baseDir}/R/expression_functions/pseudobulk_functions.r"
+params.atac_source_functions="${baseDir}/R/atac_functions/pseudobulk_functions.r"
 params.eqtl_source_functions="${baseDir}/R/MatrixEQTL_functions/matrixeqtl_source.r"
 params.quarto_report="${baseDir}/R/rmarkdown_reports/unified_final_report.Rmd"
 
@@ -27,6 +28,7 @@ params.filter_chr = "all" // Optional parameter for filtering by chromosome. use
 params.optimize_pcs = true // Whether to optimize PCs or use a fixed number
 params.fixed_pcs = 10 // Number of PCs to use when not optimizing
 params.report = false
+params.data_type = "RNA" // RNA (default) or ATAC
 
 // PC optimization strategy parameters
 params.pc_max_fraction = 0.5
@@ -60,6 +62,7 @@ def helpMessage() {
                 --outdir <output_dir> \\
                 --celltype_column <column> \\
                 --individual_column <column> \\
+                --data_type RNA|ATAC \\
                 [--cov_file covariates.csv] \\
                 [--covariates_to_include <comma list|all>] \\
                 [--optimize_pcs true|false] \\
