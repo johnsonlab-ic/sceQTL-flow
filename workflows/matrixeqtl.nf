@@ -316,7 +316,7 @@ workflow matrixeqtl {
     combine_eqtls(eqtls= run_matrixeQTL.out.eqtl_results.collect())
 
     if(params.report){
-        def unified_report_file = params.quarto_report
+        def unified_report_file = data_type == 'ATAC' ? params.quarto_report_atac : params.quarto_report
         def report_inputs = combine_eqtls.out.mateqtlouts_FDR_filtered
             .combine(combine_eqtls.out.mateqtlouts)
             .combine(nextflow.Channel.value(unified_report_file))

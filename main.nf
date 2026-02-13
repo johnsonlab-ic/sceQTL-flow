@@ -15,6 +15,7 @@ params.pseudobulk_source_functions="${baseDir}/R/expression_functions/pseudobulk
 params.atac_source_functions="${baseDir}/R/atac_functions/pseudobulk_functions.r"
 params.eqtl_source_functions="${baseDir}/R/MatrixEQTL_functions/matrixeqtl_source.r"
 params.quarto_report="${baseDir}/R/rmarkdown_reports/unified_final_report.Rmd"
+params.quarto_report_atac="${baseDir}/R/rmarkdown_reports/unified_final_report_atac.Rmd"
 
 params.min_cells=5
 params.min_expression=0.1

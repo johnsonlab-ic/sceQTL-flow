@@ -1,5 +1,5 @@
 ---
-title: "Unified eQTL & PC Optimization Report"
+title: "Unified ATAC-QTL & PC Optimization Report"
 output: html_document
 params:
   eqtl_results_filtered: NULL
@@ -55,21 +55,16 @@ format_cis_distance <- function(distance) {
     return(paste0(distance, "bp"))
   }
 }
-data_type <- if (!is.null(params$data_type) && nzchar(params$data_type)) toupper(params$data_type) else "RNA"
-analysis_descriptor <- if (data_type == "ATAC") {
-  "This report summarizes ATAC-QTL analysis on pseudobulk peak counts, including peak-level normalization and QC."
-} else {
-  "This report summarizes eQTL analysis on pseudobulked RNA expression, including expression normalization and QC."
-}
+analysis_descriptor <- "This report summarizes ATAC-QTL analysis on pseudobulk peak counts, including peak-level normalization and QC."
 # Set theme for PC optimization plots
 theme_set(theme_minimal() + theme(plot.title = element_text(hjust = 0.5, face = "bold")))
 ```
 
-## eQTL Analysis Report
+## ATAC-QTL Analysis Report
 
 **Report Generated:** `r format(Sys.time(), "%d %B %Y, %H:%M:%S")`
 
-This report was generated using the Nextflow eQTL Pipeline.
+This report was generated using the Nextflow ATAC-QTL Pipeline.
 
 `r analysis_descriptor`
 
@@ -149,14 +144,14 @@ knitr::kable(params_tbl, col.names = c("Parameter", "Value"))
 ```
 
 ```{r eqtl-load, echo=FALSE}
-# Load the filtered eQTL results
+# Load the filtered QTL results
 if (!is.null(params$eqtl_results_filtered) && file.exists(params$eqtl_results_filtered)) {
   eqtl_results_filtered <- readRDS(params$eqtl_results_filtered)
 } else {
   eqtl_results_filtered <- NULL
 }
 
-# Load the eQTL results
+# Load the QTL results
 if (!is.null(params$eqtl_results) && file.exists(params$eqtl_results)) {
   eqtl_results <- readRDS(params$eqtl_results)
 } else {
@@ -223,7 +218,7 @@ avg_individuals_display <- if (is.na(avg_individuals)) {
 
 - **Number of cell-types tested:** `r num_celltypes`
 - **Names of cell-types tested:** `r paste(cell_types, collapse=", ")`
-- **Average number of genes tested per cell-type:** `r avg_genes_tested_display`
+- **Average number of peaks tested per cell-type:** `r avg_genes_tested_display`
 - **Average number of individuals tested per cell-type:** `r avg_individuals_display`
 - **Number of SNPs tested:** `r num_snps_tested`
 
@@ -254,7 +249,7 @@ if (!is.null(individuals_df)) {
 
 ---
 
-## Total and Unique eGenes (5% FDR)
+## Total and Unique ePeaks (5% FDR)
 
 ```{r plot-total-unique-egenes, echo=FALSE}
 if (!is.null(eqtl_results_filtered)) {
@@ -319,7 +314,7 @@ if (!is.null(eqtl_results_filtered)) {
     geom_bar(stat = "identity", position = position_dodge(), width = 0.8, colour = "black") +
     geom_text(aes(label = count), position = position_dodge(width = 0.9), hjust = -0.2, size = 6 / .pt) +
     scale_fill_manual(values = new_colors) +
-    labs(y = "Total vs unique eGenes (5% FDR)") +
+    labs(y = "Total vs unique ePeaks (5% FDR)") +
     coord_flip(ylim = c(NA, max_val)) +
     theme_classic() +
     theme(
@@ -332,7 +327,7 @@ if (!is.null(eqtl_results_filtered)) {
 
   print(g)
 } else {
-  cat("Filtered eQTL results not available for eGene plot.\n")
+  cat("Filtered ATAC-QTL results not available for ePeak plot.\n")
 }
 ```
 
@@ -353,7 +348,7 @@ cat(sprintf("Received %d fine summary files\n", length(fine_summary_files)))
 
 ## PC Optimization Strategy
 
-This section details the two-stage PC optimization process used in the eQTL pipeline.
+This section details the two-stage PC optimization process used in the pipeline.
 
 ### Overview
 
@@ -393,7 +388,7 @@ if (length(coarse_summary_files) > 0 && !is.null(coarse_summary_files)) {
 
 ## Coarse Grid Optimization
 
-The coarse grid evaluates a broad range of PC values in large steps (default step size = 10) to quickly identify the region with the best eQTL power. Early stopping halts the search when two consecutive steps show less than 1% improvement in associations, preventing unnecessary computation. The plots below show the total number of associations and percent gains at each PC value tested, with the best PC (selected for fine-tuning) highlighted in red.
+The coarse grid evaluates a broad range of PC values in large steps (default step size = 10) to quickly identify the region with the best QTL power. Early stopping halts the search when two consecutive steps show less than 1% improvement in associations, preventing unnecessary computation. The plots below show the total number of associations and percent gains at each PC value tested, with the best PC (selected for fine-tuning) highlighted in red.
 
 ### Coarse Grid: Total Associations
 
@@ -486,7 +481,7 @@ if (length(fine_summary_files) > 0 && !is.null(fine_summary_files)) {
 
 ## Fine Grid Optimization
 
-The fine grid refines the search around the best coarse PC, testing in smaller steps (default step size = 2) within a defined window (default ±10 PCs). The elbow rule then selects the smallest PC count that falls within 2% of the maximum observed associations, balancing eQTL power with model parsimony. The plot below shows the number of associations at each fine-grid PC, with the selected PC highlighted in red.
+The fine grid refines the search around the best coarse PC, testing in smaller steps (default step size = 2) within a defined window (default ±10 PCs). The elbow rule then selects the smallest PC count that falls within 2% of the maximum observed associations, balancing QTL power with model parsimony. The plot below shows the number of associations at each fine-grid PC, with the selected PC highlighted in red.
 
 ### Fine Grid Visualization with Elbow Rule
 
@@ -507,7 +502,7 @@ if (!is.null(fine_data)) {
                size = 3.5, color = "#d62728", shape = 17) +
     scale_color_manual(values = plot_colors, guide = "none") +
     facet_wrap(~celltype, scales = "free") +
-    labs(x = "Number of PCs", y = "Number of eGenes") +
+    labs(x = "Number of PCs", y = "Number of ePeaks") +
     theme_minimal() +
     theme(
       panel.grid.minor = element_blank(),
@@ -552,7 +547,7 @@ knitr::kable(params_summary, caption = "PC Optimization Parameters")
 ### Fine Stage
 - **Elbow Tolerance**: Region within 2% of the maximum associations
 - **Selected PC**: The smallest PC count in the elbow region (balances accuracy with parsimony)
-- **Interpretation**: This selection avoids overfitting (too many PCs) while capturing nearly-optimal eQTL power
+- **Interpretation**: This selection avoids overfitting (too many PCs) while capturing nearly-optimal QTL power
 
 ### Example
 If coarse shows gains of 10%, 4%, 0.8%, 0.2%:
@@ -564,6 +559,6 @@ If coarse shows gains of 10%, 4%, 0.8%, 0.2%:
 
 ---
 
-# eQTL Results Summary
+# ATAC-QTL Results Summary
 
 ... (rest of the original final_report.Rmd content, e.g., eGene plots, tables, etc.) ...

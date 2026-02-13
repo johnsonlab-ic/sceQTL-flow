@@ -42,6 +42,7 @@ process final_report {
         pc_elbow_tol = ${params.pc_elbow_tol},
         pc_early_stop_tol = ${params.pc_early_stop_tol},
         pc_early_stop_patience = ${params.pc_early_stop_patience},
+        data_type = "${params.data_type}",
         workflow = "${params.workflow}",
         profile = "${workflow.profile}"
     ))
