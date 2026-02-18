@@ -34,9 +34,17 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     python3-dev \
     zlib1g-dev \
+    default-jre \
+    default-jdk \
     && apt-get upgrade -y gcc g++ binutils \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+# Install Nextflow
+RUN curl -s https://get.nextflow.io | bash && \
+    mv nextflow /usr/local/bin/ && \
+    chmod +x /usr/local/bin/nextflow && \
+    nextflow -version
 
 # Install PLINK 1.9
 RUN wget -qO plink1.zip https://s3.amazonaws.com/plink1-assets/plink_linux_x86_64_20241022.zip && \
@@ -85,6 +93,9 @@ RUN R -e 'BiocManager::install("qvalue")'
 
 # Install expression analysis packages
 RUN R -e 'install.packages(c("dplyr","data.table","Seurat","remotes","presto","glmGamPoi"))'
+
+# Install Signac for ATAC-seq analysis
+RUN R -e 'setRepositories(ind=1:3); install.packages("Signac")'
 
 # Install genotype analysis packages
 RUN R -e 'BiocManager::install(c("SeqArray","SNPRelate","GenomicRanges","BSgenome"))'
