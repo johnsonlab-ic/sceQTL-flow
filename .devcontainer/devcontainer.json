@@ -1,13 +1,6 @@
 {
   "name": "sceQTL-flow Testing",
-  "image": "sceqtl-flow:latest",
-  "build": {
-    "dockerfile": "Dockerfile",
-    "context": ".",
-    "args": {
-      "BUILDKIT_INLINE_CACHE": "1"
-    }
-  },
+  "image": "ghcr.io/johnsonlab-ic/sceqtl-flow:latest",
   "runArgs": ["--network=host"],
   "workspaceFolder": "/workspace",
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
