@@ -23,7 +23,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Parse arguments
-PUSH=false
+PUSH=true
 NO_CACHE=""
 CUSTOM_TAG=""
 
