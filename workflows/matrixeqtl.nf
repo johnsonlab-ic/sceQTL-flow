@@ -115,9 +115,10 @@ workflow matrixeqtl {
     // RUN PREFLIGHT CHECK
     // =============================================
     has_cov = params.cov_file != "none" && params.cov_file != ""
+    preflight_cov_file = has_cov ? params.cov_file : "${baseDir}/R/cov.txt"
     preflight_check(
         genotype_mat = qc_genotype.out.qc_genotype_mat,
-        cov_file = has_cov ? params.cov_file : "",
+        cov_file = preflight_cov_file,
         pseudobulk_files = qc_output_ch.collect(),
         has_cov_file = has_cov
     )

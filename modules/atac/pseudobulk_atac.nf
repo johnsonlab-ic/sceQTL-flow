@@ -55,11 +55,13 @@ process pseudobulk_atac {
     for (i in 1:length(aggregated_counts_list)) {
         df = aggregated_counts_list[[i]] %>% mutate(geneid=row.names(.))
         celltype = names(aggregated_counts_list[i])
-        data.table::fwrite(df, paste0(names(aggregated_counts_list[i]), "_pseudobulk.csv"))
+        celltype_sanitized = sanitize_celltype_name(celltype)
+        data.table::fwrite(df, paste0(celltype_sanitized, "_pseudobulk.csv"))
     }
 
     gene_locations = get_peak_locations(rownames(aggregated_counts_list[[1]]))
     data.table::fwrite(gene_locations, "gene_locations.csv")
-    writeLines(names(aggregated_counts_list), "ct_names.txt")
+    sanitized_names <- sapply(names(aggregated_counts_list), sanitize_celltype_name)
+    writeLines(sanitized_names, "ct_names.txt")
     """
 }

@@ -42,7 +42,7 @@ process qc_atac {
     dge <- edgeR::calcNormFactors(dge, method = "TMM")
     norm_mat <- edgeR::cpm(dge, log = TRUE, prior.count = 1)
 
-    cell_type_name <- gsub("_pseudobulk.csv", "", "$pseudobulk_file")
+    cell_type_name <- gsub("_pseudobulk.csv", "", basename("$pseudobulk_file"))
     norm_mat <- as.data.frame(norm_mat) %>% mutate(geneid = row.names(.))
     fwrite(norm_mat, paste0(cell_type_name, "_pseudobulk_normalised.csv"))
     """
