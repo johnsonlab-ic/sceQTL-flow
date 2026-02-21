@@ -1,0 +1,63 @@
+# Use the official R base image
+FROM r-base:4.4.0
+
+# Install necessary system dependencies
+RUN apt-get update && apt-get install -y \
+    libcurl4-openssl-dev \
+    libssl-dev \
+    libxml2-dev \
+    libhdf5-dev \
+    procps \
+    pkg-config \
+    wget \
+    make \
+    gcc \
+    bzip2
+
+# Install PLINK 1.9
+RUN wget -qO plink1.zip https://s3.amazonaws.com/plink1-assets/plink_linux_x86_64_20241022.zip && \
+    unzip plink1.zip -d /usr/local/bin/ && \
+    rm plink1.zip
+
+# Install PLINK 2.0
+RUN wget -qO plink2.zip https://s3.amazonaws.com/plink2-assets/alpha6/plink2_linux_x86_64_20241222.zip && \
+    unzip plink2.zip -d /usr/local/bin/ && \
+    rm plink2.zip
+# Install bcftools
+RUN wget https://github.com/samtools/bcftools/releases/download/1.21/bcftools-1.21.tar.bz2 && \
+    tar -xvjf bcftools-1.21.tar.bz2 && \
+    cd bcftools-1.21 && \
+    make && \
+    make install && \
+    cd .. && \
+    rm -rf bcftools-1.21 bcftools-1.21.tar.bz2
+
+# Install BiocManager
+RUN R -e 'if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")'
+
+# Install individual Bioconductor packages
+RUN R -e 'BiocManager::install("SeqArray")'
+RUN R -e 'BiocManager::install("SNPRelate")'
+RUN R -e 'BiocManager::install("GenomicRanges")'
+RUN R -e 'BiocManager::install("BSgenome")'
+RUN R -e 'BiocManager::install("SNPlocs.Hsapiens.dbSNP155.GRCh38")'
+RUN R -e 'BiocManager::install("SNPlocs.Hsapiens.dbSNP155.GRCh37")'
+RUN R -e 'BiocManager::install("GenomeInfoDb")'
+
+RUN R -e 'install.packages(c("dplyr","data.table"))'
+RUN R -e 'install.packages(c("argparse","MatrixEQTL","coloc","MendelianRandomization","ieugwasr","genetics.binaRies"))'
+RUN R -e 'install.packages("lobstr")'
+RUN R -e 'install.packages("arrow")'
+
+# Set the working directory
+WORKDIR /usr/local/src
+
+# Download the chain file
+RUN wget -P /usr/local/src https://hgdownload.soe.ucsc.edu/goldenpath/hg19/liftOver/hg19ToHg38.over.chain.gz
+RUN gunzip /usr/local/src/hg19ToHg38.over.chain.gz
+
+# Copy any additional scripts or files if needed
+# COPY . .
+
+# Set the default command to R
+CMD ["R"]

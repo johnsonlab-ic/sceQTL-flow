@@ -1,7 +1,13 @@
 {
   "name": "sceQTL-flow Testing",
-  "image": "ghcr.io/johnsonlab-ic/sceqtl-flow:latest",
-  "runArgs": ["--network=host"],
+  "build": {
+    "dockerfile": "Dockerfile.dev",
+    "context": ".."
+  },
+  "runArgs": [
+    "--network=host",
+    "--gpus=all"
+  ],
   "workspaceFolder": "/workspace",
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
   "customizations": {
@@ -13,7 +19,9 @@
         "yzhang.markdown-all-in-one",
         "mechatroner.rainbow-csv",
         "ms-python.python",
-        "ms-python.vscode-pylance"
+        "ms-python.vscode-pylance",
+        "ms-toolsai.jupyter",
+        "ms-toolsai.jupyter-keymap"
       ],
       "settings": {
         "r.rterm.linux": "/usr/bin/R",
@@ -25,7 +33,12 @@
       }
     }
   },
-  "forwardPorts": [8000, 8001, 8002, 8003],
+  "forwardPorts": [
+    8000,
+    8001,
+    8002,
+    8003
+  ],
   "remoteUser": "vscode",
-  "postCreateCommand": "echo 'sceQTL-flow test container ready' && Rscript -e \"cat('R version: ', R.version.string, '\\n')\" && python3 -c \"import tensorqtl; print('tensorqtl installed successfully')\""
+  "postCreateCommand": "echo 'sceQTL-flow test container ready' && (nvidia-smi || true) && Rscript -e \"cat('R version: ', R.version.string, '\\n')\" && python3 -c \"import tensorqtl; print('tensorqtl installed successfully')\" && python3 -m jupyter --version"
 }
