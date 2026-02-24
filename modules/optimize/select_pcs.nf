@@ -1,7 +1,7 @@
 process select_pcs {
     tag "Selecting optimal PCs for ${celltype}"
     label "process_low_memory"
-    publishDir "${params.outdir}/eQTL_outputs/", mode: 'copy'
+    publishDir "${params.outdir}/optimization/", mode: 'copy'
 
     input:
     tuple val(celltype), path(egenes_files)
@@ -9,6 +9,7 @@ process select_pcs {
 
     output:
     tuple val(celltype), path("*_pcs.txt"), emit: exp_pcs
+    tuple val(celltype), path("*_fine_summary.csv"), emit: fine_summary
 
     script:
     """
@@ -21,10 +22,23 @@ process select_pcs {
     file_list <- unlist(strsplit("${egenes_files}", " "))
     results <- rbindlist(lapply(file_list, fread))
 
-    # Find the optimal n_pcs for the cell type (row with max n_assoc)
-    optimal_idx <- which.max(results\$n_assoc)
-    n_pcs <- results[optimal_idx, ]\$n_pcs
-    cat("Selected n_pcs:", n_pcs, "with n_assoc:", results[optimal_idx, ]\$n_assoc, "\n")
+    # Find the optimal n_pcs using elbow tolerance (smallest n_pcs within tol of max)
+    results\$n_pcs <- as.integer(results\$n_pcs)
+    results\$n_assoc <- as.numeric(results\$n_assoc)
+    results <- results[order(results\$n_pcs)]
+
+    max_assoc <- max(results\$n_assoc, na.rm = TRUE)
+    threshold <- max_assoc * (1 - ${params.pc_elbow_tol})
+    candidates <- results[results\$n_assoc >= threshold, ]
+
+    if (nrow(candidates) == 0) {
+        optimal_idx <- which.max(results\$n_assoc)
+        n_pcs <- results[optimal_idx, ]\$n_pcs
+    } else {
+        n_pcs <- candidates\$n_pcs[1]
+    }
+
+    cat("Selected n_pcs:", n_pcs, "max_n_assoc:", max_assoc, "threshold:", threshold, "\n")
 
     # Perform PCA on the expression matrix
     exp_mat <- fread("${exp_matrix}") %>% tibble::column_to_rownames(var="geneid")
@@ -39,5 +53,11 @@ process select_pcs {
     
     # Also save information about how many PCs were chosen
     writeLines(paste("Cell type:", "${celltype}", "\nOptimal number of PCs:", n_pcs), "pc_info_${celltype}.txt")
+
+    # Output detailed summary CSV for visualization
+    results\$threshold <- max_assoc * (1 - ${params.pc_elbow_tol})
+    results\$within_elbow <- results\$n_assoc >= results\$threshold
+    results\$is_selected <- results\$n_pcs == n_pcs
+    write.csv(results, file = paste0("${celltype}_fine_summary.csv"), row.names = FALSE, quote = TRUE)
     """
 }

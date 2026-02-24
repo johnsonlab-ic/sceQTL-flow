@@ -1,5 +1,5 @@
 process optimize_pcs {
-    tag "${expression_mat} and ${n_pcs} PCs"
+    tag "${expression_mat} and ${n_pcs} PCs (${stage})"
 
     label "process_eqtl"
     publishDir "${params.outdir}/optimization/", mode: 'copy'
@@ -11,6 +11,7 @@ process optimize_pcs {
     path expression_mat
     path gene_locations
     val n_pcs
+    val stage
 
     output:
     path "*egenes*.txt" , emit: egenes_results
@@ -80,6 +81,6 @@ process optimize_pcs {
     )
     
     n_assoc = outs %>% filter(FDR<0.05) %>% nrow()
-    write.table(data.frame(celltype=celltype,n_pcs=${n_pcs}, n_assoc=n_assoc), file=paste0(celltype,"_egenes_vs_",${n_pcs},".txt"), sep="\t", quote=FALSE, row.names=FALSE)
+    write.table(data.frame(celltype=celltype,n_pcs=${n_pcs}, n_assoc=n_assoc), file=paste0(celltype,"_egenes_vs_",${n_pcs},"_","${stage}",".txt"), sep="\t", quote=FALSE, row.names=FALSE)
     """
 }

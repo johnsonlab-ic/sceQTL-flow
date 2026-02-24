@@ -13,7 +13,7 @@ params.workflow = 'matrixeqtl'
 params.genotype_source_functions="${baseDir}/R/genotype_functions/genotype_functions.r"
 params.pseudobulk_source_functions="${baseDir}/R/expression_functions/pseudobulk_functions.r"
 params.eqtl_source_functions="${baseDir}/R/MatrixEQTL_functions/matrixeqtl_source.r"
-params.quarto_report="${baseDir}/R/rmarkdown_reports/final_report.Rmd"
+params.quarto_report="${baseDir}/R/rmarkdown_reports/unified_final_report.Rmd"
 
 params.min_cells=5
 params.min_expression=0.1
@@ -27,6 +27,17 @@ params.filter_chr = "all" // Optional parameter for filtering by chromosome. use
 params.optimize_pcs = true // Whether to optimize PCs or use a fixed number
 params.fixed_pcs = 10 // Number of PCs to use when not optimizing
 params.report = false
+
+// PC optimization strategy parameters
+params.pc_max_fraction = 0.5
+params.pc_max_cap = 100
+params.pc_min = 2
+params.pc_coarse_step = 10
+params.pc_fine_step = 2
+params.pc_fine_window = 10
+params.pc_elbow_tol = 0.02 // 2% within max
+params.pc_early_stop_tol = 0.01 // 1% improvement threshold
+params.pc_early_stop_patience = 2
 
 // default parameters 
 // Add a new parameter for specifying which covariates to include
@@ -52,7 +63,13 @@ def helpMessage() {
                 [--cov_file covariates.csv] \\
                 [--covariates_to_include <comma list|all>] \\
                 [--optimize_pcs true|false] \\
-                [--fixed_pcs 10]
+                [--fixed_pcs 10] \\
+                [--pc_coarse_step 10] \\
+                [--pc_fine_step 2] \\
+                [--pc_fine_window 10] \\
+                [--pc_elbow_tol 0.02] \\
+                [--pc_early_stop_tol 0.01] \\
+                [--pc_early_stop_patience 2]
 
         Flags:
             --help              Show this message

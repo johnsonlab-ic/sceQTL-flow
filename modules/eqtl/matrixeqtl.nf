@@ -14,6 +14,7 @@ process run_matrixeQTL {
 
     output:
     path "*_cis_MatrixEQTLout.rds", emit: eqtl_results
+    path "*_covs_used.rds", emit: covs_used
     path "*"
 
     script:

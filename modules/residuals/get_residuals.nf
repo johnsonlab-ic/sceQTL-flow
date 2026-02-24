@@ -65,18 +65,56 @@ process get_residuals {
             }
         }
         
-        # Calculate residuals for each gene
-        lm_formula = paste0("gene ~ ", paste(covs_to_include, collapse = " + "))
-        exp_mat <- t(apply(exp_mat, 1, function(gene_exp) {
-            lm_data <- data.frame(gene = gene_exp)
-            lm_data <- cbind(lm_data, cov_mat[, covs_to_include, drop=FALSE])
-            fit <- lm(lm_formula, data = lm_data)
-            resid(fit)
-        }))
+        # Remove covariates with zero variance (constant after subsetting)
+        covs_to_remove <- c()
+        for (col_name in covs_to_include) {
+            if (is.numeric(cov_mat[[col_name]])) {
+                if (length(unique(cov_mat[[col_name]])) == 1) {
+                    covs_to_remove <- c(covs_to_remove, col_name)
+                    cat(sprintf("[%s] WARNING: Removing '%s' - constant value (%.2f)\\n", celltype, col_name, unique(cov_mat[[col_name]])[1]))
+                }
+            } else if (is.factor(cov_mat[[col_name]])) {
+                n_levels <- nlevels(cov_mat[[col_name]])
+                if (n_levels == 1) {
+                    covs_to_remove <- c(covs_to_remove, col_name)
+                    cat(sprintf("[%s] WARNING: Removing '%s' - single level (%s)\\n", celltype, col_name, levels(cov_mat[[col_name]])[1]))
+                }
+            }
+        }
         
-        cat(sprintf("[%s] Residuals calculated: %d genes × %d individuals\\n", celltype, nrow(exp_mat), ncol(exp_mat)))
+        # Update covariates list
+        if (length(covs_to_remove) > 0) {
+            covs_to_include <- setdiff(covs_to_include, covs_to_remove)
+            cat(sprintf("[%s] Covariates after removing constant variables: %s\\n", celltype, paste(covs_to_include, collapse=", ")))
+        }
         
-        exp_mat <- exp_mat %>% as.data.frame() %>% mutate(geneid=row.names(.))
+        # Skip residualization if no valid covariates remain
+        if (length(covs_to_include) == 0) {
+            cat(sprintf("[%s] WARNING: No valid covariates to regress out. Using normalized expression directly.\\n", celltype))
+            exp_mat <- exp_mat %>% as.data.frame() %>% mutate(geneid=row.names(.))
+        } else {
+            # Calculate residuals for each gene
+            lm_formula = paste0("gene ~ ", paste(covs_to_include, collapse = " + "))
+            exp_mat <- t(apply(exp_mat, 1, function(gene_exp) {
+                lm_data <- data.frame(gene = gene_exp)
+                lm_data <- cbind(lm_data, cov_mat[, covs_to_include, drop=FALSE])
+                fit <- lm(lm_formula, data = lm_data)
+                resid(fit)
+            }))
+            
+            cat(sprintf("[%s] Residuals calculated: %d genes × %d individuals\\n", celltype, nrow(exp_mat), ncol(exp_mat)))
+
+            # Remove zero-variance genes after residualization
+            gene_sd <- apply(exp_mat, 1, sd, na.rm = TRUE)
+            keep_genes <- which(gene_sd > 0 & !is.na(gene_sd))
+            removed_genes <- nrow(exp_mat) - length(keep_genes)
+            if (removed_genes > 0) {
+                cat(sprintf("[%s] Removing %d zero-variance genes after residuals\\n", celltype, removed_genes))
+                exp_mat <- exp_mat[keep_genes, , drop = FALSE]
+            }
+            
+            exp_mat <- exp_mat %>% as.data.frame() %>% mutate(geneid=row.names(.))
+        }
     }else{
         exp_mat = exp_mat %>% mutate(geneid=row.names(.))
         cat(sprintf("[%s] No covariate file\\n", celltype))

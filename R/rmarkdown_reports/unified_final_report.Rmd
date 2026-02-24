@@ -1,0 +1,560 @@
+---
+title: "Unified eQTL & PC Optimization Report"
+output: html_document
+params:
+  eqtl_results_filtered: NULL
+  eqtl_results: NULL
+  covs_used: NULL
+  coarse_summaries: NULL
+  fine_summaries: NULL
+  outdir: NULL
+  gds_file: NULL
+  single_cell_file: NULL
+  single_cell_file_list: NULL
+  counts_assay: NULL
+  counts_slot: NULL
+  celltype_column: NULL
+  individual_column: NULL
+  min_cells: NULL
+  min_expression: NULL
+  cis_distance: NULL
+  filter_chr: NULL
+  fdr_threshold: NULL
+  cov_file: NULL
+  covariates_to_include: NULL
+  subset_column: NULL
+  subset_values: NULL
+  optimize_pcs: NULL
+  fixed_pcs: NULL
+  pc_coarse_step: NULL
+  pc_fine_step: NULL
+  pc_fine_window: NULL
+  pc_elbow_tol: NULL
+  pc_early_stop_tol: NULL
+  pc_early_stop_patience: NULL
+  workflow: NULL
+  profile: NULL
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+library(data.table)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(purrr)
+library(gridExtra)
+library(scales)
+format_cis_distance <- function(distance) {
+  if (distance >= 1e6) {
+    return(paste0(distance / 1e6, "Mb"))
+  } else if (distance >= 1e3) {
+    return(paste0(distance / 1e3, "Kb"))
+  } else {
+    return(paste0(distance, "bp"))
+  }
+}
+# Set theme for PC optimization plots
+theme_set(theme_minimal() + theme(plot.title = element_text(hjust = 0.5, face = "bold")))
+```
+
+## eQTL Analysis Report
+
+**Report Generated:** `r format(Sys.time(), "%d %B %Y, %H:%M:%S")`
+
+This report was generated using the Nextflow eQTL Pipeline, a comprehensive tool for conducting expression quantitative trait loci (eQTL) analysis on single-cell RNA-seq data.
+
+**GitHub Repository:** [https://github.com/johnsonlab-ic/sceQTL-flow](https://github.com/johnsonlab-ic/sceQTL-flow)
+
+**Contact:** For questions or support regarding this pipeline, please contact Alexander Haglund (GitHub: [HaglundA](https://github.com/HaglundA))
+
+---
+
+### Pipeline Settings
+
+The following settings were used in the pipeline:
+
+```{r params-table, echo=FALSE}
+params_tbl <- tibble::tibble(
+  Parameter = c(
+    "Output directory",
+    "Workflow",
+    "Profile",
+    "GDS file",
+    "Single-cell file",
+    "Single-cell file list",
+    "Counts assay",
+    "Counts slot",
+    "Cell-type column",
+    "Individual column",
+    "Min cells",
+    "Min expression",
+    "Cis distance",
+    "Chromosomes",
+    "FDR threshold",
+    "Covariate file",
+    "Covariates to include",
+    "Subset column",
+    "Subset values",
+    "Optimize PCs",
+    "Fixed PCs",
+    "PC coarse step",
+    "PC fine step",
+    "PC fine window",
+    "PC elbow tolerance",
+    "PC early-stop tolerance",
+    "PC early-stop patience"
+  ),
+  Value = c(
+    params$outdir,
+    params$workflow,
+    params$profile,
+    params$gds_file,
+    params$single_cell_file,
+    params$single_cell_file_list,
+    params$counts_assay,
+    params$counts_slot,
+    params$celltype_column,
+    params$individual_column,
+    params$min_cells,
+    params$min_expression,
+    format_cis_distance(params$cis_distance),
+    params$filter_chr,
+    params$fdr_threshold,
+    params$cov_file,
+    params$covariates_to_include,
+    params$subset_column,
+    params$subset_values,
+    params$optimize_pcs,
+    params$fixed_pcs,
+    params$pc_coarse_step,
+    params$pc_fine_step,
+    params$pc_fine_window,
+    params$pc_elbow_tol,
+    params$pc_early_stop_tol,
+    params$pc_early_stop_patience
+  )
+)
+
+knitr::kable(params_tbl, col.names = c("Parameter", "Value"))
+```
+
+```{r eqtl-load, echo=FALSE}
+# Load the filtered eQTL results
+if (!is.null(params$eqtl_results_filtered) && file.exists(params$eqtl_results_filtered)) {
+  eqtl_results_filtered <- readRDS(params$eqtl_results_filtered)
+} else {
+  eqtl_results_filtered <- NULL
+}
+
+# Load the eQTL results
+if (!is.null(params$eqtl_results) && file.exists(params$eqtl_results)) {
+  eqtl_results <- readRDS(params$eqtl_results)
+} else {
+  eqtl_results <- NULL
+}
+# Number and names of cell-types tested
+cell_types <- if (!is.null(eqtl_results_filtered)) names(eqtl_results_filtered) else character(0)
+num_celltypes <- length(cell_types)
+
+celltype_colors <- if (length(cell_types) > 0) {
+  setNames(scales::hue_pal()(length(cell_types)), cell_types)
+} else {
+  NULL
+}
+
+if (!is.null(eqtl_results) && num_celltypes > 0) {
+  genes_list <- lapply(eqtl_results, function(df) unique(df$gene))
+  all_genes <- unlist(genes_list)
+  avg_genes_tested <- length(all_genes) / num_celltypes
+
+  snps_list <- lapply(eqtl_results, function(df) unique(df$SNP))
+  all_snps <- unique(unlist(snps_list))
+  num_snps_tested <- length(all_snps)
+} else {
+  avg_genes_tested <- NA
+  num_snps_tested <- NA
+}
+
+avg_genes_tested_display <- if (is.na(avg_genes_tested)) {
+  NA
+} else {
+  formatC(round(avg_genes_tested), format = "f", digits = 0, big.mark = ",")
+}
+
+covs_used_files <- params$covs_used
+covs_used_files <- covs_used_files[!is.null(covs_used_files) & covs_used_files != ""]
+
+if (length(covs_used_files) > 0) {
+  individuals_df <- map_df(covs_used_files, ~{
+    if (file.exists(.x)) {
+      celltype <- gsub("_covs_used.rds", "", basename(.x))
+      covmat <- readRDS(.x)
+      data.frame(celltype = celltype, n_individuals = ncol(covmat))
+    } else {
+      NULL
+    }
+  })
+  if (nrow(individuals_df) == 0) {
+    individuals_df <- NULL
+  }
+} else {
+  individuals_df <- NULL
+}
+
+avg_individuals <- if (is.null(individuals_df)) NA else mean(individuals_df$n_individuals)
+avg_individuals_display <- if (is.na(avg_individuals)) {
+  NA
+} else {
+  formatC(round(avg_individuals), format = "f", digits = 0, big.mark = ",")
+}
+```
+
+### Input Overview
+
+- **Number of cell-types tested:** `r num_celltypes`
+- **Names of cell-types tested:** `r paste(cell_types, collapse=", ")`
+- **Average number of genes tested per cell-type:** `r avg_genes_tested_display`
+- **Average number of individuals tested per cell-type:** `r avg_individuals_display`
+- **Number of SNPs tested:** `r num_snps_tested`
+
+```{r individuals-bar, fig.width=9, fig.height=4.5}
+if (!is.null(individuals_df)) {
+  plot_colors <- if (!is.null(celltype_colors)) {
+    celltype_colors
+  } else {
+    setNames(scales::hue_pal()(length(unique(individuals_df$celltype))), unique(individuals_df$celltype))
+  }
+  individuals_df %>%
+    mutate(celltype = factor(celltype, levels = names(plot_colors))) %>%
+    ggplot(aes(x = celltype, y = n_individuals, fill = celltype)) +
+    geom_col(width = 0.8, color = "black") +
+    geom_text(aes(label = n_individuals), vjust = -0.4, size = 3) +
+    scale_fill_manual(values = plot_colors, guide = "none") +
+    labs(x = "Cell Type", y = "Number of Individuals") +
+    theme_minimal() +
+    theme(
+      panel.grid.minor = element_blank(),
+      axis.text.x = element_text(angle = 45, hjust = 1),
+      axis.title = element_text(size = 10)
+    )
+} else {
+  cat("No covariate usage files available to summarize individuals.\n")
+}
+```
+
+---
+
+## Total and Unique eGenes (5% FDR)
+
+```{r plot-total-unique-egenes, echo=FALSE}
+if (!is.null(eqtl_results_filtered)) {
+  total_genes <- function(cell_list) {
+    sapply(cell_list, function(df) length(unique(df$gene)))
+  }
+
+  total_unique_genes <- function(cell_list) {
+    sapply(cell_list, function(df) {
+      current_genes <- unique(df$gene)
+      other_genes <- unique(unlist(lapply(cell_list, function(other_df) {
+        if (identical(df, other_df)) return(NULL)
+        other_df$gene
+      })))
+      length(setdiff(current_genes, other_genes))
+    })
+  }
+
+  mateqtlouts <- eqtl_results_filtered
+
+  mateqtlouts_filt <- lapply(mateqtlouts, function(x) {
+    x <- x %>% mutate(se = beta / t.stat, fstat = t.stat^2)
+    x %>%
+      group_by(gene) %>%
+      arrange(p.value) %>%
+      slice_head(n = 1) %>%
+      ungroup() %>%
+      arrange(FDR)
+  })
+
+  tot_eGenes <- total_genes(mateqtlouts_filt)
+  tot_unique_eGenes <- total_unique_genes(mateqtlouts_filt)
+  df <- data.frame(tot_eGenes, tot_unique_eGenes)
+  df$celltype <- rownames(df)
+  df$celltype <- gsub("_", " ", df$celltype)
+
+  color_pal <- scales::hue_pal()(length(unique(df$celltype)))
+  colorvec <- setNames(color_pal, unique(df$celltype))
+  df$colorvec <- colorvec
+
+  df <- df[order(df$tot_eGenes, decreasing = TRUE), ]
+  df_long <- df %>%
+    pivot_longer(cols = c(tot_eGenes, tot_unique_eGenes), names_to = "gene_type", values_to = "count")
+  df_long$gene_type <- factor(df_long$gene_type, levels = c("tot_unique_eGenes", "tot_eGenes"))
+  df_long$celltype_col <- rep(c(2, 1), times = nrow(df_long) / 2)
+  df_long$celltype_col <- factor(df_long$celltype_col)
+  df_long$celltype <- factor(df_long$celltype, levels = rev(df$celltype))
+  df_long$celltype_col <- paste0(df_long$celltype, df_long$celltype_col)
+
+  make_lighter <- function(hex, fraction = 0.4) {
+    rgb <- col2rgb(hex)
+    new_rgb <- rgb + fraction * (255 - rgb)
+    rgb(new_rgb[1], new_rgb[2], new_rgb[3], maxColorValue = 255)
+  }
+
+  colorvec <- df_long$colorvec
+  new_colors <- c(rbind(colorvec[c(TRUE, FALSE)], sapply(colorvec[c(TRUE, FALSE)], make_lighter)))
+  names(new_colors) <- df_long$celltype_col
+  max_val <- max(df_long$count) + 0.12 * max(df_long$count)
+
+  g <- ggplot(df_long, aes(x = celltype, y = count, fill = celltype_col)) +
+    geom_bar(stat = "identity", position = position_dodge(), width = 0.8, colour = "black") +
+    geom_text(aes(label = count), position = position_dodge(width = 0.9), hjust = -0.2, size = 6 / .pt) +
+    scale_fill_manual(values = new_colors) +
+    labs(y = "Total vs unique eGenes (5% FDR)") +
+    coord_flip(ylim = c(NA, max_val)) +
+    theme_classic() +
+    theme(
+      axis.text.x = element_text(size = 6.5, colour = "black"),
+      axis.title.y = element_blank(),
+      axis.text.y = element_text(size = 6.5, colour = "black"),
+      axis.title.x = element_text(size = 7, face = "bold"),
+      legend.position = "none"
+    )
+
+  print(g)
+} else {
+  cat("Filtered eQTL results not available for eGene plot.\n")
+}
+```
+
+# PC Optimization Results
+
+```{r pcopt-setup, echo=FALSE}
+# Use the passed coarse and fine summary files instead of searching in outdir
+coarse_summary_files <- params$coarse_summaries
+fine_summary_files <- params$fine_summaries
+
+# Filter out any empty or NULL values
+coarse_summary_files <- coarse_summary_files[!is.null(coarse_summary_files) & coarse_summary_files != ""]
+fine_summary_files <- fine_summary_files[!is.null(fine_summary_files) & fine_summary_files != ""]
+
+cat(sprintf("Received %d coarse summary files\n", length(coarse_summary_files)))
+cat(sprintf("Received %d fine summary files\n", length(fine_summary_files)))
+```
+
+## PC Optimization Strategy
+
+This section details the two-stage PC optimization process used in the eQTL pipeline.
+
+### Overview
+
+The pipeline employs a **coarse-to-fine grid search** with **early stopping** and **elbow tolerance** to select the optimal number of principal components (PCs) for each cell type:
+
+1. **Coarse Stage**: Test PCs in steps of 10 (2, 12, 22, ...) up to 50% of sample size
+2. **Early Stopping**: Halt coarse evaluation when 2 consecutive steps show <1% improvement
+3. **Fine Stage**: Refine search around the best coarse PC (±10 in steps of 2)
+4. **Elbow Selection**: Pick the smallest PC count within 2% of maximum associations
+
+---
+
+## Coarse Grid Optimization
+
+```{r coarse-load}
+# Load coarse summary files passed from the workflow
+if (length(coarse_summary_files) > 0 && !is.null(coarse_summary_files)) {
+  coarse_data <- map_df(coarse_summary_files, ~{
+    if (file.exists(.x)) {
+      celltype <- gsub("_coarse_summary.csv", "", basename(.x))
+      fread(.x) %>% mutate(celltype = celltype)
+    } else {
+      NULL
+    }
+  }, .id = "file") %>%
+    select(-file) %>%
+    as_tibble()
+  
+  if (nrow(coarse_data) == 0) {
+    coarse_data <- NULL
+  }
+} else {
+  cat("No coarse summary files provided from workflow.\n")
+  coarse_data <- NULL
+}
+```
+
+## Coarse Grid Optimization
+
+The coarse grid evaluates a broad range of PC values in large steps (default step size = 10) to quickly identify the region with the best eQTL power. Early stopping halts the search when two consecutive steps show less than 1% improvement in associations, preventing unnecessary computation. The plots below show the total number of associations and percent gains at each PC value tested, with the best PC (selected for fine-tuning) highlighted in red.
+
+### Coarse Grid: Total Associations
+
+```{r coarse-assoc-plot, fig.width=14, fig.height=10}
+if (!is.null(coarse_data)) {
+  plot_colors <- if (exists("celltype_colors")) {
+    celltype_colors
+  } else {
+    setNames(scales::hue_pal()(length(unique(coarse_data$celltype))), unique(coarse_data$celltype))
+  }
+  coarse_data %>%
+    mutate(celltype = factor(celltype, levels = names(plot_colors))) %>%
+    arrange(n_pcs) %>%
+    ggplot(aes(x = n_pcs, y = n_assoc, color = celltype)) +
+    geom_line(size = 0.6) +
+    geom_point(size = 2) +
+    geom_point(data = coarse_data %>% filter(is_best), size = 2.8, color = "#d62728") +
+    scale_color_manual(values = plot_colors, guide = "none") +
+    facet_wrap(~celltype, scales = "free") +
+    labs(x = "Number of PCs", y = "Number of Associations") +
+    theme_minimal() +
+    theme(
+      panel.grid.minor = element_blank(),
+      strip.text = element_text(size = 10, face = "bold"),
+      axis.text = element_text(size = 9),
+      axis.title = element_text(size = 10)
+    )
+} else {
+  cat("No coarse data for visualization.\n")
+}
+```
+
+### Coarse Grid: Percent Gains
+
+```{r coarse-gains-plot, fig.width=14, fig.height=10}
+if (!is.null(coarse_data)) {
+  plot_colors <- if (exists("celltype_colors")) {
+    celltype_colors
+  } else {
+    setNames(scales::hue_pal()(length(unique(coarse_data$celltype))), unique(coarse_data$celltype))
+  }
+  coarse_data %>%
+    mutate(celltype = factor(celltype, levels = names(plot_colors))) %>%
+    arrange(n_pcs) %>%
+    ggplot(aes(x = n_pcs, y = gain_pct, color = celltype)) +
+    geom_line(size = 0.6) +
+    geom_point(size = 2) +
+    geom_point(data = coarse_data %>% filter(is_best), size = 2.8, color = "#d62728") +
+    scale_color_manual(values = plot_colors, guide = "none") +
+    facet_wrap(~celltype, scales = "free") +
+    labs(x = "Number of PCs", y = "Gain (%)") +
+    theme_minimal() +
+    theme(
+      panel.grid.minor = element_blank(),
+      strip.text = element_text(size = 10, face = "bold"),
+      axis.text = element_text(size = 9),
+      axis.title = element_text(size = 10)
+    )
+} else {
+  cat("No coarse data for visualization.\n")
+}
+```
+
+---
+
+## Fine Grid Optimization
+
+```{r fine-load}
+# Load fine summary files passed from the workflow
+if (length(fine_summary_files) > 0 && !is.null(fine_summary_files)) {
+  fine_data <- map_df(fine_summary_files, ~{
+    if (file.exists(.x)) {
+      celltype <- gsub("_fine_summary.csv", "", basename(.x))
+      fread(.x) %>% mutate(celltype = celltype)
+    } else {
+      NULL
+    }
+  }, .id = "file") %>%
+    select(-file) %>%
+    as_tibble()
+  
+  if (nrow(fine_data) == 0) {
+    fine_data <- NULL
+  }
+} else {
+  cat("No fine summary files provided from workflow.\n")
+  fine_data <- NULL
+}
+```
+
+## Fine Grid Optimization
+
+The fine grid refines the search around the best coarse PC, testing in smaller steps (default step size = 2) within a defined window (default ±10 PCs). The elbow rule then selects the smallest PC count that falls within 2% of the maximum observed associations, balancing eQTL power with model parsimony. The plot below shows the number of associations at each fine-grid PC, with the selected PC highlighted in red.
+
+### Fine Grid Visualization with Elbow Rule
+
+```{r fine-plot, fig.width=14, fig.height=10}
+if (!is.null(fine_data)) {
+  plot_colors <- if (exists("celltype_colors")) {
+    celltype_colors
+  } else {
+    setNames(scales::hue_pal()(length(unique(fine_data$celltype))), unique(fine_data$celltype))
+  }
+  fine_data %>%
+    mutate(celltype = factor(celltype, levels = names(plot_colors))) %>%
+    arrange(n_pcs) %>%
+    ggplot(aes(x = n_pcs, y = n_assoc, color = celltype)) +
+    geom_line(size = 0.6) +
+    geom_point(size = 2) +
+    geom_point(data = fine_data %>% filter(is_selected == TRUE), 
+               size = 3.5, color = "#d62728", shape = 17) +
+    scale_color_manual(values = plot_colors, guide = "none") +
+    facet_wrap(~celltype, scales = "free") +
+    labs(x = "Number of PCs", y = "Number of eGenes") +
+    theme_minimal() +
+    theme(
+      panel.grid.minor = element_blank(),
+      strip.text = element_text(size = 10, face = "bold"),
+      axis.text = element_text(size = 9),
+      axis.title = element_text(size = 10)
+    )
+} else {
+  cat("No fine data for visualization.\n")
+}
+```
+
+
+
+## Parameters Used
+
+```{r pc-params-table}
+params_summary <- tibble(
+  Parameter = c("Coarse Step", "Fine Step", "Fine Window", "Early Stop Tolerance", "Early Stop Patience", "Elbow Tolerance"),
+  Value = c("10", "2", "±10", "1%", "2 consecutive steps", "2%"),
+  Description = c(
+    "PC increment for coarse grid",
+    "PC increment for fine grid",
+    "Range around best coarse PC",
+    "Threshold for low gain detection",
+    "Consecutive low-gain steps to trigger stop",
+    "Allow up to 2% below maximum associations"
+  )
+)
+knitr::kable(params_summary, caption = "PC Optimization Parameters")
+```
+
+---
+
+## Interpretation Guide
+
+### Coarse Stage
+- **Early Stopping**: If 2 consecutive steps show <1% improvement in associations, coarse evaluation halts
+- **Ceiling**: The last PC value before early stopping triggers
+- **Best Coarse PC**: The PC with maximum associations **up to the ceiling**
+
+### Fine Stage
+- **Elbow Tolerance**: Region within 2% of the maximum associations
+- **Selected PC**: The smallest PC count in the elbow region (balances accuracy with parsimony)
+- **Interpretation**: This selection avoids overfitting (too many PCs) while capturing nearly-optimal eQTL power
+
+### Example
+If coarse shows gains of 10%, 4%, 0.8%, 0.2%:
+- Early stop triggers at PC showing 0.2% (2 consecutive <1%)
+- Ceiling = PC at 0.2%
+- Best coarse = PC with highest associations before ceiling
+- Fine grid = ±10 around best coarse
+- Final = smallest PC in fine grid within 2% of max
+
+---
+
+# eQTL Results Summary
+
+... (rest of the original final_report.Rmd content, e.g., eGene plots, tables, etc.) ...

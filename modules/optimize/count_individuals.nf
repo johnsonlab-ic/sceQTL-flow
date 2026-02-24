@@ -6,7 +6,7 @@ process count_individuals {
     path residuals_file
 
     output:
-    tuple path(residuals_file), path('pc_values.txt'), emit: residuals_with_pcs
+    tuple path(residuals_file), path('pc_values_coarse.txt'), emit: residuals_with_pcs
 
     script:
     """
@@ -19,18 +19,20 @@ process count_individuals {
     # Count the number of columns (excluding the geneid column)
     n_samples = ncol(exp_mat) - 1  # Subtract 1 for geneid column
     
-    # Calculate the maximum number of PCs as 50% of sample count, capped at 100
-    max_pcs = min(floor(n_samples * 0.5), 100)
+    # Calculate the maximum number of PCs as a fraction of sample count, capped
+    max_pcs = min(floor(n_samples * ${params.pc_max_fraction}), ${params.pc_max_cap})
+    min_pcs = ${params.pc_min}
+    coarse_step = ${params.pc_coarse_step}
     
-    # Generate PC values in steps of 2 (adjust step size as needed)
-    pc_values = seq(2, max_pcs, by = 2)
-    
-    # If very few samples, ensure at least one PC value is tested
-    if(length(pc_values) == 0) {
-        pc_values = min(1, max_pcs)
+    # Generate coarse PC values
+    if (max_pcs >= min_pcs) {
+        pc_values = seq(min_pcs, max_pcs, by = coarse_step)
+        pc_values = sort(unique(c(pc_values, max_pcs)))
+    } else {
+        pc_values = max_pcs
     }
     
-    # Write the PC values to a file that Nextflow can read
-    write.table(pc_values, "pc_values.txt", row.names = FALSE, col.names = FALSE, quote = FALSE)
+    # Write the coarse PC values to a file that Nextflow can read
+    write.table(pc_values, "pc_values_coarse.txt", row.names = FALSE, col.names = FALSE, quote = FALSE)
     """
 }

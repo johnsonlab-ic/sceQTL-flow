@@ -1,0 +1,38 @@
+{
+  "name": "sceQTL-flow Testing",
+  "image": "sceqtl-flow:latest",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".",
+    "args": {
+      "BUILDKIT_INLINE_CACHE": "1"
+    }
+  },
+  "runArgs": ["--network=host"],
+  "workspaceFolder": "/workspace",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "Ikuyadeu.r",
+        "REditorSupport.r",
+        "quarto.quarto",
+        "yzhang.markdown-all-in-one",
+        "mechatroner.rainbow-csv",
+        "ms-python.python",
+        "ms-python.vscode-pylance"
+      ],
+      "settings": {
+        "r.rterm.linux": "/usr/bin/R",
+        "r.lsp.enabled": true,
+        "python.defaultInterpreterPath": "/usr/bin/python3",
+        "python.linting.enabled": true,
+        "python.linting.pylintEnabled": true,
+        "editor.formatOnSave": true
+      }
+    }
+  },
+  "forwardPorts": [8000, 8001, 8002, 8003],
+  "remoteUser": "vscode",
+  "postCreateCommand": "echo 'sceQTL-flow test container ready' && Rscript -e \"cat('R version: ', R.version.string, '\\n')\" && python3 -c \"import tensorqtl; print('tensorqtl installed successfully')\""
+}
