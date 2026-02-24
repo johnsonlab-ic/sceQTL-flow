@@ -8,7 +8,6 @@ process create_genotype {
     path source_R
 
     output:
-
     path "genotype_012mat.csv", emit: genotype_mat
     path "snp_chromlocations.csv", emit: snp_chromlocations
     path "MAF_mat.csv", emit: maf_mat
@@ -22,7 +21,6 @@ process create_genotype {
     chain_fpath="/usr/local/src/hg19ToHg38.over.chain")
     """
 }
-
 
 process qc_genotype {
 

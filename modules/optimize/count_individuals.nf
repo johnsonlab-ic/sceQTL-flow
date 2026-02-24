@@ -19,7 +19,7 @@ process count_individuals {
     # Count the number of columns (excluding the geneid column)
     n_samples = ncol(exp_mat) - 1  # Subtract 1 for geneid column
     
-    # Calculate the maximum number of PCs as 50% of sample count, capped at 20
+    # Calculate the maximum number of PCs as 50% of sample count, capped at 100
     max_pcs = min(floor(n_samples * 0.5), 100)
     
     # Generate PC values in steps of 2 (adjust step size as needed)
@@ -34,4 +34,3 @@ process count_individuals {
     write.table(pc_values, "pc_values.txt", row.names = FALSE, col.names = FALSE, quote = FALSE)
     """
 }
-
