@@ -82,7 +82,7 @@ def helpMessage() {
         Notes:
             Residuals are calculated automatically when --cov_file is provided.
             Set --optimize_pcs false to force a fixed number of PCs (default 10).
-            tensorqTL workflow is a placeholder.
+            tensorqTL workflow currently runs with fixed PCs only (no PC optimization, no report).
         """
 }
 
@@ -98,7 +98,7 @@ workflow {
     def wf = params.workflow?.toLowerCase() ?: 'matrixeqtl'
     switch(wf) {
         case 'tensorqtl':
-            log.info "Running tensorQTL workflow (placeholder)."
+            log.info "Running tensorQTL workflow (fixed PCs only; no optimization/report)."
             tensorqtl()
             break
         case 'matrixeqtl':
