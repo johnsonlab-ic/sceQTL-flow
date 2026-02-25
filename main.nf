@@ -1,9 +1,9 @@
 nextflow.enable.dsl=2
 
 // default inputs
-params.outdir="/rds/general/user/ah3918/projects/puklandmarkproject/ephemeral/tmp/"
-params.gds_file="/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/TEST_DATA/test_geno.gds"
-params.single_cell_file="/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/TEST_DATA/roche_ms_decontx.rds"
+params.outdir="./results"
+params.gds_file=""
+params.single_cell_file=""
 params.single_cell_file_list="none"
 params.cov_file="none"
 params.help = false
@@ -90,6 +90,31 @@ if (params.help) {
     helpMessage()
     System.exit(0)
 }
+
+def isUnset(v) {
+    if (v == null) return true
+    def s = v.toString().trim()
+    return s == '' || s.equalsIgnoreCase('none')
+}
+
+def validateRequiredInputs() {
+    if (isUnset(params.gds_file)) {
+        error "Missing required input: --gds_file <path.gds>"
+    }
+
+    def hasSingle = !isUnset(params.single_cell_file)
+    def hasList = !isUnset(params.single_cell_file_list)
+
+    if (!hasSingle && !hasList) {
+        error "Missing required single-cell input: provide --single_cell_file <seurat.rds> or --single_cell_file_list <file1.rds,file2.rds,...>"
+    }
+
+    if (hasSingle && hasList) {
+        error "Please provide only one single-cell input mode: either --single_cell_file or --single_cell_file_list, not both."
+    }
+}
+
+validateRequiredInputs()
 
 include { matrixeqtl } from './workflows/matrixeqtl.nf'
 include { tensorqtl } from './workflows/tensorqtl.nf'
