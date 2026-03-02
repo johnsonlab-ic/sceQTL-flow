@@ -102,7 +102,7 @@ pseudobulk_counts <- function(seuratlist, min.cells = 100, indiv_col = "Sample_I
       m[common_genes, , drop = FALSE]
     })
 
-    do.call(Matrix::cbind, layer_mats_harmonized)
+    do.call(cbind, layer_mats_harmonized)
   }
 
   agg_count_list <- lapply(seuratlist, function(x) {
