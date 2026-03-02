@@ -36,8 +36,24 @@ process pseudobulk_singlecell {
         cat("[PB] Layers in assay ${params.counts_assay}:", paste(lyr_info, collapse=","), "\n")
     }
     cat("[PB] Cells:", ncol(seuratobj), "\n")
-    # Safe counts preview
-    counts_preview <- tryCatch(Seurat::GetAssayData(seuratobj, slot="${params.counts_slot}"), error=function(e) {
+    # Safe counts preview (Seurat v5 layer-aware)
+    counts_preview <- tryCatch({
+        assay_obj <- seuratobj[["${params.counts_assay}"]]
+        all_layers <- tryCatch(SeuratObject::Layers(assay_obj), error=function(e) NULL)
+        if (is.null(all_layers)) {
+            Seurat::GetAssayData(seuratobj, slot="${params.counts_slot}")
+        } else if ("${params.counts_slot}" %in% all_layers) {
+            SeuratObject::LayerData(assay_obj, layer="${params.counts_slot}")
+        } else {
+            slot_layers <- grep(paste0("^", "${params.counts_slot}", "\\\\."), all_layers, value=TRUE)
+            if (length(slot_layers) > 0) {
+                tmp_obj <- SeuratObject::JoinLayers(seuratobj, assay="${params.counts_assay}", layers=slot_layers, new="${params.counts_slot}")
+                SeuratObject::LayerData(tmp_obj[["${params.counts_assay}"]], layer="${params.counts_slot}")
+            } else {
+                stop(paste0("Could not find layer '", "${params.counts_slot}", "' in assay '", "${params.counts_assay}", "'."))
+            }
+        }
+    }, error=function(e) {
         cat("[PB] Counts preview retrieval error:", conditionMessage(e), "\n"); NULL
     })
     if (!is.null(counts_preview)) {

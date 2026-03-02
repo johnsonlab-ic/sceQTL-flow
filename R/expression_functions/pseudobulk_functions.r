@@ -55,26 +55,35 @@ pseudobulk_counts <- function(seuratlist, min.cells = 100, indiv_col = "Sample_I
     Seurat::DefaultAssay(x) <- assay
     metadata <- x[[]]
 
-    # Handle Seurat v5 multi-layer assays
-    # Check if there are multiple layers in the assay
+    # Handle Seurat v5 layers safely by targeting only requested slot family
     assay_obj <- x[[assay]]
     layers <- tryCatch(SeuratObject::Layers(assay_obj), error = function(e) NULL)
-    
-    if (!is.null(layers) && length(layers) > 1) {
-      # Seurat v5 with multiple layers - join them first
-      cat(sprintf("  Joining %d layers in assay %s...\\n", length(layers), assay))
-      x <- SeuratObject::JoinLayers(x, assay = assay)
-      assay_obj <- x[[assay]]
-    }
-    
-    # Get counts - try layer first (v5), then fall back to slot (v4)
-    counts <- tryCatch(
-      SeuratObject::GetAssayData(object = assay_obj, layer = slot),
-      error = function(e) {
-        # Fallback for Seurat v4 or when layer doesn't exist
-        Seurat::GetAssayData(x, slot = slot)
+
+    if (is.null(layers)) {
+      counts <- Seurat::GetAssayData(x, slot = slot)
+    } else {
+      if (slot %in% layers) {
+        counts <- SeuratObject::LayerData(assay_obj, layer = slot)
+      } else {
+        slot_prefix <- paste0("^", slot, "\\.")
+        slot_layers <- grep(slot_prefix, layers, value = TRUE)
+
+        if (length(slot_layers) > 0) {
+          cat(sprintf("  Joining %d '%s' layers in assay %s...\\n", length(slot_layers), slot, assay))
+          x <- SeuratObject::JoinLayers(x, assay = assay, layers = slot_layers, new = slot)
+          assay_obj <- x[[assay]]
+          counts <- SeuratObject::LayerData(assay_obj, layer = slot)
+        } else {
+          stop(sprintf(
+            "Could not find layer '%s' or any layers prefixed by '%s.' in assay '%s'. Available layers: %s",
+            slot,
+            slot,
+            assay,
+            paste(layers, collapse = ",")
+          ))
+        }
       }
-    )
+    }
     
     unique_ids <- unique(metadata[[indiv_col]])
     indiv_table <- metadata %>% dplyr::count(get(indiv_col))
