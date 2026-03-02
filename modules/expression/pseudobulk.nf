@@ -53,12 +53,12 @@ process pseudobulk_singlecell {
                     layer_mat <- SeuratObject::LayerData(assay_obj, layer=layer_name)
                     list(nrow=nrow(layer_mat), ncol=ncol(layer_mat), genes=rownames(layer_mat))
                 })
-                gene_lists <- lapply(layer_info, function(x) x$genes)
+                gene_lists <- lapply(layer_info, function(x) x\$genes)
                 common_genes <- Reduce(intersect, gene_lists)
                 if (length(common_genes) == 0) {
                     stop("No common genes across slot-prefixed layers.")
                 }
-                n_cells <- vapply(layer_info, function(x) x$ncol, numeric(1))
+                n_cells <- vapply(layer_info, function(x) x\$ncol, numeric(1))
                 c(length(common_genes), sum(n_cells))
             } else {
                 stop(paste0("Could not find layer '", "${params.counts_slot}", "' in assay '", "${params.counts_assay}", "'."))
