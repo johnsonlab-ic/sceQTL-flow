@@ -329,6 +329,11 @@ workflow matrixeqtl {
 }
 
 workflow.onComplete {
+    def active_wf = params.workflow?.toLowerCase() ?: 'matrixeqtl'
+    if (active_wf != 'matrixeqtl') {
+        return
+    }
+
     println """
     ========================================
     Pipeline Completed!

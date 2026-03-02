@@ -143,6 +143,11 @@ workflow tensorqtl {
 }
 
 workflow.onComplete {
+    def active_wf = params.workflow?.toLowerCase() ?: 'matrixeqtl'
+    if (active_wf != 'tensorqtl') {
+        return
+    }
+
     println """
     ========================================
     tensorQTL workflow completed.
