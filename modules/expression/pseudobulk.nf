@@ -36,19 +36,29 @@ process pseudobulk_singlecell {
         cat("[PB] Layers in assay ${params.counts_assay}:", paste(lyr_info, collapse=","), "\n")
     }
     cat("[PB] Cells:", ncol(seuratobj), "\n")
-    # Safe counts preview (Seurat v5 layer-aware)
-    counts_preview <- tryCatch({
+    # Safe counts preview (Seurat v5 layer-aware, no JoinLayers)
+    counts_preview_dims <- tryCatch({
         assay_obj <- seuratobj[["${params.counts_assay}"]]
         all_layers <- tryCatch(SeuratObject::Layers(assay_obj), error=function(e) NULL)
         if (is.null(all_layers)) {
-            Seurat::GetAssayData(seuratobj, slot="${params.counts_slot}")
+            mat <- Seurat::GetAssayData(seuratobj, slot="${params.counts_slot}")
+            c(nrow(mat), ncol(mat))
         } else if ("${params.counts_slot}" %in% all_layers) {
-            SeuratObject::LayerData(assay_obj, layer="${params.counts_slot}")
+            mat <- SeuratObject::LayerData(assay_obj, layer="${params.counts_slot}")
+            c(nrow(mat), ncol(mat))
         } else {
             slot_layers <- grep(paste0("^", "${params.counts_slot}", "\\\\."), all_layers, value=TRUE)
             if (length(slot_layers) > 0) {
-                tmp_obj <- SeuratObject::JoinLayers(seuratobj, assay="${params.counts_assay}", layers=slot_layers, new="${params.counts_slot}")
-                SeuratObject::LayerData(tmp_obj[["${params.counts_assay}"]], layer="${params.counts_slot}")
+                layer_dims <- lapply(slot_layers, function(layer_name) {
+                    layer_mat <- SeuratObject::LayerData(assay_obj, layer=layer_name)
+                    c(nrow(layer_mat), ncol(layer_mat))
+                })
+                n_genes <- vapply(layer_dims, function(x) x[1], numeric(1))
+                n_cells <- vapply(layer_dims, function(x) x[2], numeric(1))
+                if (length(unique(n_genes)) != 1) {
+                    stop("Inconsistent gene dimensions across slot-prefixed layers.")
+                }
+                c(n_genes[1], sum(n_cells))
             } else {
                 stop(paste0("Could not find layer '", "${params.counts_slot}", "' in assay '", "${params.counts_assay}", "'."))
             }
@@ -56,8 +66,8 @@ process pseudobulk_singlecell {
     }, error=function(e) {
         cat("[PB] Counts preview retrieval error:", conditionMessage(e), "\n"); NULL
     })
-    if (!is.null(counts_preview)) {
-        cat("[PB] Counts preview dims:", nrow(counts_preview), "genes x", ncol(counts_preview), "cells\n")
+    if (!is.null(counts_preview_dims)) {
+        cat("[PB] Counts preview dims:", counts_preview_dims[1], "genes x", counts_preview_dims[2], "cells\n")
     }
 
     celltypelist=Seurat::SplitObject(seuratobj,split.by="${params.celltype_column}")

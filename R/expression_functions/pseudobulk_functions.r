@@ -51,39 +51,47 @@ get_gene_locations<-function(exp_mat){
 
 # Function to pseudobulk counts
 pseudobulk_counts <- function(seuratlist, min.cells = 100, indiv_col = "Sample_ID", assay = "RNA", slot = "counts") {
-  agg_count_list <- lapply(seuratlist, function(x) {
-    Seurat::DefaultAssay(x) <- assay
-    metadata <- x[[]]
-
-    # Handle Seurat v5 layers safely by targeting only requested slot family
-    assay_obj <- x[[assay]]
+  get_counts_matrix <- function(seurat_obj, assay_name, slot_name) {
+    assay_obj <- seurat_obj[[assay_name]]
     layers <- tryCatch(SeuratObject::Layers(assay_obj), error = function(e) NULL)
 
     if (is.null(layers)) {
-      counts <- Seurat::GetAssayData(x, slot = slot)
-    } else {
-      if (slot %in% layers) {
-        counts <- SeuratObject::LayerData(assay_obj, layer = slot)
-      } else {
-        slot_prefix <- paste0("^", slot, "\\.")
-        slot_layers <- grep(slot_prefix, layers, value = TRUE)
-
-        if (length(slot_layers) > 0) {
-          cat(sprintf("  Joining %d '%s' layers in assay %s...\\n", length(slot_layers), slot, assay))
-          x <- SeuratObject::JoinLayers(x, assay = assay, layers = slot_layers, new = slot)
-          assay_obj <- x[[assay]]
-          counts <- SeuratObject::LayerData(assay_obj, layer = slot)
-        } else {
-          stop(sprintf(
-            "Could not find layer '%s' or any layers prefixed by '%s.' in assay '%s'. Available layers: %s",
-            slot,
-            slot,
-            assay,
-            paste(layers, collapse = ",")
-          ))
-        }
-      }
+      return(Seurat::GetAssayData(seurat_obj, slot = slot_name))
     }
+
+    if (slot_name %in% layers) {
+      return(SeuratObject::LayerData(assay_obj, layer = slot_name))
+    }
+
+    slot_prefix <- paste0("^", slot_name, "\\.")
+    slot_layers <- grep(slot_prefix, layers, value = TRUE)
+    if (length(slot_layers) == 0) {
+      stop(sprintf(
+        "Could not find layer '%s' or any layers prefixed by '%s.' in assay '%s'. Available layers: %s",
+        slot_name,
+        slot_name,
+        assay_name,
+        paste(layers, collapse = ",")
+      ))
+    }
+
+    cat(sprintf("  Combining %d '%s' layers in assay %s...\\n", length(slot_layers), slot_name, assay_name))
+    layer_mats <- lapply(slot_layers, function(layer_name) {
+      SeuratObject::LayerData(assay_obj, layer = layer_name)
+    })
+
+    rowname_signatures <- vapply(layer_mats, function(m) paste(rownames(m), collapse = "|"), character(1))
+    if (length(unique(rowname_signatures)) > 1) {
+      stop(sprintf("Layer rownames are inconsistent across '%s.*' layers in assay '%s'.", slot_name, assay_name))
+    }
+
+    do.call(Matrix::cbind, layer_mats)
+  }
+
+  agg_count_list <- lapply(seuratlist, function(x) {
+    Seurat::DefaultAssay(x) <- assay
+    metadata <- x[[]]
+    counts <- get_counts_matrix(x, assay, slot)
     
     unique_ids <- unique(metadata[[indiv_col]])
     indiv_table <- metadata %>% dplyr::count(get(indiv_col))
@@ -99,6 +107,10 @@ pseudobulk_counts <- function(seuratlist, min.cells = 100, indiv_col = "Sample_I
       return(emptydf)
     } else {
       cells <- rownames(metadata[metadata[[indiv_col]] == unique_ids[1], ])
+      cells <- intersect(cells, colnames(counts))
+      if (length(cells) == 0) {
+        stop(sprintf("No cells found in counts matrix for individual '%s'.", unique_ids[1]))
+      }
       counts_2 <- Matrix::rowSums(counts[, cells])
       finalmat <- data.frame(counts_2)
       samplenames <- unique_ids[1]
@@ -106,6 +118,10 @@ pseudobulk_counts <- function(seuratlist, min.cells = 100, indiv_col = "Sample_I
       if (length(unique_ids) > 1) {
         for (i in 2:length(unique_ids)) {
           cells <- rownames(metadata[metadata[[indiv_col]] == unique_ids[i], ])
+          cells <- intersect(cells, colnames(counts))
+          if (length(cells) == 0) {
+            next
+          }
           sample <- unique_ids[i]
           counts_2 <- Matrix::rowSums(counts[, cells])
           finalmat <- cbind(finalmat, counts_2)
