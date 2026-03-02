@@ -80,12 +80,29 @@ pseudobulk_counts <- function(seuratlist, min.cells = 100, indiv_col = "Sample_I
       SeuratObject::LayerData(assay_obj, layer = layer_name)
     })
 
-    rowname_signatures <- vapply(layer_mats, function(m) paste(rownames(m), collapse = "|"), character(1))
-    if (length(unique(rowname_signatures)) > 1) {
-      stop(sprintf("Layer rownames are inconsistent across '%s.*' layers in assay '%s'.", slot_name, assay_name))
+    gene_sets <- lapply(layer_mats, rownames)
+    common_genes <- Reduce(intersect, gene_sets)
+    if (length(common_genes) == 0) {
+      stop(sprintf("No common genes found across '%s.*' layers in assay '%s'.", slot_name, assay_name))
     }
 
-    do.call(Matrix::cbind, layer_mats)
+    gene_counts <- vapply(gene_sets, length, integer(1))
+    min_genes <- min(gene_counts)
+    max_genes <- max(gene_counts)
+    if (length(common_genes) < max_genes) {
+      cat(sprintf(
+        "  Harmonizing layer genes: keeping %d common genes (layer range: %d-%d genes).\\n",
+        length(common_genes),
+        min_genes,
+        max_genes
+      ))
+    }
+
+    layer_mats_harmonized <- lapply(layer_mats, function(m) {
+      m[common_genes, , drop = FALSE]
+    })
+
+    do.call(Matrix::cbind, layer_mats_harmonized)
   }
 
   agg_count_list <- lapply(seuratlist, function(x) {

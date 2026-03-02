@@ -49,16 +49,17 @@ process pseudobulk_singlecell {
         } else {
             slot_layers <- grep(paste0("^", "${params.counts_slot}", "\\\\."), all_layers, value=TRUE)
             if (length(slot_layers) > 0) {
-                layer_dims <- lapply(slot_layers, function(layer_name) {
+                layer_info <- lapply(slot_layers, function(layer_name) {
                     layer_mat <- SeuratObject::LayerData(assay_obj, layer=layer_name)
-                    c(nrow(layer_mat), ncol(layer_mat))
+                    list(nrow=nrow(layer_mat), ncol=ncol(layer_mat), genes=rownames(layer_mat))
                 })
-                n_genes <- vapply(layer_dims, function(x) x[1], numeric(1))
-                n_cells <- vapply(layer_dims, function(x) x[2], numeric(1))
-                if (length(unique(n_genes)) != 1) {
-                    stop("Inconsistent gene dimensions across slot-prefixed layers.")
+                gene_lists <- lapply(layer_info, function(x) x$genes)
+                common_genes <- Reduce(intersect, gene_lists)
+                if (length(common_genes) == 0) {
+                    stop("No common genes across slot-prefixed layers.")
                 }
-                c(n_genes[1], sum(n_cells))
+                n_cells <- vapply(layer_info, function(x) x$ncol, numeric(1))
+                c(length(common_genes), sum(n_cells))
             } else {
                 stop(paste0("Could not find layer '", "${params.counts_slot}", "' in assay '", "${params.counts_assay}", "'."))
             }
