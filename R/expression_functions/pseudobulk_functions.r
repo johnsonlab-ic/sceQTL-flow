@@ -55,12 +55,29 @@ pseudobulk_counts <- function(seuratlist, min.cells = 100, indiv_col = "Sample_I
     assay_obj <- seurat_obj[[assay_name]]
     layers <- tryCatch(SeuratObject::Layers(assay_obj), error = function(e) NULL)
 
+    read_layer_matrix <- function(layer_name) {
+      layer_obj <- tryCatch(
+        SeuratObject::LayerData(assay_obj, layer = layer_name),
+        error = function(e) NULL
+      )
+      if (is.null(layer_obj)) {
+        return(NULL)
+      }
+      if (length(dim(layer_obj)) != 2) {
+        return(NULL)
+      }
+      layer_obj
+    }
+
     if (is.null(layers)) {
       return(Seurat::GetAssayData(seurat_obj, slot = slot_name))
     }
 
     if (slot_name %in% layers) {
-      return(SeuratObject::LayerData(assay_obj, layer = slot_name))
+      single_layer <- read_layer_matrix(slot_name)
+      if (!is.null(single_layer)) {
+        return(single_layer)
+      }
     }
 
     slot_prefix <- paste0("^", slot_name, "\\.")
@@ -76,9 +93,17 @@ pseudobulk_counts <- function(seuratlist, min.cells = 100, indiv_col = "Sample_I
     }
 
     cat(sprintf("  Combining %d '%s' layers in assay %s...\\n", length(slot_layers), slot_name, assay_name))
-    layer_mats <- lapply(slot_layers, function(layer_name) {
-      SeuratObject::LayerData(assay_obj, layer = layer_name)
-    })
+    layer_mats <- lapply(slot_layers, read_layer_matrix)
+    valid_mask <- !vapply(layer_mats, is.null, logical(1))
+    if (!all(valid_mask)) {
+      skipped_layers <- slot_layers[!valid_mask]
+      cat(sprintf("  Skipping %d unreadable/non-2D layers: %s\\n", length(skipped_layers), paste(skipped_layers, collapse = ",")))
+    }
+    layer_mats <- layer_mats[valid_mask]
+
+    if (length(layer_mats) == 0) {
+      stop(sprintf("No valid '%s.*' layers could be read in assay '%s'.", slot_name, assay_name))
+    }
 
     gene_sets <- lapply(layer_mats, rownames)
     common_genes <- Reduce(intersect, gene_sets)
