@@ -21,7 +21,7 @@ process select_pcs {
     sanitize_celltype_name <- function(celltype_name) {
         sanitized <- gsub("[/:*?\"<>|\\\\\\\\]", "_", celltype_name)
         sanitized <- gsub("_+", "_", sanitized)
-        sanitized <- gsub("^_+|_+$", "", sanitized)
+        sanitized <- gsub("^_+|_+\$", "", sanitized)
         sanitized
     }
 

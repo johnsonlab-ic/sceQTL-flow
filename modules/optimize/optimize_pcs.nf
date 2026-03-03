@@ -39,7 +39,7 @@ process optimize_pcs {
     }
     celltype_sanitized = gsub("[/:*?\"<>|\\\\\\\\]", "_", celltype)
     celltype_sanitized = gsub("_+", "_", celltype_sanitized)
-    celltype_sanitized = gsub("^_+|_+$", "", celltype_sanitized)
+    celltype_sanitized = gsub("^_+|_+\$", "", celltype_sanitized)
     common_samples = intersect(colnames(exp_mat), colnames(geno_mat))
 
     exp_mat = exp_mat %>% select(all_of(common_samples))
