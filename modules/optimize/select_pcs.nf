@@ -28,7 +28,7 @@ process select_pcs {
     celltype_sanitized <- sanitize_celltype_name("${celltype}")
 
     # Combine all egenes files into a single data frame
-    file_list <- list.files(pattern = "_egenes_vs_.*_fine\\\\.txt$", full.names = TRUE)
+    file_list <- list.files(pattern = "_egenes_vs_.*_fine\\\\.txt\$", full.names = TRUE)
     if (length(file_list) == 0) {
         stop("No fine egenes files found in work directory.")
     }
