@@ -37,7 +37,7 @@ process optimize_pcs {
         # Fallback: remove .csv extension
         celltype = gsub(".csv\$", "", basename("$expression_mat"))
     }
-    celltype_sanitized = gsub("[/:*?\"<>|\\\\\\\\]", "_", celltype)
+    celltype_sanitized = gsub('[/:*?"<>|\\\\]', '_', celltype)
     celltype_sanitized = gsub("_+", "_", celltype_sanitized)
     celltype_sanitized = gsub("^_+|_+\$", "", celltype_sanitized)
     common_samples = intersect(colnames(exp_mat), colnames(geno_mat))

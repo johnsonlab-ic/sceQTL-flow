@@ -17,7 +17,7 @@ process select_pcs_coarse {
     library(dplyr)
 
     sanitize_celltype_name <- function(celltype_name) {
-        sanitized <- gsub("[/:*?\"<>|\\\\\\\\]", "_", celltype_name)
+        sanitized <- gsub('[/:*?"<>|\\\\]', '_', celltype_name)
         sanitized <- gsub("_+", "_", sanitized)
         sanitized <- gsub("^_+|_+\$", "", sanitized)
         sanitized
