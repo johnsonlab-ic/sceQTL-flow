@@ -16,8 +16,20 @@ process select_pcs_coarse {
     library(data.table)
     library(dplyr)
 
+    sanitize_celltype_name <- function(celltype_name) {
+        sanitized <- gsub("[/:*?\"<>|\\\\\\\\]", "_", celltype_name)
+        sanitized <- gsub("_+", "_", sanitized)
+        sanitized <- gsub("^_+|_+$", "", sanitized)
+        sanitized
+    }
+
+    celltype_sanitized <- sanitize_celltype_name("${celltype}")
+
     # Combine all egenes files into a single data frame
-    file_list <- unlist(strsplit("${egenes_files}", " "))
+    file_list <- list.files(pattern = "_egenes_vs_.*_coarse\\\\.txt$", full.names = TRUE)
+    if (length(file_list) == 0) {
+        stop("No coarse egenes files found in work directory.")
+    }
     results <- rbindlist(lapply(file_list, fread))
 
     results\$n_pcs <- as.integer(results\$n_pcs)
@@ -72,7 +84,7 @@ process select_pcs_coarse {
         "\nEarly-stop patience:", patience,
         "\nStop at n_pcs:", max_eval_pcs,
         "\nCoarse best n_pcs:", center
-    ), "pc_info_${celltype}_coarse.txt")
+    ), paste0("pc_info_", celltype_sanitized, "_coarse.txt"))
 
     # Output detailed summary CSV for visualization
     results_summary <- results
@@ -81,6 +93,6 @@ process select_pcs_coarse {
     results_summary\$below_threshold <- results_summary\$gain_pct < (early_tol * 100)
     results_summary\$is_ceiling <- results_summary\$n_pcs == max_eval_pcs
     results_summary\$is_best <- results_summary\$n_pcs == center
-    write.csv(results_summary, file = paste0("${celltype}_coarse_summary.csv"), row.names = FALSE, quote = TRUE)
+    write.csv(results_summary, file = paste0(celltype_sanitized, "_coarse_summary.csv"), row.names = FALSE, quote = TRUE)
     """
 }

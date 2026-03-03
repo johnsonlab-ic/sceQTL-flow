@@ -18,8 +18,20 @@ process select_pcs {
     library(ggplot2)
     library(dplyr)
 
+    sanitize_celltype_name <- function(celltype_name) {
+        sanitized <- gsub("[/:*?\"<>|\\\\\\\\]", "_", celltype_name)
+        sanitized <- gsub("_+", "_", sanitized)
+        sanitized <- gsub("^_+|_+$", "", sanitized)
+        sanitized
+    }
+
+    celltype_sanitized <- sanitize_celltype_name("${celltype}")
+
     # Combine all egenes files into a single data frame
-    file_list <- unlist(strsplit("${egenes_files}", " "))
+    file_list <- list.files(pattern = "_egenes_vs_.*_fine\\\\.txt$", full.names = TRUE)
+    if (length(file_list) == 0) {
+        stop("No fine egenes files found in work directory.")
+    }
     results <- rbindlist(lapply(file_list, fread))
 
     # Find the optimal n_pcs using elbow tolerance (smallest n_pcs within tol of max)
@@ -49,15 +61,15 @@ process select_pcs {
     exp_pcs <- t(exp_pcs)
 
     # Write the PC covariate matrix to a file
-    write.table(exp_pcs, file=paste0("${celltype}_",n_pcs,"_pcs.txt"), quote=FALSE, sep="\t", col.names=TRUE, row.names=TRUE)
+    write.table(exp_pcs, file=paste0(celltype_sanitized,"_",n_pcs,"_pcs.txt"), quote=FALSE, sep="\t", col.names=TRUE, row.names=TRUE)
     
     # Also save information about how many PCs were chosen
-    writeLines(paste("Cell type:", "${celltype}", "\nOptimal number of PCs:", n_pcs), "pc_info_${celltype}.txt")
+    writeLines(paste("Cell type:", "${celltype}", "\nOptimal number of PCs:", n_pcs), paste0("pc_info_", celltype_sanitized, ".txt"))
 
     # Output detailed summary CSV for visualization
     results\$threshold <- max_assoc * (1 - ${params.pc_elbow_tol})
     results\$within_elbow <- results\$n_assoc >= results\$threshold
     results\$is_selected <- results\$n_pcs == n_pcs
-    write.csv(results, file = paste0("${celltype}_fine_summary.csv"), row.names = FALSE, quote = TRUE)
+    write.csv(results, file = paste0(celltype_sanitized, "_fine_summary.csv"), row.names = FALSE, quote = TRUE)
     """
 }

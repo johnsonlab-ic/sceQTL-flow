@@ -37,6 +37,9 @@ process optimize_pcs {
         # Fallback: remove .csv extension
         celltype = gsub(".csv\$", "", basename("$expression_mat"))
     }
+    celltype_sanitized = gsub("[/:*?\"<>|\\\\\\\\]", "_", celltype)
+    celltype_sanitized = gsub("_+", "_", celltype_sanitized)
+    celltype_sanitized = gsub("^_+|_+$", "", celltype_sanitized)
     common_samples = intersect(colnames(exp_mat), colnames(geno_mat))
 
     exp_mat = exp_mat %>% select(all_of(common_samples))
@@ -76,11 +79,11 @@ process optimize_pcs {
         exp_loc = exp_loc,
         geno_mat = geno_mat,
         geno_loc = geno_loc,
-        name = celltype,
+        name = celltype_sanitized,
         cisDist = ${params.cis_distance}
     )
     
     n_assoc = outs %>% filter(FDR<0.05) %>% nrow()
-    write.table(data.frame(celltype=celltype,n_pcs=${n_pcs}, n_assoc=n_assoc), file=paste0(celltype,"_egenes_vs_",${n_pcs},"_","${stage}",".txt"), sep="\t", quote=FALSE, row.names=FALSE)
+    write.table(data.frame(celltype=celltype_sanitized,n_pcs=${n_pcs}, n_assoc=n_assoc), file=paste0(celltype_sanitized,"_egenes_vs_",${n_pcs},"_","${stage}",".txt"), sep="\t", quote=FALSE, row.names=FALSE)
     """
 }
