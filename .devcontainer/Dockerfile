@@ -106,7 +106,7 @@ RUN R -e 'BiocManager::install(c("TxDb.Hsapiens.UCSC.hg38.knownGene","org.Hs.eg.
 RUN R -e 'install.packages(c("argparse","MatrixEQTL","coloc","MendelianRandomization","ieugwasr","genetics.binaRies","lobstr","arrow"))'
 
 # Install reporting packages
-RUN R -e 'install.packages(c("ggplot2","cowplot","patchwork","ggrepel","tidyverse","gridExtra","ggbeeswarm","rmarkdown","tinytex"), repos="http://cran.rstudio.com/")'
+RUN R -e 'install.packages(c("ggplot2","cowplot","patchwork","ggrepel","tidyverse","gridExtra","ggbeeswarm","rmarkdown","tinytex","DT"), repos="http://cran.rstudio.com/")'
 
 # Install BPCells from GitHub
 RUN R -e 'remotes::install_github("bnprks/BPCells/r")'
