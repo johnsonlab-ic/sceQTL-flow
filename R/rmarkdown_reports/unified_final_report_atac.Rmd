@@ -4,6 +4,7 @@ output: html_document
 params:
   eqtl_results_filtered: NULL
   eqtl_results: NULL
+  genes_tested: NULL
   covs_used: NULL
   coarse_summaries: NULL
   fine_summaries: NULL

@@ -323,6 +323,7 @@ workflow matrixeqtl {
         def unified_report_file = data_type == 'ATAC' ? params.quarto_report_atac : params.quarto_report
         def report_inputs = combine_eqtls.out.mateqtlouts_FDR_filtered
             .combine(combine_eqtls.out.mateqtlouts)
+            .combine(combine_eqtls.out.genes_tested)
             .combine(nextflow.Channel.value(unified_report_file))
             .combine(collected_coarse_summaries.map { files -> [files] })
             .combine(collected_fine_summaries.map { files -> [files] })

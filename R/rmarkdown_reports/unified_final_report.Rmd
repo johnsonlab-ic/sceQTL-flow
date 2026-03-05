@@ -4,6 +4,7 @@ output: html_document
 params:
   eqtl_results_filtered: NULL
   eqtl_results: NULL
+  genes_tested: NULL
   covs_used: NULL
   coarse_summaries: NULL
   fine_summaries: NULL
@@ -163,6 +164,14 @@ if (!is.null(params$eqtl_results) && file.exists(params$eqtl_results)) {
 } else {
   eqtl_results <- NULL
 }
+
+# Load genes tested summary
+if (!is.null(params$genes_tested) && file.exists(params$genes_tested)) {
+  genes_tested_df <- data.table::fread(params$genes_tested, data.table = FALSE)
+} else {
+  genes_tested_df <- NULL
+}
+
 # Number and names of cell-types tested
 cell_types <- if (!is.null(eqtl_results_filtered)) names(eqtl_results_filtered) else character(0)
 num_celltypes <- length(cell_types)
@@ -334,6 +343,49 @@ if (!is.null(eqtl_results_filtered)) {
   print(g)
 } else {
   cat("Filtered eQTL results not available for eGene plot.\n")
+}
+```
+
+### total eGenes vs total genes tested
+
+```{r plot-egenes-vs-tested, echo=FALSE, fig.width=10, fig.height=5}
+if (!is.null(eqtl_results_filtered) && !is.null(genes_tested_df) && nrow(genes_tested_df) > 0) {
+  egenes_discovered_df <- tibble(
+    celltype = names(eqtl_results_filtered),
+    egenes_discovered = vapply(eqtl_results_filtered, function(df) dplyr::n_distinct(df$gene), numeric(1))
+  )
+
+  plot_df <- egenes_discovered_df %>%
+    inner_join(genes_tested_df, by = "celltype") %>%
+    mutate(celltype = gsub("_", " ", celltype)) %>%
+    arrange(desc(genes_tested))
+
+  plot_long <- plot_df %>%
+    pivot_longer(
+      cols = c(egenes_discovered, genes_tested),
+      names_to = "metric",
+      values_to = "n_genes"
+    ) %>%
+    mutate(
+      metric = dplyr::recode(metric,
+        egenes_discovered = "eGenes discovered",
+        genes_tested = "Total genes tested"
+      ),
+      celltype = factor(celltype, levels = unique(plot_df$celltype))
+    )
+
+  ggplot(plot_long, aes(x = celltype, y = n_genes, group = metric, color = metric)) +
+    geom_line(size = 0.8) +
+    geom_point(size = 2) +
+    labs(x = "Cell Type", y = "Number of genes", color = "Metric") +
+    theme_minimal() +
+    theme(
+      panel.grid.minor = element_blank(),
+      axis.text.x = element_text(angle = 45, hjust = 1),
+      axis.title = element_text(size = 10)
+    )
+} else {
+  cat("Genes tested summary is unavailable; cannot plot eGenes discovered vs total genes tested.\n")
 }
 ```
 

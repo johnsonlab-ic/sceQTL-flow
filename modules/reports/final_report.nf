@@ -3,7 +3,7 @@ process final_report {
     publishDir "${params.outdir}/eQTL_outputs/", mode: 'copy'
 
     input:
-    tuple path(eqtl_results_filtered), path(eqtl_results), path(report_file), path(coarse_summaries, stageAs: "coarse/*"), path(fine_summaries, stageAs: "fine/*"), path(covs_used, stageAs: "covs/*")
+    tuple path(eqtl_results_filtered), path(eqtl_results), path(genes_tested), path(report_file), path(coarse_summaries, stageAs: "coarse/*"), path(fine_summaries, stageAs: "fine/*"), path(covs_used, stageAs: "covs/*")
 
     output:
     path "eqtl_report.html"
@@ -14,6 +14,7 @@ process final_report {
     rmarkdown::render(input = "$report_file", output_file = "eqtl_report.html", params = list(
         eqtl_results_filtered = "$eqtl_results_filtered",
         eqtl_results = "$eqtl_results",
+        genes_tested = "$genes_tested",
         coarse_summaries = list.files("coarse", full.names = TRUE),
         fine_summaries = list.files("fine", full.names = TRUE),
         covs_used = list.files("covs", full.names = TRUE),

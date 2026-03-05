@@ -10,6 +10,7 @@ process combine_eqtls {
     output:
     path "mateqtlouts.rds", emit: mateqtlouts
     path "mateqtlouts_FDR_filtered.rds", emit: mateqtlouts_FDR_filtered
+    path "genes_tested.csv", emit: genes_tested
     
     script:
     """
@@ -52,5 +53,11 @@ process combine_eqtls {
     })
     names(eqtl_list)=celltypes
     saveRDS(eqtl_list, "mateqtlouts.rds")
+
+    genes_tested <- tibble(
+        celltype = names(eqtl_list),
+        genes_tested = vapply(eqtl_list, function(df) dplyr::n_distinct(df$gene), numeric(1))
+    )
+    fwrite(genes_tested, "genes_tested.csv")
     """
 }
