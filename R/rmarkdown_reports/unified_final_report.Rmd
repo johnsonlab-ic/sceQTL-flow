@@ -364,35 +364,60 @@ if (!is.null(eqtl_results) && length(eqtl_results) > 0) {
     caption = paste0("Unique eGenes per cell type at FDR <= ", fdr_cutoff)
   )
 
-  unique_egenes_long <- purrr::imap_dfr(eqtl_filtered_dynamic, function(df, ct) {
-    if (!"gene" %in% colnames(df) || nrow(df) == 0) {
-      return(tibble(cell_type = gsub("_", " ", ct), gene = character(0)))
+  full_eqtl_dt <- purrr::imap_dfr(eqtl_filtered_dynamic, function(df, ct) {
+    if (nrow(df) == 0) {
+      return(tibble(
+        cell_type = character(0),
+        SNP = character(0),
+        gene = character(0),
+        effect_allele = character(0),
+        other_allele = character(0),
+        p.value = character(0),
+        FDR = character(0),
+        beta = character(0),
+        se = character(0)
+      ))
     }
+
+    has_tstat <- "t.stat" %in% colnames(df)
+    has_beta <- "beta" %in% colnames(df)
+    se_vals <- rep(NA_real_, nrow(df))
+    if (has_tstat && has_beta) {
+      se_vals <- ifelse(df$t.stat == 0, NA_real_, df$beta / df$t.stat)
+    }
+
     tibble(
       cell_type = gsub("_", " ", ct),
-      gene = sort(unique(as.character(df$gene)))
+      SNP = as.character(df$SNP),
+      gene = as.character(df$gene),
+      effect_allele = if ("effect_allele" %in% colnames(df)) as.character(df$effect_allele) else NA_character_,
+      other_allele = if ("other_allele" %in% colnames(df)) as.character(df$other_allele) else NA_character_,
+      p.value = formatC(as.numeric(df$p.value), format = "e", digits = 2),
+      FDR = formatC(as.numeric(df$FDR), format = "e", digits = 2),
+      beta = as.character(signif(as.numeric(df$beta), 3)),
+      se = as.character(signif(as.numeric(se_vals), 3))
     )
   })
 
-  if (nrow(unique_egenes_long) > 0) {
+  if (nrow(full_eqtl_dt) > 0) {
     DT::datatable(
-      unique_egenes_long,
+      full_eqtl_dt,
       rownames = FALSE,
       filter = "top",
       extensions = "Buttons",
       options = list(
-        pageLength = 50,
+        pageLength = 20,
         lengthMenu = c(10, 25, 50, 100),
         dom = "Bfrtip",
         buttons = c("copy", "csv")
       ),
       caption = htmltools::tags$caption(
         style = "caption-side: top; text-align: left;",
-        paste0("Unique eGenes by cell type (FDR <= ", fdr_cutoff, ")")
+        paste0("Full eQTL table by cell type (FDR <= ", fdr_cutoff, ")")
       )
     )
   } else {
-    cat("No eGenes passed the configured FDR threshold for DT summary.\n")
+    cat("No eQTL associations passed the configured FDR threshold for DT summary.\n")
   }
 } else {
   cat("eQTL results are unavailable; cannot build summary tables.\n")

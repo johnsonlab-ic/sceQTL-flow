@@ -314,7 +314,10 @@ workflow matrixeqtl {
         .collect()
         .set { collected_covs_used }
 
-    combine_eqtls(eqtls= run_matrixeQTL.out.eqtl_results.collect())
+    combine_eqtls(
+        eqtls= run_matrixeQTL.out.eqtl_results.collect(),
+        maf_mat= create_genotype.out.maf_mat
+    )
 
     if(params.report){
         def unified_report_file = data_type == 'ATAC' ? params.quarto_report_atac : params.quarto_report
