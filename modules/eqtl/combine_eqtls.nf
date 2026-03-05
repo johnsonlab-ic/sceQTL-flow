@@ -56,7 +56,7 @@ process combine_eqtls {
 
     genes_tested <- tibble(
         celltype = names(eqtl_list),
-        genes_tested = vapply(eqtl_list, function(df) dplyr::n_distinct(df$gene), numeric(1))
+        genes_tested = vapply(eqtl_list, function(df) dplyr::n_distinct(df\$gene), numeric(1))
     )
     fwrite(genes_tested, "genes_tested.csv")
     """
