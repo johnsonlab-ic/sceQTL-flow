@@ -386,16 +386,39 @@ if (!is.null(eqtl_results) && length(eqtl_results) > 0) {
       se_vals <- ifelse(df$t.stat == 0, NA_real_, df$beta / df$t.stat)
     }
 
+    p_numeric <- as.numeric(df$p.value)
+    fdr_numeric <- as.numeric(df$FDR)
+    beta_numeric <- as.numeric(df$beta)
+    gene_values <- as.character(df$gene)
+    snp_values <- as.character(df$SNP)
+    effect_values <- if ("effect_allele" %in% colnames(df)) as.character(df$effect_allele) else rep(NA_character_, nrow(df))
+    other_values <- if ("other_allele" %in% colnames(df)) as.character(df$other_allele) else rep(NA_character_, nrow(df))
+
+    top_per_gene <- tibble(
+      gene = gene_values,
+      SNP = snp_values,
+      effect_allele = effect_values,
+      other_allele = other_values,
+      p_numeric = p_numeric,
+      fdr_numeric = fdr_numeric,
+      beta_numeric = beta_numeric,
+      se_numeric = as.numeric(se_vals)
+    ) %>%
+      group_by(gene) %>%
+      arrange(p_numeric, .by_group = TRUE) %>%
+      slice_head(n = 1) %>%
+      ungroup()
+
     tibble(
       cell_type = gsub("_", " ", ct),
-      SNP = as.character(df$SNP),
-      gene = as.character(df$gene),
-      effect_allele = if ("effect_allele" %in% colnames(df)) as.character(df$effect_allele) else NA_character_,
-      other_allele = if ("other_allele" %in% colnames(df)) as.character(df$other_allele) else NA_character_,
-      p.value = formatC(as.numeric(df$p.value), format = "e", digits = 2),
-      FDR = formatC(as.numeric(df$FDR), format = "e", digits = 2),
-      beta = as.character(signif(as.numeric(df$beta), 3)),
-      se = as.character(signif(as.numeric(se_vals), 3))
+      SNP = top_per_gene$SNP,
+      gene = top_per_gene$gene,
+      effect_allele = top_per_gene$effect_allele,
+      other_allele = top_per_gene$other_allele,
+      p.value = formatC(top_per_gene$p_numeric, format = "e", digits = 2),
+      FDR = formatC(top_per_gene$fdr_numeric, format = "e", digits = 2),
+      beta = as.character(signif(top_per_gene$beta_numeric, 3)),
+      se = as.character(signif(top_per_gene$se_numeric, 3))
     )
   })
 
@@ -413,7 +436,7 @@ if (!is.null(eqtl_results) && length(eqtl_results) > 0) {
       ),
       caption = htmltools::tags$caption(
         style = "caption-side: top; text-align: left;",
-        paste0("Full eQTL table by cell type (FDR <= ", fdr_cutoff, ")")
+        paste0("Unique-gene eQTL table by cell type (best association per gene, FDR <= ", fdr_cutoff, ")")
       )
     )
   } else {
