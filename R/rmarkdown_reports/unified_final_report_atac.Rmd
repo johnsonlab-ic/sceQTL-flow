@@ -47,6 +47,7 @@ library(tidyr)
 library(purrr)
 library(gridExtra)
 library(scales)
+library(DT)
 format_cis_distance <- function(distance) {
   if (distance >= 1e6) {
     return(paste0(distance / 1e6, "Mb"))
@@ -56,7 +57,12 @@ format_cis_distance <- function(distance) {
     return(paste0(distance, "bp"))
   }
 }
-analysis_descriptor <- "This report summarizes ATAC-QTL analysis on pseudobulk peak counts, including peak-level normalization and QC."
+data_type <- if (!is.null(params$data_type) && nzchar(params$data_type)) toupper(params$data_type) else "ATAC"
+analysis_descriptor <- if (data_type == "ATAC") {
+  "This report summarizes ATAC-QTL analysis on pseudobulk peak counts, including peak-level normalization and QC."
+} else {
+  "This report summarizes eQTL analysis on pseudobulked RNA expression, including expression normalization and QC."
+}
 # Set theme for PC optimization plots
 theme_set(theme_minimal() + theme(plot.title = element_text(hjust = 0.5, face = "bold")))
 ```
@@ -158,6 +164,14 @@ if (!is.null(params$eqtl_results) && file.exists(params$eqtl_results)) {
 } else {
   eqtl_results <- NULL
 }
+
+# Load peaks tested summary
+if (!is.null(params$genes_tested) && file.exists(params$genes_tested)) {
+  genes_tested_df <- data.table::fread(params$genes_tested, data.table = FALSE)
+} else {
+  genes_tested_df <- NULL
+}
+
 # Number and names of cell-types tested
 cell_types <- if (!is.null(eqtl_results_filtered)) names(eqtl_results_filtered) else character(0)
 num_celltypes <- length(cell_types)
@@ -332,6 +346,159 @@ if (!is.null(eqtl_results_filtered)) {
 }
 ```
 
+### total ePeaks vs total peaks tested
+
+```{r plot-epeaks-vs-tested, echo=FALSE, fig.width=10, fig.height=5}
+if (!is.null(eqtl_results_filtered) && !is.null(genes_tested_df) && nrow(genes_tested_df) > 0) {
+  epeaks_discovered_df <- tibble(
+    celltype = names(eqtl_results_filtered),
+    epeaks_discovered = vapply(eqtl_results_filtered, function(df) dplyr::n_distinct(df$gene), numeric(1))
+  )
+
+  plot_df <- epeaks_discovered_df %>%
+    inner_join(genes_tested_df, by = "celltype") %>%
+    mutate(celltype = gsub("_", " ", celltype)) %>%
+    arrange(desc(genes_tested))
+
+  plot_long <- plot_df %>%
+    pivot_longer(
+      cols = c(epeaks_discovered, genes_tested),
+      names_to = "metric",
+      values_to = "n_peaks"
+    ) %>%
+    mutate(
+      metric = dplyr::recode(metric,
+        epeaks_discovered = "ePeaks discovered",
+        genes_tested = "Total peaks tested"
+      ),
+      celltype = factor(celltype, levels = unique(plot_df$celltype))
+    )
+
+  ggplot(plot_long, aes(x = celltype, y = n_peaks, group = metric, color = metric)) +
+    geom_line(size = 0.8) +
+    geom_point(size = 2) +
+    labs(x = "Cell Type", y = "Number of peaks", color = "Metric") +
+    theme_minimal() +
+    theme(
+      panel.grid.minor = element_blank(),
+      axis.text.x = element_text(angle = 45, hjust = 1),
+      axis.title = element_text(size = 10)
+    )
+} else {
+  cat("Peaks tested summary is unavailable; cannot plot ePeaks discovered vs total peaks tested.\n")
+}
+```
+
+### ATAC-QTL Summary Tables (Filtered at Configured FDR)
+
+```{r eqtl-summary-tables, echo=FALSE}
+if (!is.null(eqtl_results) && length(eqtl_results) > 0) {
+  fdr_cutoff <- as.numeric(params$fdr_threshold)
+  if (is.na(fdr_cutoff)) {
+    fdr_cutoff <- 0.05
+  }
+
+  eqtl_filtered_dynamic <- lapply(eqtl_results, function(df) {
+    if (!"FDR" %in% colnames(df)) return(df[0, , drop = FALSE])
+    df %>% filter(FDR <= fdr_cutoff)
+  })
+
+  summary_tbl <- tibble(
+    cell_type = names(eqtl_filtered_dynamic),
+    total_unique_ePeaks = vapply(eqtl_filtered_dynamic, function(df) dplyr::n_distinct(df$gene), numeric(1))
+  ) %>%
+    mutate(cell_type = gsub("_", " ", cell_type)) %>%
+    arrange(desc(total_unique_ePeaks))
+
+  knitr::kable(
+    summary_tbl,
+    col.names = c("Cell Type", "Total Unique ePeaks"),
+    caption = paste0("Unique ePeaks per cell type at FDR <= ", fdr_cutoff)
+  )
+
+  full_eqtl_dt <- purrr::imap_dfr(eqtl_filtered_dynamic, function(df, ct) {
+    if (nrow(df) == 0) {
+      return(tibble(
+        cell_type = character(0),
+        SNP = character(0),
+        peak = character(0),
+        effect_allele = character(0),
+        other_allele = character(0),
+        p.value = character(0),
+        FDR = character(0),
+        beta = character(0),
+        se = character(0)
+      ))
+    }
+
+    has_tstat <- "t.stat" %in% colnames(df)
+    has_beta <- "beta" %in% colnames(df)
+    se_vals <- rep(NA_real_, nrow(df))
+    if (has_tstat && has_beta) {
+      se_vals <- ifelse(df$t.stat == 0, NA_real_, df$beta / df$t.stat)
+    }
+
+    p_numeric <- as.numeric(df$p.value)
+    fdr_numeric <- as.numeric(df$FDR)
+    beta_numeric <- as.numeric(df$beta)
+    peak_values <- as.character(df$gene)
+    snp_values <- as.character(df$SNP)
+    effect_values <- if ("effect_allele" %in% colnames(df)) as.character(df$effect_allele) else rep(NA_character_, nrow(df))
+    other_values <- if ("other_allele" %in% colnames(df)) as.character(df$other_allele) else rep(NA_character_, nrow(df))
+
+    top_per_peak <- tibble(
+      peak = peak_values,
+      SNP = snp_values,
+      effect_allele = effect_values,
+      other_allele = other_values,
+      p_numeric = p_numeric,
+      fdr_numeric = fdr_numeric,
+      beta_numeric = beta_numeric,
+      se_numeric = as.numeric(se_vals)
+    ) %>%
+      group_by(peak) %>%
+      arrange(p_numeric, .by_group = TRUE) %>%
+      slice_head(n = 1) %>%
+      ungroup()
+
+    tibble(
+      cell_type = gsub("_", " ", ct),
+      SNP = top_per_peak$SNP,
+      peak = top_per_peak$peak,
+      effect_allele = top_per_peak$effect_allele,
+      other_allele = top_per_peak$other_allele,
+      p.value = formatC(top_per_peak$p_numeric, format = "e", digits = 2),
+      FDR = formatC(top_per_peak$fdr_numeric, format = "e", digits = 2),
+      beta = as.character(signif(top_per_peak$beta_numeric, 3)),
+      se = as.character(signif(top_per_peak$se_numeric, 3))
+    )
+  })
+
+  if (nrow(full_eqtl_dt) > 0) {
+    DT::datatable(
+      full_eqtl_dt,
+      rownames = FALSE,
+      filter = "top",
+      extensions = "Buttons",
+      options = list(
+        pageLength = 20,
+        lengthMenu = c(10, 25, 50, 100),
+        dom = "Bfrtip",
+        buttons = c("copy", "csv")
+      ),
+      caption = htmltools::tags$caption(
+        style = "caption-side: top; text-align: left;",
+        paste0("Unique-peak ATAC-QTL table by cell type (best association per peak, FDR <= ", fdr_cutoff, ")")
+      )
+    )
+  } else {
+    cat("No ATAC-QTL associations passed the configured FDR threshold for DT summary.\n")
+  }
+} else {
+  cat("ATAC-QTL results are unavailable; cannot build summary tables.\n")
+}
+```
+
 # PC Optimization Results
 
 ```{r pcopt-setup, echo=FALSE}
@@ -386,8 +553,6 @@ if (length(coarse_summary_files) > 0 && !is.null(coarse_summary_files)) {
   coarse_data <- NULL
 }
 ```
-
-## Coarse Grid Optimization
 
 The coarse grid evaluates a broad range of PC values in large steps (default step size = 10) to quickly identify the region with the best QTL power. Early stopping halts the search when two consecutive steps show less than 1% improvement in associations, preventing unnecessary computation. The plots below show the total number of associations and percent gains at each PC value tested, with the best PC (selected for fine-tuning) highlighted in red.
 
@@ -534,6 +699,35 @@ params_summary <- tibble(
   )
 )
 knitr::kable(params_summary, caption = "PC Optimization Parameters")
+```
+
+```{r final-pcs-by-celltype, echo=FALSE}
+if (!is.null(fine_data) && nrow(fine_data) > 0 && "is_selected" %in% colnames(fine_data)) {
+  final_pcs_tbl <- fine_data %>%
+    filter(is_selected == TRUE) %>%
+    select(celltype, n_pcs) %>%
+    distinct() %>%
+    mutate(celltype = gsub("_", " ", celltype)) %>%
+    arrange(celltype)
+} else if (!is.null(cell_types) && length(cell_types) > 0 && !is.null(params$fixed_pcs)) {
+  final_pcs_tbl <- tibble(
+    celltype = gsub("_", " ", cell_types),
+    n_pcs = as.integer(params$fixed_pcs)
+  ) %>%
+    arrange(celltype)
+} else {
+  final_pcs_tbl <- NULL
+}
+
+if (!is.null(final_pcs_tbl) && nrow(final_pcs_tbl) > 0) {
+  knitr::kable(
+    final_pcs_tbl,
+    col.names = c("Cell Type", "Final PCs Used"),
+    caption = "Final number of PCs used per cell type"
+  )
+} else {
+  cat("Final PC selection table is not available.\n")
+}
 ```
 
 ---

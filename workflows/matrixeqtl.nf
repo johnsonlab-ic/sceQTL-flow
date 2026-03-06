@@ -294,9 +294,9 @@ workflow matrixeqtl {
             .join(generate_fixed_pcs.out.exp_pcs, failOnDuplicate: true, failOnMismatch: true)
             .set { residuals_with_pcs }
 
-        // Provide empty channels for coarse/fine summaries since optimization was skipped
-        nextflow.Channel.empty().set { collected_coarse_summaries }
-        nextflow.Channel.empty().set { collected_fine_summaries }
+        // Provide empty list values for coarse/fine summaries so report generation still runs
+        nextflow.Channel.value([]).set { collected_coarse_summaries }
+        nextflow.Channel.value([]).set { collected_fine_summaries }
     }
 
     // Run matrixeQTL with PCs (either optimized or fixed)
@@ -325,9 +325,9 @@ workflow matrixeqtl {
             .combine(combine_eqtls.out.mateqtlouts)
             .combine(combine_eqtls.out.genes_tested)
             .combine(nextflow.Channel.value(unified_report_file))
-            .combine(collected_coarse_summaries.map { files -> [files] })
-            .combine(collected_fine_summaries.map { files -> [files] })
-            .combine(collected_covs_used.map { files -> [files] })
+            .combine(collected_coarse_summaries)
+            .combine(collected_fine_summaries)
+            .combine(collected_covs_used)
         report_inputs | final_report
     }
 }
