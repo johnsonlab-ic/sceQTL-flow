@@ -11,6 +11,7 @@ include { subset_samples } from '../modules/qc/subset_samples.nf'
 include { get_residuals } from '../modules/residuals/get_residuals.nf'
 include { run_matrixeQTL } from '../modules/eqtl/matrixeqtl.nf'
 include { combine_eqtls } from '../modules/eqtl/combine_eqtls.nf'
+include { combine_caqtls } from '../modules/eqtl/combine_caqtls.nf'
 include { final_report } from '../modules/reports/final_report.nf'
 include { organize_pc_optimization } from '../modules/reports/organize_pc_optimization.nf'
 include { optimize_pcs as optimize_pcs_coarse } from '../modules/optimize/optimize_pcs.nf'
@@ -314,16 +315,28 @@ workflow matrixeqtl {
         .collect()
         .set { collected_covs_used }
 
-    combine_eqtls(
-        eqtls= run_matrixeQTL.out.eqtl_results.collect(),
-        maf_mat= create_genotype.out.maf_mat
-    )
+    if (data_type == 'ATAC') {
+        combine_caqtls(
+            eqtls= run_matrixeQTL.out.eqtl_results.collect(),
+            maf_mat= create_genotype.out.maf_mat
+        )
+    } else {
+        combine_eqtls(
+            eqtls= run_matrixeQTL.out.eqtl_results.collect(),
+            maf_mat= create_genotype.out.maf_mat
+        )
+    }
 
     if(params.report){
         def unified_report_file = data_type == 'ATAC' ? params.quarto_report_atac : params.quarto_report
-        def report_inputs = combine_eqtls.out.mateqtlouts_FDR_filtered
-            .combine(combine_eqtls.out.mateqtlouts)
-            .combine(combine_eqtls.out.genes_tested)
+        def eqtl_filtered_ch = data_type == 'ATAC' ? combine_caqtls.out.mateqtlouts_FDR_filtered : combine_eqtls.out.mateqtlouts_FDR_filtered
+        // For ATAC, avoid materializing the large unfiltered RDS and reuse filtered results for report inputs.
+        def eqtl_full_ch = data_type == 'ATAC' ? combine_caqtls.out.mateqtlouts_FDR_filtered : combine_eqtls.out.mateqtlouts
+        def genes_tested_ch = data_type == 'ATAC' ? combine_caqtls.out.genes_tested : combine_eqtls.out.genes_tested
+
+        def report_inputs = eqtl_filtered_ch
+            .combine(eqtl_full_ch)
+            .combine(genes_tested_ch)
             .combine(nextflow.Channel.value(unified_report_file))
             .combine(collected_coarse_summaries)
             .combine(collected_fine_summaries)
