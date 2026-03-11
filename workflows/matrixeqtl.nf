@@ -334,14 +334,15 @@ workflow matrixeqtl {
         def eqtl_full_ch = data_type == 'ATAC' ? combine_caqtls.out.mateqtlouts_FDR_filtered : combine_eqtls.out.mateqtlouts
         def genes_tested_ch = data_type == 'ATAC' ? combine_caqtls.out.genes_tested : combine_eqtls.out.genes_tested
 
-        def report_inputs = eqtl_filtered_ch
-            .combine(eqtl_full_ch)
-            .combine(genes_tested_ch)
-            .combine(nextflow.Channel.value(unified_report_file))
-            .combine(collected_coarse_summaries)
-            .combine(collected_fine_summaries)
-            .combine(collected_covs_used)
-        report_inputs | final_report
+        final_report(
+            eqtl_filtered_ch,
+            eqtl_full_ch,
+            genes_tested_ch,
+            nextflow.Channel.value(unified_report_file),
+            collected_coarse_summaries,
+            collected_fine_summaries,
+            collected_covs_used
+        )
     }
 }
 

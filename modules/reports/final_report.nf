@@ -3,7 +3,13 @@ process final_report {
     publishDir "${params.outdir}/eQTL_outputs/", mode: 'copy'
 
     input:
-    tuple path(eqtl_results_filtered), path(eqtl_results), path(genes_tested), path(report_file), path(coarse_summaries, stageAs: "coarse/*"), path(fine_summaries, stageAs: "fine/*"), path(covs_used, stageAs: "covs/*")
+    path eqtl_results_filtered
+    path eqtl_results
+    path genes_tested
+    path report_file
+    path coarse_summaries, stageAs: "coarse/*"
+    path fine_summaries, stageAs: "fine/*"
+    path covs_used, stageAs: "covs/*"
 
     output:
     path "eqtl_report.html"
