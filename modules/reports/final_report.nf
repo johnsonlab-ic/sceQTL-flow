@@ -3,8 +3,8 @@ process final_report {
     publishDir "${params.outdir}/eQTL_outputs/", mode: 'copy'
 
     input:
-    path eqtl_results_filtered
-    path eqtl_results
+    path eqtl_results_filtered, stageAs: "eqtl_results_filtered/*"
+    path eqtl_results, stageAs: "eqtl_results/*"
     path genes_tested
     path report_file
     path coarse_summaries, stageAs: "coarse/*"
