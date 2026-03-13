@@ -63,6 +63,30 @@ analysis_descriptor <- if (data_type == "ATAC") {
 } else {
   "This report summarizes eQTL analysis on pseudobulked RNA expression, including expression normalization and QC."
 }
+
+# Exclude placeholder cell-type labels from all report sections.
+is_excluded_celltype <- function(celltype_values) {
+  normalized <- trimws(as.character(celltype_values))
+  normalized[is.na(normalized)] <- ""
+  normalized <- tolower(normalized)
+  normalized <- gsub("[[:space:]_-]+", "", normalized)
+  grepl("^(unknown|unassigned|na|n/a)$", normalized)
+}
+
+filter_celltype_named_list <- function(x) {
+  if (is.null(x) || length(x) == 0 || is.null(names(x))) {
+    return(x)
+  }
+  x[!is_excluded_celltype(names(x))]
+}
+
+filter_celltype_df <- function(df, column_name = "celltype") {
+  if (is.null(df) || !column_name %in% colnames(df)) {
+    return(df)
+  }
+  dplyr::filter(df, !is_excluded_celltype(.data[[column_name]]))
+}
+
 # Set theme for PC optimization plots
 theme_set(theme_minimal() + theme(plot.title = element_text(hjust = 0.5, face = "bold")))
 ```
@@ -157,6 +181,7 @@ if (!is.null(params$eqtl_results_filtered) && file.exists(params$eqtl_results_fi
 } else {
   eqtl_results_filtered <- NULL
 }
+eqtl_results_filtered <- filter_celltype_named_list(eqtl_results_filtered)
 
 # Load the QTL results
 if (!is.null(params$eqtl_results) && file.exists(params$eqtl_results)) {
@@ -164,6 +189,7 @@ if (!is.null(params$eqtl_results) && file.exists(params$eqtl_results)) {
 } else {
   eqtl_results <- NULL
 }
+eqtl_results <- filter_celltype_named_list(eqtl_results)
 
 # Load peaks tested summary
 if (!is.null(params$genes_tested) && file.exists(params$genes_tested)) {
@@ -171,6 +197,7 @@ if (!is.null(params$genes_tested) && file.exists(params$genes_tested)) {
 } else {
   genes_tested_df <- NULL
 }
+genes_tested_df <- filter_celltype_df(genes_tested_df, "celltype")
 
 # Number and names of cell-types tested
 cell_types <- if (!is.null(eqtl_results_filtered)) names(eqtl_results_filtered) else character(0)
@@ -218,6 +245,11 @@ if (length(covs_used_files) > 0) {
     individuals_df <- NULL
   }
 } else {
+  individuals_df <- NULL
+}
+
+individuals_df <- filter_celltype_df(individuals_df, "celltype")
+if (!is.null(individuals_df) && nrow(individuals_df) == 0) {
   individuals_df <- NULL
 }
 
@@ -552,6 +584,11 @@ if (length(coarse_summary_files) > 0 && !is.null(coarse_summary_files)) {
   cat("No coarse summary files provided from workflow.\n")
   coarse_data <- NULL
 }
+
+coarse_data <- filter_celltype_df(coarse_data, "celltype")
+if (!is.null(coarse_data) && nrow(coarse_data) == 0) {
+  coarse_data <- NULL
+}
 ```
 
 The coarse grid evaluates a broad range of PC values in large steps (default step size = 10) to quickly identify the region with the best QTL power. Early stopping halts the search when two consecutive steps show less than 1% improvement in associations, preventing unnecessary computation. The plots below show the total number of associations and percent gains at each PC value tested, with the best PC (selected for fine-tuning) highlighted in red.
@@ -641,6 +678,11 @@ if (length(fine_summary_files) > 0 && !is.null(fine_summary_files)) {
   }
 } else {
   cat("No fine summary files provided from workflow.\n")
+  fine_data <- NULL
+}
+
+fine_data <- filter_celltype_df(fine_data, "celltype")
+if (!is.null(fine_data) && nrow(fine_data) == 0) {
   fine_data <- NULL
 }
 ```
