@@ -4,8 +4,7 @@ process select_pcs {
     publishDir "${params.outdir}/optimization/", mode: 'copy'
 
     input:
-    tuple val(celltype), path(egenes_files)
-    tuple val(celltype), path(exp_matrix)
+    tuple val(celltype), path(egenes_files), path(exp_matrix)
 
     output:
     tuple val(celltype), path("*_pcs.txt"), emit: exp_pcs

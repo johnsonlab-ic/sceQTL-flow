@@ -68,12 +68,11 @@ workflow matrixeqtl {
     ==============================================
 
     """
-    create_genotype(gds_file= params.gds_file, 
-    params.genotype_source_functions)
+    create_genotype(params.gds_file, params.genotype_source_functions)
     qc_genotype(
-        genotype_mat=create_genotype.out.genotype_mat,
-        snp_chromlocations=create_genotype.out.snp_chromlocations,
-        filter_chr=params.filter_chr  // Pass the optional parameter
+        create_genotype.out.genotype_mat,
+        create_genotype.out.snp_chromlocations,
+        params.filter_chr  // Optional chromosome filter
     )
 
     // Handle single file vs multiple files
@@ -89,17 +88,17 @@ workflow matrixeqtl {
 
     pseudobulk_singlecell(seurat_input, params.pseudobulk_source_functions)
     pseudobulk_ch = pseudobulk_singlecell.out.pseudobulk_counts.flatten()
-    qc_expression(pseudobulk_file= pseudobulk_ch)
+    qc_expression(pseudobulk_ch)
     
     // =============================================
     // RUN PREFLIGHT CHECK
     // =============================================
     has_cov = params.cov_file != "none" && params.cov_file != ""
     preflight_check(
-        genotype_mat = qc_genotype.out.qc_genotype_mat,
-        cov_file = has_cov ? params.cov_file : "",
-        pseudobulk_files = qc_expression.out.pseudobulk_normalised.collect(),
-        has_cov_file = has_cov
+        qc_genotype.out.qc_genotype_mat,
+        has_cov ? params.cov_file : "",
+        qc_expression.out.pseudobulk_normalised.collect(),
+        has_cov
     )
     
     // =============================================
@@ -152,15 +151,15 @@ workflow matrixeqtl {
             params.eqtl_source_functions,
             qc_genotype.out.qc_genotype_mat,
             qc_genotype.out.qc_snp_chromlocations,
-            dynamic_pcs_coarse_ch.map { it[0] },
+            dynamic_pcs_coarse_ch.map { row -> row[0] },
             pseudobulk_singlecell.out.gene_locations,
-            dynamic_pcs_coarse_ch.map { it[1] },
+            dynamic_pcs_coarse_ch.map { row -> row[1] },
             "coarse"
         )
 
         optimize_pcs_coarse.out.egenes_results
             .map { file ->
-                celltype = file.name.replaceAll(/_egenes_vs_.+_coarse\.txt$/, "")
+                def celltype = file.name.replaceAll(/_egenes_vs_.+_coarse\.txt$/, "")
                 [celltype, file]
             }
             .groupTuple(by: 0)
@@ -197,7 +196,7 @@ workflow matrixeqtl {
         // Build fine PC values per celltype
         ch_residual_matrices_debug
             .join(select_pcs_coarse.out.fine_pc_values, failOnDuplicate: true, failOnMismatch: true)
-            .flatMap { celltype, exp_file, pc_file ->
+            .flatMap { _celltype, exp_file, pc_file ->
                 def pc_values = pc_file.text.trim().split('\n')
                 pc_values.collect { pc -> [exp_file, pc.toInteger()] }
             }
@@ -208,32 +207,26 @@ workflow matrixeqtl {
             params.eqtl_source_functions,
             qc_genotype.out.qc_genotype_mat,
             qc_genotype.out.qc_snp_chromlocations,
-            dynamic_pcs_fine_ch.map { it[0] },
+            dynamic_pcs_fine_ch.map { row -> row[0] },
             pseudobulk_singlecell.out.gene_locations,
-            dynamic_pcs_fine_ch.map { it[1] },
+            dynamic_pcs_fine_ch.map { row -> row[1] },
             "fine"
         )
 
         optimize_pcs_fine.out.egenes_results
             .map { file ->
-                celltype = file.name.replaceAll(/_egenes_vs_.+_fine\.txt$/, "")
+                def celltype = file.name.replaceAll(/_egenes_vs_.+_fine\.txt$/, "")
                 [celltype, file]
             }
             .groupTuple(by: 0)
             .set { grouped_results_fine }
-
-        // For the markdown file
-        optimize_pcs_fine.out.egenes_results
-            .collect()
-            .set { collected_results }
 
         // Run the select_pcs process on fine grid results
         grouped_results_fine
             .join(ch_residual_matrices_debug, failOnDuplicate: true, failOnMismatch: true)
             .set { paired_data_fine }
 
-        select_pcs(paired_data_fine.map { celltype, egenes_files, exp_file -> [celltype, egenes_files] },
-                  paired_data_fine.map { celltype, egenes_files, exp_file -> [celltype, exp_file] })
+        select_pcs(paired_data_fine)
 
         // Collect fine summary CSVs for reporting (only file paths)
         select_pcs.out.fine_summary
@@ -283,9 +276,9 @@ workflow matrixeqtl {
         params.eqtl_source_functions,
         qc_genotype.out.qc_genotype_mat,
         qc_genotype.out.qc_snp_chromlocations,
-        residuals_with_pcs.map { it[1] },  // expression file
+        residuals_with_pcs.map { row -> row[1] },  // expression file
         pseudobulk_singlecell.out.gene_locations,
-        residuals_with_pcs.map { it[2] }   // PCs file (optimized or fixed)
+        residuals_with_pcs.map { row -> row[2] }   // PCs file (optimized or fixed)
     )
 
     // Collect covariate matrices used per cell type for reporting
@@ -293,7 +286,7 @@ workflow matrixeqtl {
         .collect()
         .set { collected_covs_used }
 
-    combine_eqtls(eqtls= run_matrixeQTL.out.eqtl_results.collect())
+    combine_eqtls(run_matrixeQTL.out.eqtl_results.collect())
 
     if(params.report){
         def unified_report_file = params.quarto_report
@@ -305,15 +298,4 @@ workflow matrixeqtl {
             .combine(collected_covs_used.map { files -> [files] })
         report_inputs | final_report
     }
-}
-
-workflow.onComplete {
-    println """
-    ========================================
-    Pipeline Completed!
-    ========================================
-
-    eQTL report generated at: ${params.outdir}/eQTL_outputs/eqtl_report.html
-
-    """
 }

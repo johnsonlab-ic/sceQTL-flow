@@ -82,27 +82,25 @@ def helpMessage() {
         """
 }
 
-if (params.help) {
-    helpMessage()
-    System.exit(0)
-}
-
 include { matrixeqtl } from './workflows/matrixeqtl.nf'
 include { tensorqtl } from './workflows/tensorqtl.nf'
 
 workflow {
+    if (params.help) {
+        helpMessage()
+        System.exit(0)
+    }
+
     def wf = params.workflow?.toLowerCase() ?: 'matrixeqtl'
-    switch(wf) {
-        case 'tensorqtl':
-            log.info "Running tensorQTL workflow (placeholder)."
-            tensorqtl()
-            break
-        case 'matrixeqtl':
-            log.info "Running matrixeQTL workflow."
-            matrixeqtl()
-            break
-        default:
-            error "Unknown workflow '${wf}'. Choose 'matrixeqtl' or 'tensorqtl'."
+    if (wf == 'tensorqtl') {
+        log.info "Running tensorQTL workflow (placeholder)."
+        tensorqtl()
+    } else if (wf == 'matrixeqtl') {
+        log.info "Running matrixeQTL workflow."
+        matrixeqtl()
+    } else {
+        error "Unknown workflow '${wf}'. Choose 'matrixeqtl' or 'tensorqtl'."
     }
 }
+
 
