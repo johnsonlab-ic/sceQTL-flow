@@ -13,9 +13,10 @@ process run_matrixeQTL {
     path optimized_pcs
 
     output:
-    path "*_cis_MatrixEQTLout.rds", emit: eqtl_results
+    path "*_cis_eqtl_sig.rds", emit: sig
+    path "*_eqtl_summary.rds", emit: summary
     path "*_covs_used.rds", emit: covs_used
-    path "*"
+    path "*_cis_MatrixEQTLout.rds", emit: full, optional: true
 
     script:
     """
@@ -81,16 +82,33 @@ process run_matrixeQTL {
         cisDist = as.numeric(${params.cis_distance})
     )
 
-    save_eqtls <- function(eqtls, prefix) {
-        if (!is.null(eqtls) && nrow(eqtls) > 0) {
-          names(eqtls)[names(eqtls) == "statistic"] <- "t.stat"
-          names(eqtls)[names(eqtls) == "pvalue"] <- "p.value"
-          names(eqtls)[names(eqtls) == "snps"] <- "SNP"
-          saveRDS(eqtls, paste0(celltype, "_cis_MatrixEQTLout.rds"))
-        }
-      }
+    # Filter + summarise at the source so combine_eqtls never holds the full table.
+    outs = if (is.null(outs)) data.frame() else as.data.frame(outs)
+    if (nrow(outs) > 0) {
+        names(outs)[names(outs) == "statistic"] <- "t.stat"
+        names(outs)[names(outs) == "pvalue"]    <- "p.value"
+        names(outs)[names(outs) == "snps"]      <- "SNP"
+        sig_mask <- outs[["FDR"]] <= as.numeric(${params.fdr_threshold})
+    } else {
+        sig_mask <- logical(0)
+    }
 
-    save_eqtls(outs)
-    
+    summ <- data.frame(
+        celltype       = celltype,
+        n_individuals  = length(common_samples),
+        n_genes_tested = if (nrow(outs) > 0) length(unique(outs[["gene"]])) else 0L,
+        n_snps_tested  = if (nrow(outs) > 0) length(unique(outs[["SNP"]]))  else 0L,
+        n_tests        = nrow(outs),
+        n_sig_pairs    = sum(sig_mask),
+        n_egenes       = if (nrow(outs) > 0) length(unique(outs[["gene"]][sig_mask])) else 0L,
+        stringsAsFactors = FALSE
+    )
+    saveRDS(summ, paste0(celltype, "_eqtl_summary.rds"))
+    saveRDS(outs[sig_mask, , drop = FALSE], paste0(celltype, "_cis_eqtl_sig.rds"))
+
+    # Full per-cell-type cis stats are opt-in (for coloc/mashr); never concatenated.
+    if (${params.save_full_eqtl ? 'TRUE' : 'FALSE'}) {
+        saveRDS(outs, paste0(celltype, "_cis_MatrixEQTLout.rds"))
+    }
     """
 }

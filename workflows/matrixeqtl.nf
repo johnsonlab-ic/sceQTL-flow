@@ -1,8 +1,10 @@
 // MatrixEQTL workflow (extracted from main.nf)
 
-include { create_genotype; qc_genotype } from '../modules/genotype/genotype.nf'
-include { merge_seurat_objects } from '../modules/expression/merge_seurat.nf'
-include { pseudobulk_singlecell } from '../modules/expression/pseudobulk.nf'
+include { create_genotype; qc_genotype; relabel_genotype } from '../modules/genotype/genotype.nf'
+include { pseudobulk_anndata } from '../modules/expression/pseudobulk_anndata.nf'
+include { pseudobulk_seurat } from '../modules/expression/pseudobulk_seurat.nf'
+include { combine_pseudobulk } from '../modules/expression/combine_pseudobulk.nf'
+include { check_overlap } from '../modules/qc/check_overlap.nf'
 include { qc_expression } from '../modules/expression/qc_expression.nf'
 include { preflight_check } from '../modules/qc/preflight_check.nf'
 include { subset_samples } from '../modules/qc/subset_samples.nf'
@@ -68,6 +70,19 @@ workflow matrixeqtl {
     ==============================================
 
     """
+
+    // Write a parameters manifest into the output directory for provenance
+    def _od = file(params.outdir)
+    _od.mkdirs()
+    def _manifest = (["sceQTL-flow run parameters",
+                      "date: ${new Date()}",
+                      "commandLine: ${workflow.commandLine}",
+                      "revision: ${workflow.revision ?: 'n/a'}",
+                      "profile: ${workflow.profile}",
+                      ""] +
+                     params.sort { it.key }.collect { k, v -> "${k} = ${v}" }).join("\n") + "\n"
+    file("${params.outdir}/run_params.txt").text = _manifest
+
     create_genotype(params.gds_file, params.genotype_source_functions)
     qc_genotype(
         create_genotype.out.genotype_mat,
@@ -75,28 +90,56 @@ workflow matrixeqtl {
         params.filter_chr  // Optional chromosome filter
     )
 
-    // Handle single file vs multiple files
-    if (params.single_cell_file_list != "none" && params.single_cell_file_list != "") {
-        // Multiple Seurat objects - need to merge first
-        seurat_files_ch = nextflow.Channel.fromPath(params.single_cell_file_list.split(',') as List)
-        merge_seurat_objects(seurat_files_ch.collect(), params.pseudobulk_source_functions)
-        seurat_input = merge_seurat_objects.out.merged_seurat
+    // Optional genotype sample relabelling (default: expect IDs to already match)
+    def has_sample_map = params.sample_map != "none" && params.sample_map != ""
+    if (has_sample_map) {
+        relabel_genotype(qc_genotype.out.qc_genotype_mat, file(params.sample_map))
+        geno_mat = relabel_genotype.out.relabelled_mat
     } else {
-        // Single Seurat object - use directly
-        seurat_input = params.single_cell_file
+        geno_mat = qc_genotype.out.qc_genotype_mat
     }
 
-    pseudobulk_singlecell(seurat_input, params.pseudobulk_source_functions)
-    pseudobulk_ch = pseudobulk_singlecell.out.pseudobulk_counts.flatten()
+    // Unified single-cell input: Seurat (.rds) or AnnData (.h5ad), single file or list
+    def sc_paths = (params.single_cell_file_list != "none" && params.single_cell_file_list != "") ?
+        (params.single_cell_file_list.split(',').collect { it.trim() }) : [ params.single_cell_file ]
+    sc_ch = nextflow.Channel.fromPath(sc_paths).map { f -> tuple(f.baseName, f) }
+    sc_ch.branch {
+        anndata: it[1].name.toLowerCase().endsWith('.h5ad')
+        seurat:  it[1].name.toLowerCase().endsWith('.rds')
+    }.set { sc_by_type }
+
+    // Cell-level metadata file (optional); NO_FILE placeholder when absent
+    def has_meta = params.cell_metadata_file != "none" && params.cell_metadata_file != ""
+    meta_ch = has_meta ? file(params.cell_metadata_file) : file("${baseDir}/assets/NO_FILE")
+
+    // Early genotype <-> single-cell overlap gate (requires a cell metadata file)
+    if (has_meta) {
+        check_overlap(geno_mat, meta_ch, file(params.check_overlap_script))
+    }
+
+    // Native per-file pseudobulk, then combine partials
+    pseudobulk_anndata(sc_by_type.anndata, file(params.pseudobulk_anndata_script), meta_ch)
+    pseudobulk_seurat(sc_by_type.seurat,  file(params.pseudobulk_seurat_script),  meta_ch)
+
+    all_partials = pseudobulk_anndata.out.partials.mix(pseudobulk_seurat.out.partials).collect()
+    all_ncells   = pseudobulk_anndata.out.ncells.mix(pseudobulk_seurat.out.ncells).collect()
+    combine_pseudobulk(
+        all_partials,
+        all_ncells,
+        params.pseudobulk_source_functions,
+        params.combine_pseudobulk_script
+    )
+
+    pseudobulk_ch = combine_pseudobulk.out.pseudobulk_counts.flatten()
     qc_expression(pseudobulk_ch)
-    
+
     // =============================================
     // RUN PREFLIGHT CHECK
     // =============================================
     has_cov = params.cov_file != "none" && params.cov_file != ""
     preflight_check(
-        qc_genotype.out.qc_genotype_mat,
-        has_cov ? params.cov_file : "",
+        geno_mat,
+        has_cov ? file(params.cov_file) : file("${baseDir}/assets/NO_FILE"),
         qc_expression.out.pseudobulk_normalised.collect(),
         has_cov
     )
@@ -149,10 +192,10 @@ workflow matrixeqtl {
         // Run the optimize_pcs process on the coarse grid
         optimize_pcs_coarse(
             params.eqtl_source_functions,
-            qc_genotype.out.qc_genotype_mat,
+            geno_mat,
             qc_genotype.out.qc_snp_chromlocations,
             dynamic_pcs_coarse_ch.map { row -> row[0] },
-            pseudobulk_singlecell.out.gene_locations,
+            combine_pseudobulk.out.gene_locations,
             dynamic_pcs_coarse_ch.map { row -> row[1] },
             "coarse"
         )
@@ -205,10 +248,10 @@ workflow matrixeqtl {
         // Run the optimize_pcs process on the fine grid (second invocation with alias)
         optimize_pcs_fine(
             params.eqtl_source_functions,
-            qc_genotype.out.qc_genotype_mat,
+            geno_mat,
             qc_genotype.out.qc_snp_chromlocations,
             dynamic_pcs_fine_ch.map { row -> row[0] },
-            pseudobulk_singlecell.out.gene_locations,
+            combine_pseudobulk.out.gene_locations,
             dynamic_pcs_fine_ch.map { row -> row[1] },
             "fine"
         )
@@ -266,18 +309,20 @@ workflow matrixeqtl {
             .join(generate_fixed_pcs.out.exp_pcs, failOnDuplicate: true, failOnMismatch: true)
             .set { residuals_with_pcs }
 
-        // Provide empty channels for coarse/fine summaries since optimization was skipped
-        nextflow.Channel.empty().set { collected_coarse_summaries }
-        nextflow.Channel.empty().set { collected_fine_summaries }
+        // Optimization skipped: emit a single empty file-list so the report
+        // channel still produces one item (Channel.empty would yield zero and
+        // silently drop final_report from the DAG).
+        nextflow.Channel.of([]).set { collected_coarse_summaries }
+        nextflow.Channel.of([]).set { collected_fine_summaries }
     }
 
     // Run matrixeQTL with PCs (either optimized or fixed)
     run_matrixeQTL(
         params.eqtl_source_functions,
-        qc_genotype.out.qc_genotype_mat,
+        geno_mat,
         qc_genotype.out.qc_snp_chromlocations,
         residuals_with_pcs.map { row -> row[1] },  // expression file
-        pseudobulk_singlecell.out.gene_locations,
+        combine_pseudobulk.out.gene_locations,
         residuals_with_pcs.map { row -> row[2] }   // PCs file (optimized or fixed)
     )
 
@@ -286,13 +331,15 @@ workflow matrixeqtl {
         .collect()
         .set { collected_covs_used }
 
-    combine_eqtls(run_matrixeQTL.out.eqtl_results.collect())
+    combine_eqtls(run_matrixeQTL.out.sig.collect(), run_matrixeQTL.out.summary.collect())
 
     if(params.report){
-        def unified_report_file = params.quarto_report
+        def unified_report_file = file(params.quarto_report)
+        def child_report_file = file(params.pc_optimization_report)
         def report_inputs = combine_eqtls.out.mateqtlouts_FDR_filtered
-            .combine(combine_eqtls.out.mateqtlouts)
+            .combine(combine_eqtls.out.summary)
             .combine(nextflow.Channel.value(unified_report_file))
+            .combine(nextflow.Channel.value(child_report_file))
             .combine(collected_coarse_summaries.map { files -> [files] })
             .combine(collected_fine_summaries.map { files -> [files] })
             .combine(collected_covs_used.map { files -> [files] })

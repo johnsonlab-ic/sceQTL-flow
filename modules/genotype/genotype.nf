@@ -52,3 +52,32 @@ process qc_genotype {
     data.table::fwrite(snp_chromlocations, "qc_snp_chromlocations.csv")
     """
 }
+
+process relabel_genotype {
+    publishDir "${params.outdir}/genotype_files/", mode: "copy"
+
+    input:
+    path genotype_mat
+    path sample_map
+
+    output:
+    path "relabelled_genotype_mat.csv", emit: relabelled_mat
+
+    script:
+    """
+    #!/usr/bin/env Rscript
+    suppressMessages(library(data.table))
+
+    geno <- fread("${genotype_mat}")
+    map  <- fread("${sample_map}")
+    from <- as.character(map[["${params.sample_map_from}"]])
+    to   <- as.character(map[["${params.sample_map_to}"]])
+    lut  <- setNames(to, from)
+
+    cn    <- colnames(geno)
+    newcn <- ifelse(cn %in% names(lut), unname(lut[cn]), cn)
+    setnames(geno, cn, newcn)
+    fwrite(geno, "relabelled_genotype_mat.csv")
+    cat("[RELABEL] renamed", sum(cn %in% names(lut)), "of", length(cn), "columns\\n")
+    """
+}

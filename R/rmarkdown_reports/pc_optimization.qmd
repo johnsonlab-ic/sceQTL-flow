@@ -1,0 +1,77 @@
+# PC optimization
+
+```{r pcopt-load}
+# Staged by final_report.nf into coarse/ and fine/ (read directly; no params).
+load_summaries <- function(dir, suffix) {
+  files <- list.files(dir, full.names = TRUE)
+  if (length(files) == 0) return(NULL)
+  out <- map_df(files, function(f) {
+    ct <- gsub(suffix, "", basename(f))
+    fread(f)[, celltype := ct]
+  })
+  if (nrow(out) == 0) NULL else as_tibble(out)
+}
+coarse_data <- load_summaries("coarse", "_coarse_summary.csv")
+fine_data   <- load_summaries("fine",   "_fine_summary.csv")
+
+pcopt_colors <- if (!is.null(coarse_data)) celltype_palette(coarse_data$celltype) else
+                if (!is.null(fine_data)) celltype_palette(fine_data$celltype) else ct_colors
+```
+
+A two-stage **coarse → fine** grid search selects the number of expression PCs per cell type:
+
+1. **Coarse grid** — step `r params$pc_coarse_step` up to 50% of sample size; **early stop** after `r params$pc_early_stop_patience` consecutive steps gaining < `r scales::percent(as.numeric(params$pc_early_stop_tol))`.
+2. **Fine grid** — step `r params$pc_fine_step` within ± `r params$pc_fine_window` of the best coarse PC.
+3. **Elbow rule** — smallest PC count within `r scales::percent(as.numeric(params$pc_elbow_tol))` of the maximum associations (selected PC marked ▲).
+
+## Coarse grid
+
+```{r coarse-assoc, fig.width=12, fig.height=8}
+if (!is.null(coarse_data)) {
+  coarse_data %>% arrange(n_pcs) %>%
+    ggplot(aes(n_pcs, n_assoc, colour = celltype)) +
+    geom_line(linewidth = 0.6) + geom_point(size = 1.8) +
+    geom_point(data = filter(coarse_data, is_best), colour = "#DC0000", size = 2.8) +
+    scale_colour_manual(values = pcopt_colors, guide = "none") +
+    facet_wrap(~celltype, scales = "free") +
+    labs(x = "Number of PCs", y = "Associations", title = "Total associations (best PC in red)")
+} else cat("No coarse summary data.\n")
+```
+
+```{r coarse-gains, fig.width=12, fig.height=8}
+if (!is.null(coarse_data) && "gain_pct" %in% names(coarse_data)) {
+  coarse_data %>% arrange(n_pcs) %>%
+    ggplot(aes(n_pcs, gain_pct, colour = celltype)) +
+    geom_line(linewidth = 0.6) + geom_point(size = 1.8) +
+    geom_point(data = filter(coarse_data, is_best), colour = "#DC0000", size = 2.8) +
+    scale_colour_manual(values = pcopt_colors, guide = "none") +
+    facet_wrap(~celltype, scales = "free") +
+    labs(x = "Number of PCs", y = "Gain (%)", title = "Per-step gain")
+}
+```
+
+## Fine grid
+
+```{r fine-plot, fig.width=12, fig.height=8}
+if (!is.null(fine_data)) {
+  fine_data %>% arrange(n_pcs) %>%
+    ggplot(aes(n_pcs, n_assoc, colour = celltype)) +
+    geom_line(linewidth = 0.6) + geom_point(size = 1.8) +
+    geom_point(data = filter(fine_data, is_selected == TRUE),
+               colour = "#DC0000", size = 3.5, shape = 17) +
+    scale_colour_manual(values = pcopt_colors, guide = "none") +
+    facet_wrap(~celltype, scales = "free") +
+    labs(x = "Number of PCs", y = "Associations", title = "Fine grid (selected PC ▲)")
+} else cat("No fine summary data.\n")
+```
+
+## Selected PCs
+
+```{r selected-table}
+if (!is.null(fine_data) && "is_selected" %in% names(fine_data)) {
+  fine_data %>% filter(is_selected == TRUE) %>%
+    transmute(`Cell type` = celltype, `Selected PCs` = n_pcs, Associations = n_assoc) %>%
+    arrange(`Cell type`) %>%
+    knitr::kable(caption = "PCs selected per cell type by the elbow rule.")
+}
+```

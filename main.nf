@@ -12,8 +12,23 @@ params.workflow = 'matrixeqtl'
 // source functions for easy troubleshooting
 params.genotype_source_functions="${baseDir}/R/genotype_functions/genotype_functions.r"
 params.pseudobulk_source_functions="${baseDir}/R/expression_functions/pseudobulk_functions.r"
+params.pseudobulk_anndata_script="${baseDir}/R/expression_functions/pseudobulk_anndata.py"
+params.pseudobulk_seurat_script="${baseDir}/R/expression_functions/pseudobulk_seurat.R"
+params.combine_pseudobulk_script="${baseDir}/R/expression_functions/combine_pseudobulk.R"
+params.check_overlap_script="${baseDir}/R/expression_functions/check_overlap.py"
 params.eqtl_source_functions="${baseDir}/R/MatrixEQTL_functions/matrixeqtl_source.r"
-params.quarto_report="${baseDir}/R/rmarkdown_reports/unified_final_report.Rmd"
+params.quarto_report="${baseDir}/R/rmarkdown_reports/unified_report.qmd"
+params.pc_optimization_report="${baseDir}/R/rmarkdown_reports/pc_optimization.qmd"
+
+// cell-level metadata + grouping (optional external metadata file)
+params.cell_metadata_file="none"   // CSV/.gz keyed by metadata_id_col; if "none", labels read from object
+params.metadata_id_col="cell_id"
+params.overlap_warn_frac=0.5       // warn if genotype<->single-cell overlap below this fraction
+
+// optional genotype sample relabelling (default: expect IDs to already match)
+params.sample_map="none"           // CSV mapping genotype IDs -> individual IDs
+params.sample_map_from="Sample_ID"
+params.sample_map_to="caseid"
 
 params.min_cells=5
 params.min_expression=0.1
@@ -23,6 +38,7 @@ params.counts_assay="RNA"
 params.counts_slot="counts"
 params.cis_distance=1000000
 params.fdr_threshold=0.05
+params.save_full_eqtl=false  // also persist full per-celltype cis stats (for coloc/mashr); never concatenated
 params.filter_chr = "all" // Optional parameter for filtering by chromosome. use "chr6"
 params.optimize_pcs = true // Whether to optimize PCs or use a fixed number
 params.fixed_pcs = 10 // Number of PCs to use when not optimizing

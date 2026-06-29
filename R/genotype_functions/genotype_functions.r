@@ -51,6 +51,9 @@ generate_genotype_matrix=function(vcfs,
 
   print(lobstr::mem_used())
   chrompos_mat=check_snps(chrompos_mat, chain_fpath)
+  # drop duplicate rsIDs (two positions can map to the same rsID); keep first so
+  # geno_mat / af_df stay aligned via old_snp and row names remain unique
+  chrompos_mat=chrompos_mat[!duplicated(chrompos_mat$annot),]
   geno_mat=geno_mat[match(chrompos_mat$old_snp,geno_mat$snp),]
   geno_mat$snp=chrompos_mat$annot
   rownames(geno_mat)=geno_mat$snp
