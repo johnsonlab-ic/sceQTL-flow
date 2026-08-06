@@ -11,6 +11,7 @@ process combine_pseudobulk {
     output:
     path "*_pseudobulk.csv", emit: pseudobulk_counts
     path "gene_locations.csv", emit: gene_locations
+    path "cells_per_individual.csv", emit: cells_per_individual
 
     script:
     """

@@ -3,7 +3,7 @@ process final_report {
     publishDir "${params.outdir}/eQTL_outputs/", mode: 'copy'
 
     input:
-    tuple path(eqtl_results_filtered), path(eqtl_summary), path(report_file), path(child_report), path(coarse_summaries, stageAs: "coarse/*"), path(fine_summaries, stageAs: "fine/*"), path(covs_used, stageAs: "covs/*")
+    tuple path(eqtl_results_filtered), path(eqtl_summary), path(report_file), path(child_report), path(coarse_summaries, stageAs: "coarse/*"), path(fine_summaries, stageAs: "fine/*"), path(covs_used, stageAs: "covs/*"), path(cells_per_individual)
 
     output:
     path "eqtl_report.html"
@@ -22,6 +22,7 @@ process final_report {
         execute_params = list(
             eqtl_results_filtered = "$eqtl_results_filtered",
             eqtl_summary = "$eqtl_summary",
+            cells_per_individual = "$cells_per_individual",
             outdir = "${params.outdir}",
             gds_file = "${params.gds_file}",
             single_cell_file = "${params.single_cell_file}",

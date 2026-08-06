@@ -25,6 +25,7 @@ execute:
 params:
   eqtl_results_filtered: null
   eqtl_summary: null
+  cells_per_individual: null
   outdir: null
   gds_file: null
   single_cell_file: null
@@ -100,6 +101,10 @@ eqtl_results_filtered <- if (is_set(params$eqtl_results_filtered) && file.exists
 
 eqtl_summary <- if (is_set(params$eqtl_summary) && file.exists(params$eqtl_summary)) {
   as.data.frame(readRDS(params$eqtl_summary))
+} else NULL
+
+cells_per_individual <- if (is_set(params$cells_per_individual) && file.exists(params$cells_per_individual)) {
+  fread(params$cells_per_individual)
 } else NULL
 
 cell_types     <- if (!is.null(eqtl_results_filtered)) names(eqtl_results_filtered) else
@@ -203,6 +208,65 @@ if (!is.null(ind_df)) {
     theme(axis.text.x = element_text(angle = 35, hjust = 1))
 } else {
   cat("No eQTL summary available.\n")
+}
+```
+
+### Cells per individual
+
+```{r cells-per-individual, fig.height=6}
+if (!is.null(cells_per_individual) && nrow(cells_per_individual) > 0) {
+  below_lbl <- sprintf("Below min_cells (%s)", params$min_cells)
+  dropped_lbl <- "Cell type dropped (<15 individuals)"
+  alpha_vals <- setNames(c(1, 0.4, 0.15), c("Included", below_lbl, dropped_lbl))
+
+  cpi_colors <- celltype_palette(cells_per_individual$celltype)
+
+  cpi <- cells_per_individual %>%
+    mutate(
+      status = case_when(
+        celltype_dropped   ~ dropped_lbl,
+        !kept_min_cells    ~ below_lbl,
+        TRUE                ~ "Included"
+      ),
+      status = factor(status, levels = c("Included", below_lbl, dropped_lbl))
+    ) %>%
+    group_by(celltype) %>%
+    mutate(individual = factor(individual, levels = individual[order(n_cells, decreasing = TRUE)])) %>%
+    ungroup()
+
+  ggplot(cpi, aes(individual, n_cells, fill = celltype, alpha = status)) +
+    geom_col(width = 0.85, colour = "black", linewidth = 0.15) +
+    geom_hline(yintercept = as.numeric(params$min_cells), linetype = "dashed", colour = "grey30") +
+    facet_wrap(~celltype, scales = "free_x") +
+    scale_fill_manual(values = cpi_colors, guide = "none") +
+    scale_alpha_manual(values = alpha_vals, name = NULL) +
+    scale_y_log10() +
+    labs(x = "Individuals (sorted by cell count)", y = "Cells per individual (log scale)") +
+    theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(),
+          legend.position = "top")
+} else {
+  cat("No per-individual cell-count data available.\n")
+}
+```
+
+```{r cells-per-individual-table}
+if (!is.null(cells_per_individual) && nrow(cells_per_individual) > 0) {
+  cpi_tab <- cells_per_individual %>%
+    group_by(celltype) %>%
+    summarise(
+      `Individuals seen`   = n(),
+      `Below min_cells`    = sum(!kept_min_cells),
+      `Median cells`       = fmt_int(median(n_cells)),
+      `Min cells`          = fmt_int(min(n_cells)),
+      `Max cells`          = fmt_int(max(n_cells)),
+      `Cell type dropped`  = any(celltype_dropped),
+      .groups = "drop"
+    ) %>%
+    arrange(`Cell type dropped`, desc(`Individuals seen`))
+  kable(cpi_tab, align = c("l", "r", "r", "r", "r", "r", "c"),
+        caption = sprintf("Cell-count QC per cell type. min_cells=%s; cell types with <15 individuals after that filter are dropped from eQTL mapping entirely.", params$min_cells))
+} else {
+  cat("No per-individual cell-count data available.\n")
 }
 ```
 

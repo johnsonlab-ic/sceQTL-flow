@@ -343,6 +343,7 @@ workflow matrixeqtl {
             .combine(collected_coarse_summaries.map { files -> [files] })
             .combine(collected_fine_summaries.map { files -> [files] })
             .combine(collected_covs_used.map { files -> [files] })
+            .combine(combine_pseudobulk.out.cells_per_individual)
         report_inputs | final_report
     }
 }

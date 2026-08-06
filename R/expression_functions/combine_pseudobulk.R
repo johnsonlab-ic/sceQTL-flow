@@ -23,7 +23,10 @@ if (!length(partials)) stop("no *_partial.csv files found in ", indir)
 ct_of <- function(p) sub("__.*$", "", basename(p))
 celltypes <- unique(vapply(partials, ct_of, character(1)))
 
+min_individuals <- 15  # eQTL mapping is underpowered below this many individuals
+
 all_genes <- character(0)
+cells_records <- list()
 for (ct in celltypes) {
   files <- partials[vapply(partials, ct_of, character(1)) == ct]
 
@@ -61,10 +64,19 @@ for (ct in celltypes) {
   dropped <- setdiff(colnames(combined), keep)
   combined <- combined[, keep, drop = FALSE]
 
-  # eQTL mapping is underpowered below ~15 individuals; drop the celltype
-  # entirely rather than let it crash downstream residual/PC steps.
-  min_individuals <- 15
-  if (ncol(combined) < min_individuals) {
+  celltype_dropped <- ncol(combined) < min_individuals
+  cells_records[[ct]] <- data.frame(
+    celltype = ct,
+    individual = names(ncell_tot),
+    n_cells = as.numeric(ncell_tot),
+    kept_min_cells = names(ncell_tot) %in% keep,
+    celltype_dropped = celltype_dropped,
+    row.names = NULL
+  )
+
+  # Drop the celltype entirely rather than let too few individuals crash
+  # downstream residual/PC steps.
+  if (celltype_dropped) {
     message(sprintf("[COMBINE] %s: dropped entirely - only %d individuals post pseudobulk (< %d minimum)",
                     ct, ncol(combined), min_individuals))
     next
@@ -83,3 +95,8 @@ if (exists("get_gene_locations")) {
   fwrite(gl, file.path(outdir, "gene_locations.csv"))
   message(sprintf("[COMBINE] gene_locations: %d genes mapped", nrow(gl)))
 }
+
+cells_per_individual <- do.call(rbind, cells_records)
+fwrite(cells_per_individual, file.path(outdir, "cells_per_individual.csv"))
+message(sprintf("[COMBINE] cells_per_individual: %d rows across %d cell types",
+                nrow(cells_per_individual), length(cells_records)))
