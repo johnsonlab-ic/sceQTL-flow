@@ -117,12 +117,32 @@ workflow matrixeqtl {
         check_overlap(geno_mat, meta_ch, file(params.check_overlap_script))
     }
 
-    // Native per-file pseudobulk, then combine partials
-    pseudobulk_anndata(sc_by_type.anndata, file(params.pseudobulk_anndata_script), meta_ch)
-    pseudobulk_seurat(sc_by_type.seurat,  file(params.pseudobulk_seurat_script),  meta_ch)
+    // Native per-file pseudobulk, then combine partials. Only invoke the
+    // process(es) for formats actually present in the input list, so a
+    // single-format run doesn't show the other's process with 0 tasks.
+    def has_anndata_input = sc_paths.any { it.toString().toLowerCase().endsWith('.h5ad') }
+    def has_seurat_input  = sc_paths.any { it.toString().toLowerCase().endsWith('.rds') }
 
-    all_partials = pseudobulk_anndata.out.partials.mix(pseudobulk_seurat.out.partials).collect()
-    all_ncells   = pseudobulk_anndata.out.ncells.mix(pseudobulk_seurat.out.ncells).collect()
+    if (has_anndata_input) {
+        pseudobulk_anndata(sc_by_type.anndata, file(params.pseudobulk_anndata_script), meta_ch)
+        anndata_partials = pseudobulk_anndata.out.partials
+        anndata_ncells   = pseudobulk_anndata.out.ncells
+    } else {
+        anndata_partials = nextflow.Channel.empty()
+        anndata_ncells   = nextflow.Channel.empty()
+    }
+
+    if (has_seurat_input) {
+        pseudobulk_seurat(sc_by_type.seurat, file(params.pseudobulk_seurat_script), meta_ch)
+        seurat_partials = pseudobulk_seurat.out.partials
+        seurat_ncells   = pseudobulk_seurat.out.ncells
+    } else {
+        seurat_partials = nextflow.Channel.empty()
+        seurat_ncells   = nextflow.Channel.empty()
+    }
+
+    all_partials = anndata_partials.mix(seurat_partials).collect()
+    all_ncells   = anndata_ncells.mix(seurat_ncells).collect()
     combine_pseudobulk(
         all_partials,
         all_ncells,
