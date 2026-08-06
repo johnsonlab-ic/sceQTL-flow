@@ -61,6 +61,15 @@ for (ct in celltypes) {
   dropped <- setdiff(colnames(combined), keep)
   combined <- combined[, keep, drop = FALSE]
 
+  # eQTL mapping is underpowered below ~15 individuals; drop the celltype
+  # entirely rather than let it crash downstream residual/PC steps.
+  min_individuals <- 15
+  if (ncol(combined) < min_individuals) {
+    message(sprintf("[COMBINE] %s: dropped entirely - only %d individuals post pseudobulk (< %d minimum)",
+                    ct, ncol(combined), min_individuals))
+    next
+  }
+
   out <- data.frame(geneid = rownames(combined), combined, check.names = FALSE)
   fwrite(out, file.path(outdir, paste0(ct, "_pseudobulk.csv")))
   all_genes <- union(all_genes, rownames(combined))
