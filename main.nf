@@ -32,7 +32,7 @@ params.sample_map_to="caseid"
 
 params.min_cells=5
 params.min_expression=0.1
-params.celltype_column="celltype"
+params.celltype_column="celltype" // comma-separated to pseudobulk on multiple columns/resolutions independently
 params.individual_column="individual"
 params.counts_assay="RNA"
 params.counts_slot="counts"
@@ -74,7 +74,7 @@ def helpMessage() {
                 --gds_file <path.gds> \\
                 --single_cell_file <seurat.rds> OR --single_cell_file_list <file1.rds,file2.rds,...> \\
                 --outdir <output_dir> \\
-                --celltype_column <column> \\
+                --celltype_column <column|column1,column2,...> \\
                 --individual_column <column> \\
                 [--cov_file covariates.csv] \\
                 [--covariates_to_include <comma list|all>] \\

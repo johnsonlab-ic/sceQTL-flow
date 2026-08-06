@@ -1,9 +1,13 @@
 #!/usr/bin/env Rscript
 # Native per-file pseudobulk for one Seurat .rds object.
-# Same partial contract as pseudobulk_anndata.py: grouping (celltype + individual)
-# comes from an external cell-level metadata file (--cell-metadata, keyed by
-# --id-col) OR the object's own meta.data. Counts are summed cells->individuals
-# within each cell type via a single sparse matmul.
+# Same partial contract as pseudobulk_anndata.py: --celltype-col accepts a
+# comma-separated list of columns to pseudobulk on independently. Individual/
+# celltype labels come from an external cell-level metadata file
+# (--cell-metadata, keyed by --id-col) OR the object's own meta.data. Counts
+# are summed cells->individuals within each category via a single sparse
+# matmul. Output files are prefixed "<column>-<category>__..." so categories
+# from different columns can't collide (and get silently summed together)
+# downstream.
 suppressMessages({
   library(Seurat)
   library(Matrix)
@@ -43,6 +47,9 @@ counts <- tryCatch(
 )  # genes x cells
 cell_ids <- colnames(counts)
 
+celltype_cols <- trimws(strsplit(celltype_col, ",")[[1]])
+celltype_cols <- celltype_cols[nzchar(celltype_cols)]
+
 # resolve grouping table for cells present in the label source
 if (!is.null(cell_meta) && nchar(cell_meta) > 0 && cell_meta != "NO_FILE") {
   meta <- as.data.frame(fread(cell_meta))
@@ -52,37 +59,53 @@ if (!is.null(cell_meta) && nchar(cell_meta) > 0 && cell_meta != "NO_FILE") {
   ndrop <- length(cell_ids) - length(present)
   if (ndrop > 0) message(sprintf("[PB] %d/%d cells not in metadata; dropped", ndrop, length(cell_ids)))
   if (length(present) == 0) stop("no cells matched between counts and metadata")
-  ct  <- as.character(meta[present, celltype_col])
   ind <- as.character(meta[present, indiv_col])
+  meta_sub <- meta[present, celltype_cols, drop = FALSE]
   counts <- counts[, present, drop = FALSE]
 } else {
   md <- obj@meta.data
-  ct  <- as.character(md[cell_ids, celltype_col])
   ind <- as.character(md[cell_ids, indiv_col])
+  meta_sub <- md[cell_ids, celltype_cols, drop = FALSE]
 }
 
-ok <- !is.na(ct) & !is.na(ind)
-if (any(!ok)) counts <- counts[, ok, drop = FALSE]
-ct <- ct[ok]; ind <- ind[ok]
-
-grp <- factor(paste(ct, ind, sep = SEP))
-design_t <- Matrix::fac2sparse(grp)          # groups x cells
-summed <- as.matrix(counts %*% Matrix::t(design_t))  # genes x groups
-storage.mode(summed) <- "integer"
-ncells <- as.integer(Matrix::rowSums(design_t))
-gl <- levels(grp)
-g_ct  <- sub(paste0(SEP, ".*$"), "", gl)
-g_ind <- sub(paste0("^.*", SEP), "", gl)
-genes <- rownames(counts)
+ok_ind <- !is.na(ind)
+if (any(!ok_ind)) {
+  counts <- counts[, ok_ind, drop = FALSE]
+  ind <- ind[ok_ind]
+  meta_sub <- meta_sub[ok_ind, , drop = FALSE]
+}
 
 san <- function(s) gsub("[^A-Za-z0-9._+-]+", "_", s)
-for (c in unique(g_ct)) {
-  m <- g_ct == c
-  mat <- summed[, m, drop = FALSE]
-  colnames(mat) <- g_ind[m]
-  df <- data.frame(geneid = genes, mat, check.names = FALSE)
-  fwrite(df, file.path(outdir, paste0(san(c), "__", tag, "_partial.csv")))
-  fwrite(data.frame(individual = g_ind[m], n_cells = ncells[m]),
-         file.path(outdir, paste0(san(c), "__", tag, "_ncells.csv")))
-  message(sprintf("[PB] %s: %d genes x %d individuals (tag=%s)", c, nrow(mat), ncol(mat), tag))
+
+for (col in celltype_cols) {
+  ct <- as.character(meta_sub[[col]])
+  ok_ct <- !is.na(ct)
+  n_invalid <- sum(!ok_ct)
+  if (n_invalid > 0) message(sprintf("[PB] [%s] %d cells with missing celltype label; dropped", col, n_invalid))
+
+  ct_c <- ct[ok_ct]
+  ind_c <- ind[ok_ct]
+  counts_c <- counts[, ok_ct, drop = FALSE]
+
+  grp <- factor(paste(ct_c, ind_c, sep = SEP))
+  design_t <- Matrix::fac2sparse(grp)                  # groups x cells
+  summed <- as.matrix(counts_c %*% Matrix::t(design_t))  # genes x groups
+  storage.mode(summed) <- "integer"
+  ncells <- as.integer(Matrix::rowSums(design_t))
+  gl <- levels(grp)
+  g_ct  <- sub(paste0(SEP, ".*$"), "", gl)
+  g_ind <- sub(paste0("^.*", SEP), "", gl)
+  genes <- rownames(counts_c)
+
+  for (c in unique(g_ct)) {
+    m <- g_ct == c
+    mat <- summed[, m, drop = FALSE]
+    colnames(mat) <- g_ind[m]
+    df <- data.frame(geneid = genes, mat, check.names = FALSE)
+    label <- san(paste0(col, "-", c))
+    fwrite(df, file.path(outdir, paste0(label, "__", tag, "_partial.csv")))
+    fwrite(data.frame(individual = g_ind[m], n_cells = ncells[m]),
+           file.path(outdir, paste0(label, "__", tag, "_ncells.csv")))
+    message(sprintf("[PB] [%s] %s: %d genes x %d individuals (tag=%s)", col, c, nrow(mat), ncol(mat), tag))
+  }
 }
