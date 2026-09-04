@@ -38,19 +38,31 @@ nextflow run johnsonlab-ic/sceQTL-flow \
 | `--gds_file` | Genotype data file | `/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/TEST_DATA/test_geno.gds` |
 | `--single_cell_file` | Seurat object file | `/rds/general/user/ah3918/projects/puklandmarkproject/live/Users/Alex/pipelines/TEST_DATA/roche_ms_decontx.rds` |
 
+### Input Formats
+
+`--single_cell_file` (one file) or `--single_cell_file_list` (comma-separated) accept either Seurat `.rds` or AnnData `.h5ad` objects — mixed lists of both are fine. Each file is pseudobulked natively (no merge-into-one-object step), then combined.
+
 ### Analysis Parameters
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
-| `--counts_assay` | Assay for counts | `RNA` |
-| `--counts_slot` | Slot for counts | `counts` |
-| `--celltype_column` | Column for cell types | `CellType` |
-| `--individual_column` | Column for individual IDs | `Individual_ID` |
-| `--min_cells` | Min cells for pseudobulking | `10` |
+| `--counts_assay` | Assay for counts (Seurat input only) | `RNA` |
+| `--counts_slot` | Slot/layer for raw counts | `counts` |
+| `--celltype_column` | Column(s) for cell types. Comma-separated to pseudobulk multiple annotation columns/resolutions independently in one run (e.g. `col1,col2`) | `celltype` |
+| `--individual_column` | Column for individual IDs | `individual` |
+| `--cell_metadata_file` | Optional external CSV/.gz of cell-level labels (celltype + individual), keyed by `--metadata_id_col`. If omitted, labels are read from the object's own metadata | `none` |
+| `--metadata_id_col` | Cell-id column in `--cell_metadata_file` (must match the object's cell/barcode names) | `cell_id` |
+| `--sample_map` | Optional CSV to relabel genotype sample IDs to individual IDs, when they don't already match | `none` |
+| `--sample_map_from` / `--sample_map_to` | Column names in `--sample_map` for the relabeling | `Sample_ID` / `caseid` |
+| `--overlap_warn_frac` | Warn if genotype↔single-cell ID overlap falls below this fraction (only runs when `--cell_metadata_file` is set) | `0.5` |
+| `--min_cells` | Min total cells for an individual to be kept in pseudobulking | `10` |
 | `--min_expression` | Min expression percentage | `0.05` |
 | `--cis_distance` | Cis distance for eQTL analysis | `1e6` |
 | `--fdr_threshold` | FDR threshold | `0.05` |
+| `--save_full_eqtl` | Also persist the full (not just FDR-significant) per-celltype cis association table, as separate un-combined `<celltype>_cis_MatrixEQTLout.rds` files | `false` |
 | `--optimize_pcs` | Optimize principal components | `true` |
+
+Celltypes with fewer than 15 individuals remaining after pseudobulking are dropped automatically (logged, not fatal).
 
 ### Runtime Options
 
@@ -98,25 +110,14 @@ This pipeline is optimized for the Imperial College HPC system due to its memory
 
 ## 🐳 Docker Images
 
-The pipeline uses containerization to ensure reproducibility across environments:
+The pipeline uses two containers:
 
 | Container | Purpose | Repository |
 |-----------|---------|------------|
-| **eqtl-genotype** | Genotype processing & eQTL analysis | `ghcr.io/johnsonlab-ic/eqtl-genotype:latest` |
-| **eqtl-expression** | Single-cell data & pseudobulking | `ghcr.io/johnsonlab-ic/eqtl-expression:latest` |
-| **eqtl-report** | Report generation & visualization | `ghcr.io/johnsonlab-ic/eqtl-report:latest` |
+| **genetics** | Everything by default: genotype processing, PC optimization, matrixQTL, combine/report | `ghcr.io/johnsonlab-ic/genetics:latest` |
+| **landmark-sc_image** | Single-cell-heavy steps only: `pseudobulk_anndata`, `pseudobulk_seurat`, `check_overlap` | `ghcr.io/johnsonlab-ic/landmark-sc_image:latest` |
 
-### Building Custom Containers
-
-```bash
-# Build containers locally
-cd Images
-docker build -t local/eqtl-expression:latest -f Dockerfile.expression .
-docker build -t local/eqtl-genotype:latest -f Dockerfile.genotype .
-docker build -t local/eqtl-report:latest -f Dockerfile.reports .
-```
-
-To use custom images, modify the corresponding entries in `nextflow.config`.
+These images are built and published outside this repository. To use custom images, change the `container` entries in `nextflow.config`.
 
 ---
 
@@ -142,12 +143,14 @@ For major changes, please discuss them first via issues.
 
 ## 📊 Output Details
 
-The pipeline generates these key outputs:
+Under `<outdir>/eQTL_outputs/`:
 
-- **eQTL results**: Lists of significant eQTLs for each cell type
-- **Visualization reports**: Interactive HTML reports with plots
-- **Optimization data**: PC optimization results if enabled
-- **QC metrics**: Quality control information for genotype and expression data
+- `mateqtlouts_FDR_filtered.rds` — significant (FDR-passing) cis associations per celltype
+- `eqtl_summary.rds` / `.csv` — per-celltype counts (n_individuals, n_tests, n_sig_pairs, n_egenes, ...)
+- `<celltype>_cis_MatrixEQTLout.rds` — full unfiltered per-celltype association table, only if `--save_full_eqtl true` (one file per celltype, never combined)
+- `eqtl_report.html` — the unified report (celltype QC, PC optimization, cells-per-individual chart, results), if `--report true`
+
+Also written: `<outdir>/QC/overlap_report.txt` (genotype↔single-cell ID overlap, if `--cell_metadata_file` set) and `<outdir>/run_params.txt` (a provenance manifest of the exact parameters and revision used).
 
 ---
 

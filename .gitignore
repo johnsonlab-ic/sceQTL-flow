@@ -20,3 +20,4 @@ personal/
 nxf*
 claude_notes/
 .claude/
+.devcontainer/
