@@ -27,12 +27,18 @@ process finalize_residuals {
         n_pcs <- 0
         pcs <- NULL
     } else {
-        pcs_raw <- fread("$pcs_file", data.table = FALSE, header = TRUE)
+        # No explicit header=TRUE: the PCs file was written by write.table()
+        # with row.names=TRUE, so its header line has one fewer field than
+        # the data rows (no label for the PC-name column). fread's default
+        # "auto" header detection catches this and shifts correctly,
+        # naming that first (PC-name) column "V1" -- forcing header=TRUE
+        # instead defeats that detection and misreads the whole file.
+        pcs_raw <- fread("$pcs_file", data.table = FALSE)
         if (nrow(pcs_raw) == 0) {
             n_pcs <- 0
             pcs <- NULL
         } else {
-            pcs <- pcs_raw %>% tibble::column_to_rownames(var = names(pcs_raw)[1])
+            pcs <- pcs_raw %>% tibble::column_to_rownames(var = "V1")
             pcs <- as.matrix(pcs[, colnames(exp_mat), drop = FALSE])
             n_pcs <- nrow(pcs)
         }
