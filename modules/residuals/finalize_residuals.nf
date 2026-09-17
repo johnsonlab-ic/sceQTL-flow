@@ -7,13 +7,26 @@ process finalize_residuals {
     tuple val(celltype), path(expression_mat), path(pcs_file)
 
     output:
-    tuple val(celltype), path("*_final_residuals.csv"), emit: final_residuals
+    tuple val(celltype), path("*_final_residuals.csv"), path(pcs_file), emit: final_residuals
     path "*_covs_used.rds", emit: covs_used
     path "*_sdY_check.csv", emit: sdy_check
 
     script:
     """
     #!/usr/bin/env Rscript
+    # NOTE: PCs are explicitly regressed out of the expression matrix here
+    # (below), AND the PCs file is still forwarded to run_matrixeQTL, which
+    # passes it to MatrixEQTL as cvrt. This is not redundant: MatrixEQTL's
+    # cvrt orthogonalizes covariates out of BOTH expression and genotype --
+    # explicit regression here only ever touched expression. Re-passing PCs
+    # to MatrixEQTL is what adjusts genotype for population-structure/PC
+    # effects; it's a no-op on the expression side, since residuals of an
+    # OLS fit are already exactly orthogonal to the predictors that produced
+    # them (regressing an already-orthogonal vector on the same predictors
+    # again returns it unchanged). Dropping the genotype-side adjustment
+    # (i.e. passing covmat=NULL to MatrixEQTL) was tried and shown to
+    # materially change beta/t.stat/p-value/FDR versus the pre-refactor
+    # pipeline -- this two-part design is what keeps results identical.
     library(data.table)
     library(dplyr)
 

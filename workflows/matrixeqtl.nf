@@ -343,13 +343,16 @@ workflow matrixeqtl {
     // variance (SdY=1), so this is exactly the phenotype MatrixEQTL tests.
     finalize_residuals(residuals_with_pcs)
 
-    // Run matrixeQTL on the finalized (PC-adjusted, optionally standardized) residuals
+    // Run matrixeQTL on the finalized (PC-adjusted, optionally standardized) residuals.
+    // The PCs are still passed through as covariates so MatrixEQTL applies the
+    // matching genotype-side adjustment -- see the note in finalize_residuals.nf.
     run_matrixeQTL(
         params.eqtl_source_functions,
         geno_mat,
         qc_genotype.out.qc_snp_chromlocations,
         finalize_residuals.out.final_residuals.map { row -> row[1] },  // expression file
-        combine_pseudobulk.out.gene_locations
+        combine_pseudobulk.out.gene_locations,
+        finalize_residuals.out.final_residuals.map { row -> row[2] }   // PCs file (pass-through)
     )
 
     // Collect covariate (PC) matrices and achieved-SdY QC files per cell type for reporting

@@ -10,6 +10,7 @@ process run_matrixeQTL {
     path snp_locations
     path expression_mat
     path gene_locations
+    path optimized_pcs
 
     output:
     path "*_cis_eqtl_sig.rds", emit: sig
@@ -59,12 +60,26 @@ process run_matrixeQTL {
     geno_loc = geno_loc[rownames(geno_mat), ]
     geno_loc = geno_loc %>% mutate(annot = rownames(geno_loc)) %>% select(annot, chrom, position)
 
-    # Covariates and PCs have already been regressed out (and, if
-    # --standardize_residuals is set, the residuals rescaled to unit
-    # variance) upstream in finalize_residuals — nothing left to pass here.
+    # PCs are already regressed out of exp_mat upstream in finalize_residuals
+    # (and, if --standardize_residuals is set, exp_mat is rescaled to unit
+    # variance there too). They're still passed to MatrixEQTL as covariates
+    # here because cvrt adjusts BOTH sides of the test -- this is what
+    # adjusts genotype for the same PCs; it's a no-op on the already-PC-
+    # residualized expression side. See the note in finalize_residuals.nf.
+    message("Loading PCs (for genotype-side adjustment) from: $optimized_pcs")
+    pcs_size = file.info("$optimized_pcs")\$size
+    if (is.na(pcs_size) || pcs_size == 0) {
+        covmat = NULL
+    } else {
+        covmat_raw = fread("$optimized_pcs", data.table = FALSE)
+        covmat = if (nrow(covmat_raw) == 0) NULL else covmat_raw %>% tibble::column_to_rownames(var = "V1")
+    }
+    message("Using ", if (is.null(covmat)) 0 else nrow(covmat), " PCs as covariates")
+
     ##finally, re-order inputs to same column order
     exp_mat = exp_mat[, common_samples]
     geno_mat = geno_mat[, common_samples]
+    covmat = if (!is.null(covmat) && nrow(covmat) > 0) covmat[, common_samples, drop = FALSE] else NULL
 
     message("Calculating eQTLs")
     outs=calculate_ciseqtl(
@@ -73,7 +88,7 @@ process run_matrixeQTL {
         geno_mat = geno_mat,
         geno_loc = geno_loc,
         name = celltype,
-        covmat = NULL,
+        covmat = covmat,
         pvOutputThreshold = 0,
         cisDist = as.numeric(${params.cis_distance})
     )
