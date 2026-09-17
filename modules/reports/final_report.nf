@@ -3,7 +3,7 @@ process final_report {
     publishDir "${params.outdir}/eQTL_outputs/", mode: 'copy'
 
     input:
-    tuple path(eqtl_results_filtered), path(eqtl_summary), path(report_file), path(child_report), path(coarse_summaries, stageAs: "coarse/*"), path(fine_summaries, stageAs: "fine/*"), path(covs_used, stageAs: "covs/*"), path(cells_per_individual)
+    tuple path(eqtl_results_filtered), path(eqtl_summary), path(report_file), path(child_report), path(coarse_summaries, stageAs: "coarse/*"), path(fine_summaries, stageAs: "fine/*"), path(covs_used, stageAs: "covs/*"), path(cells_per_individual), path(sdy_check, stageAs: "sdy/*")
 
     output:
     path "eqtl_report.html"
@@ -48,6 +48,7 @@ process final_report {
             pc_elbow_tol = ${params.pc_elbow_tol},
             pc_early_stop_tol = ${params.pc_early_stop_tol},
             pc_early_stop_patience = ${params.pc_early_stop_patience},
+            standardize_residuals = ${params.standardize_residuals ? 'TRUE' : 'FALSE'},
             workflow = "${params.workflow}",
             profile = "${workflow.profile}"
         )

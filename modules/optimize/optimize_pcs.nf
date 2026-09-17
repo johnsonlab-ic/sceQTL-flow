@@ -51,18 +51,18 @@ process optimize_pcs {
     geno_loc = geno_loc[rownames(geno_mat), ]
     geno_loc = geno_loc %>% mutate(annot = rownames(geno_loc)) %>% select(annot, chrom, position)
 
-    covmat = NULL
+    n_pcs = ${n_pcs}
 
-    exp_pcs = prcomp(t(exp_mat), scale. = TRUE)
-    exp_pcs = exp_pcs\$x[, 1:${n_pcs}]
-    exp_pcs = as.data.frame(exp_pcs)
-    colnames(exp_pcs) = paste0("PC", 1:${n_pcs})
-    exp_pcs = t(exp_pcs)
-
-    if (!is.null(covmat)) {
-        covmat = rbind(covmat, exp_pcs)
+    if (n_pcs > 0) {
+        pc_obj = prcomp(t(exp_mat), scale. = TRUE)
+        exp_pcs = pc_obj\$x[, 1:n_pcs, drop = FALSE]
+        exp_pcs = as.data.frame(exp_pcs)
+        colnames(exp_pcs) = paste0("PC", 1:n_pcs)
+        covmat = t(exp_pcs)
     } else {
-        covmat = exp_pcs
+        # n_pcs = 0: no PC covariates for this grid point, rather than the
+        # pre-fix behaviour, where R's `1:0 == c(1,0)` silently selected PC1.
+        covmat = matrix(nrow = 0, ncol = ncol(exp_mat), dimnames = list(NULL, colnames(exp_mat)))
     }
 
     ##finally, re-order inputs to same column order

@@ -39,6 +39,7 @@ params.counts_slot="counts"
 params.cis_distance=1000000
 params.fdr_threshold=0.05
 params.save_full_eqtl=false  // also persist full per-celltype cis stats (for coloc/mashr); never concatenated
+params.standardize_residuals=true  // center+scale final (post-covariate, post-PC) residuals to unit variance (SdY=1), so betas are directly coloc-compatible
 params.filter_chr = "all" // Optional parameter for filtering by chromosome. use "chr6"
 params.optimize_pcs = true // Whether to optimize PCs or use a fixed number
 params.fixed_pcs = 10 // Number of PCs to use when not optimizing
@@ -85,7 +86,8 @@ def helpMessage() {
                 [--pc_fine_window 10] \\
                 [--pc_elbow_tol 0.02] \\
                 [--pc_early_stop_tol 0.01] \\
-                [--pc_early_stop_patience 2]
+                [--pc_early_stop_patience 2] \\
+                [--standardize_residuals true|false]
 
         Flags:
             --help              Show this message
@@ -93,7 +95,12 @@ def helpMessage() {
 
         Notes:
             Residuals are calculated automatically when --cov_file is provided.
-            Set --optimize_pcs false to force a fixed number of PCs (default 10).
+            Set --optimize_pcs false to force a fixed number of PCs (default 10; use 0 for no PCs).
+            --standardize_residuals (default true) centers+scales the final, fully-adjusted
+            residuals (covariates and PCs already removed) to unit variance per gene, so
+            SdY=1 holds exactly for the phenotype actually tested -- directly usable in coloc
+            without a separate SdY estimation step. Set false to keep residuals on the
+            original log2(CPM+1) scale (matches pre-standardization pipeline behaviour).
             tensorqTL workflow is a placeholder.
         """
 }

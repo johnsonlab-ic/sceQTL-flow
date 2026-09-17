@@ -1,6 +1,6 @@
 process run_matrixeQTL {
   
-    tag "${expression_mat} and ${optimized_pcs}"
+    tag "${expression_mat}"
     label "process_eqtl"
     publishDir "${params.outdir}/eQTL_outputs/", mode: 'copy'
 
@@ -10,12 +10,10 @@ process run_matrixeQTL {
     path snp_locations
     path expression_mat
     path gene_locations
-    path optimized_pcs
 
     output:
     path "*_cis_eqtl_sig.rds", emit: sig
     path "*_eqtl_summary.rds", emit: summary
-    path "*_covs_used.rds", emit: covs_used
     path "*_cis_MatrixEQTLout.rds", emit: full, optional: true
 
     script:
@@ -31,7 +29,9 @@ process run_matrixeQTL {
     exp_loc = fread("$gene_locations")
 
     # Update to handle both residuals and normalized file naming patterns
-    if (grepl("_residuals.csv\$", basename("$expression_mat"))) {
+    if (grepl("_final_residuals.csv\$", basename("$expression_mat"))) {
+        celltype = gsub("_final_residuals.csv", "", basename("$expression_mat"))
+    } else if (grepl("_residuals.csv\$", basename("$expression_mat"))) {
         celltype = gsub("_residuals.csv", "", basename("$expression_mat"))
     } else if (grepl("_pseudobulk_normalised.csv\$", basename("$expression_mat"))) {
         celltype = gsub("_pseudobulk_normalised.csv", "", basename("$expression_mat"))
@@ -59,16 +59,12 @@ process run_matrixeQTL {
     geno_loc = geno_loc[rownames(geno_mat), ]
     geno_loc = geno_loc %>% mutate(annot = rownames(geno_loc)) %>% select(annot, chrom, position)
 
-    # Load optimized PCs as covariates
-    message("Loading optimized PCs from: $optimized_pcs")
-    covmat = fread("$optimized_pcs",data.table=F) %>% tibble::column_to_rownames(var="V1")
-
-    message("Using ", nrow(covmat), " optimized PCs as covariates")
-
+    # Covariates and PCs have already been regressed out (and, if
+    # --standardize_residuals is set, the residuals rescaled to unit
+    # variance) upstream in finalize_residuals — nothing left to pass here.
     ##finally, re-order inputs to same column order
     exp_mat = exp_mat[, common_samples]
     geno_mat = geno_mat[, common_samples]
-    covmat = covmat[, common_samples] 
 
     message("Calculating eQTLs")
     outs=calculate_ciseqtl(
@@ -77,7 +73,7 @@ process run_matrixeQTL {
         geno_mat = geno_mat,
         geno_loc = geno_loc,
         name = celltype,
-        covmat = covmat,
+        covmat = NULL,
         pvOutputThreshold = 0,
         cisDist = as.numeric(${params.cis_distance})
     )

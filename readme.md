@@ -61,6 +61,8 @@ nextflow run johnsonlab-ic/sceQTL-flow \
 | `--fdr_threshold` | FDR threshold | `0.05` |
 | `--save_full_eqtl` | Also persist the full (not just FDR-significant) per-celltype cis association table, as separate un-combined `<celltype>_cis_MatrixEQTLout.rds` files | `false` |
 | `--optimize_pcs` | Optimize principal components | `true` |
+| `--fixed_pcs` | Number of PCs when `--optimize_pcs false`. `0` is a real option — no PCs are removed | `10` |
+| `--standardize_residuals` | Center and scale the final (covariate- and PC-adjusted) residuals to unit variance per gene, so `SdY=1` holds exactly for the phenotype tested — directly usable in `coloc` without a separate SdY estimation step. Set `false` to keep residuals on the original log2(CPM+1) scale | `true` |
 
 Celltypes with fewer than 15 individuals remaining after pseudobulking are dropped automatically (logged, not fatal).
 
@@ -148,9 +150,9 @@ Under `<outdir>/eQTL_outputs/`:
 - `mateqtlouts_FDR_filtered.rds` — significant (FDR-passing) cis associations per celltype
 - `eqtl_summary.rds` / `.csv` — per-celltype counts (n_individuals, n_tests, n_sig_pairs, n_egenes, ...)
 - `<celltype>_cis_MatrixEQTLout.rds` — full unfiltered per-celltype association table, only if `--save_full_eqtl true` (one file per celltype, never combined)
-- `eqtl_report.html` — the unified report (celltype QC, PC optimization, cells-per-individual chart, results), if `--report true`
+- `eqtl_report.html` — the unified report (celltype QC, statistical corrections applied, PC optimization, cells-per-individual chart, results), if `--report true`
 
-Also written: `<outdir>/QC/overlap_report.txt` (genotype↔single-cell ID overlap, if `--cell_metadata_file` set) and `<outdir>/run_params.txt` (a provenance manifest of the exact parameters and revision used).
+Also written: `<outdir>/final_residuals/<celltype>_final_residuals.csv` (the exact phenotype matrix MatrixEQTL tested — covariates and PCs already regressed out, and, if `--standardize_residuals true`, centered/scaled to unit variance) with a companion `<celltype>_sdY_check.csv` (achieved per-gene residual SD, for sanity-checking `SdY≈1`); `<outdir>/QC/overlap_report.txt` (genotype↔single-cell ID overlap, if `--cell_metadata_file` set); and `<outdir>/run_params.txt` (a provenance manifest of the exact parameters and revision used).
 
 ---
 

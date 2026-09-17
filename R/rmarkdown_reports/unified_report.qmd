@@ -51,6 +51,7 @@ params:
   pc_elbow_tol: null
   pc_early_stop_tol: null
   pc_early_stop_patience: null
+  standardize_residuals: null
   workflow: null
   profile: null
 ---
@@ -183,11 +184,86 @@ if (is_set(params$subset_column)) {
     c("Subset values",  params$subset_values)))
 }
 rows <- c(rows, list(
-  c("PC selection", if (optimize_pcs) "optimized" else paste0("fixed (", params$fixed_pcs, ")"))))
+  c("PC selection", if (optimize_pcs) "optimized" else paste0("fixed (", params$fixed_pcs, ")")),
+  c("Standardize final residuals (SdY=1)", if (isTRUE(as.logical(params$standardize_residuals))) "YES" else "NO")))
 
 params_tbl <- as.data.frame(do.call(rbind, rows), stringsAsFactors = FALSE)
 colnames(params_tbl) <- c("Parameter", "Value")
 kable(params_tbl)
+```
+
+## Statistical corrections
+
+The expression matrix passes through the following corrections, in this order, before an association
+is tested at each SNP-gene pair. The diagram shows the pipeline's full canonical shape; the table below
+states which of these steps were actually applied for this run.
+
+```{r corrections-flags}
+standardize_residuals <- isTRUE(as.logical(params$standardize_residuals))
+has_cov <- is_set(params$cov_file)
+```
+
+```{mermaid}
+%%| fig-cap: "Corrections applied to the expression matrix before eQTL testing"
+flowchart TD
+    A[Raw pseudobulk counts] --> B["Normalize: log2(CPM + 1)"]
+    B --> C["Regress out covariates (per gene lm)"]
+    C --> D["Compute hidden-factor PCs<br/>(prcomp, scale.=TRUE)"]
+    D --> E["Regress out PCs (per gene lm)"]
+    E --> F["Center + scale to unit variance<br/>(SdY = 1)"]
+    F --> G[MatrixEQTL cis association test]
+```
+
+The canonical pipeline always has this shape; the table below shows which steps were actually applied for this run.
+
+```{r corrections-table}
+n_pcs_used <- {
+  cov_files <- list.files("covs", pattern = "_covs_used\\.rds$", full.names = TRUE)
+  if (length(cov_files) == 0) {
+    NA_integer_
+  } else {
+    vals <- vapply(cov_files, function(f) {
+      m <- readRDS(f)
+      if (is.null(m)) 0L else nrow(m)
+    }, integer(1))
+    vals
+  }
+}
+pcs_used_any <- length(n_pcs_used) > 0 && !all(is.na(n_pcs_used)) && any(n_pcs_used > 0, na.rm = TRUE)
+
+corrections_rows <- list(
+  c("1. Normalize (log2(CPM+1))", "Always applied"),
+  c("2. Regress out covariates",
+    if (has_cov) paste0("Applied — ", params$covariates_to_include) else "Skipped — no --cov_file given"),
+  c("3. Compute hidden-factor PCs",
+    if (pcs_used_any) paste0("Applied — ", if (optimize_pcs) "optimized per cell type" else paste0("fixed (", params$fixed_pcs, ")")) else "Skipped — 0 PCs"),
+  c("4. Regress out PCs", if (pcs_used_any) "Applied" else "Skipped — no PCs selected"),
+  c("5. Center + scale to unit variance (SdY=1)",
+    if (standardize_residuals) "Applied — final residuals are mean-centered, unit-variance per gene" else "Skipped — residuals left on log2(CPM+1) scale (--standardize_residuals false)")
+)
+corrections_tbl <- as.data.frame(do.call(rbind, corrections_rows), stringsAsFactors = FALSE)
+colnames(corrections_tbl) <- c("Step", "This run")
+kable(corrections_tbl)
+```
+
+```{r sdy-check}
+sdy_files <- list.files("sdy", pattern = "_sdY_check\\.csv$", full.names = TRUE)
+if (length(sdy_files) > 0) {
+  sdy_df <- rbindlist(lapply(sdy_files, function(f) {
+    ct <- gsub("_sdY_check\\.csv$", "", basename(f))
+    d <- fread(f)
+    data.table(celltype = ct, median_sd = median(d$sd, na.rm = TRUE),
+               p10 = quantile(d$sd, 0.1, na.rm = TRUE), p90 = quantile(d$sd, 0.9, na.rm = TRUE))
+  }))
+  cap <- if (standardize_residuals) {
+    "Achieved per-gene residual SD, by cell type (median and 10th/90th percentile). Should sit at 1.0 — this is what makes SdY=1 valid to pass directly to coloc."
+  } else {
+    "Achieved per-gene residual SD, by cell type (median and 10th/90th percentile). Standardization is off for this run, so these are NOT 1 — the true SD must be estimated separately before using SdY=1 in coloc."
+  }
+  kable(sdy_df, digits = 3, caption = cap)
+} else {
+  cat("No SdY check files available.\n")
+}
 ```
 
 ## Sample sizes

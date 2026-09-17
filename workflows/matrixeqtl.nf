@@ -9,6 +9,7 @@ include { qc_expression } from '../modules/expression/qc_expression.nf'
 include { preflight_check } from '../modules/qc/preflight_check.nf'
 include { subset_samples } from '../modules/qc/subset_samples.nf'
 include { get_residuals } from '../modules/residuals/get_residuals.nf'
+include { finalize_residuals } from '../modules/residuals/finalize_residuals.nf'
 include { run_matrixeQTL } from '../modules/eqtl/matrixeqtl.nf'
 include { combine_eqtls } from '../modules/eqtl/combine_eqtls.nf'
 include { final_report } from '../modules/reports/final_report.nf'
@@ -60,6 +61,7 @@ workflow matrixeqtl {
     Chromosomes used: ${params.filter_chr}
     Calculating residuals: ${params.cov_file != "none" && params.cov_file != "" ? "YES" : "NO"}
     Optimize PCs: ${params.optimize_pcs ? "YES" : "NO (using " + params.fixed_pcs + " PCs)"}
+    Standardize final residuals (SdY=1): ${params.standardize_residuals ? "YES" : "NO (log2(CPM+1)-scale residuals)"}
     PC optimization strategy: coarse_step=${params.pc_coarse_step}, fine_step=${params.pc_fine_step}, fine_window=${params.pc_fine_window}, elbow_tol=${params.pc_elbow_tol}, early_stop_tol=${params.pc_early_stop_tol}, early_stop_patience=${params.pc_early_stop_patience}
     Sample subsetting: ${params.subset_column != "none" && params.subset_values != "none" ? "YES (" + params.subset_column + " = " + params.subset_values + ")" : "NO"}
 
@@ -336,20 +338,27 @@ workflow matrixeqtl {
         nextflow.Channel.of([]).set { collected_fine_summaries }
     }
 
-    // Run matrixeQTL with PCs (either optimized or fixed)
+    // Explicitly regress out the (optimized or fixed) PCs, then — if
+    // --standardize_residuals is set — center+scale each gene to unit
+    // variance (SdY=1), so this is exactly the phenotype MatrixEQTL tests.
+    finalize_residuals(residuals_with_pcs)
+
+    // Run matrixeQTL on the finalized (PC-adjusted, optionally standardized) residuals
     run_matrixeQTL(
         params.eqtl_source_functions,
         geno_mat,
         qc_genotype.out.qc_snp_chromlocations,
-        residuals_with_pcs.map { row -> row[1] },  // expression file
-        combine_pseudobulk.out.gene_locations,
-        residuals_with_pcs.map { row -> row[2] }   // PCs file (optimized or fixed)
+        finalize_residuals.out.final_residuals.map { row -> row[1] },  // expression file
+        combine_pseudobulk.out.gene_locations
     )
 
-    // Collect covariate matrices used per cell type for reporting
-    run_matrixeQTL.out.covs_used
+    // Collect covariate (PC) matrices and achieved-SdY QC files per cell type for reporting
+    finalize_residuals.out.covs_used
         .collect()
         .set { collected_covs_used }
+    finalize_residuals.out.sdy_check
+        .collect()
+        .set { collected_sdy_check }
 
     combine_eqtls(run_matrixeQTL.out.sig.collect(), run_matrixeQTL.out.summary.collect())
 
@@ -364,6 +373,7 @@ workflow matrixeqtl {
             .combine(collected_fine_summaries.map { files -> [files] })
             .combine(collected_covs_used.map { files -> [files] })
             .combine(combine_pseudobulk.out.cells_per_individual)
+            .combine(collected_sdy_check.map { files -> [files] })
         report_inputs | final_report
     }
 }

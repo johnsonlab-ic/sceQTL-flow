@@ -19,11 +19,18 @@ process generate_fixed_pcs {
 
     exp_mat <- fread("${expression_file}") %>% tibble::column_to_rownames(var = "geneid")
 
-    pc_obj <- prcomp(t(exp_mat), scale. = TRUE)
-    pcs <- pc_obj\$x[, 1:${n_pcs}]
-    pcs <- as.data.frame(pcs)
-    colnames(pcs) <- paste0("PC", 1:${n_pcs})
-    pcs <- t(pcs)
+    n_pcs <- ${n_pcs}
+    if (n_pcs > 0) {
+        pc_obj <- prcomp(t(exp_mat), scale. = TRUE)
+        pcs <- pc_obj\$x[, 1:n_pcs, drop = FALSE]
+        pcs <- as.data.frame(pcs)
+        colnames(pcs) <- paste0("PC", 1:n_pcs)
+        pcs <- t(pcs)
+    } else {
+        # n_pcs = 0: emit an empty covariate matrix (0 rows) rather than the
+        # pre-fix behaviour, where R's `1:0 == c(1,0)` silently selected PC1.
+        pcs <- matrix(nrow = 0, ncol = ncol(exp_mat), dimnames = list(NULL, colnames(exp_mat)))
+    }
 
     write.table(pcs, file = "${celltype}_${n_pcs}_pcs.txt", quote = FALSE, sep = "\t", col.names = TRUE, row.names = TRUE)
     """

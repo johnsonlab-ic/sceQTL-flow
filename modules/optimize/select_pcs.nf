@@ -41,11 +41,17 @@ process select_pcs {
 
     # Perform PCA on the expression matrix
     exp_mat <- fread("${exp_matrix}") %>% tibble::column_to_rownames(var="geneid")
-    exp_pcs <- prcomp(t(exp_mat), scale. = TRUE)
-    exp_pcs <- exp_pcs\$x[, 1:n_pcs]
-    exp_pcs <- as.data.frame(exp_pcs)
-    colnames(exp_pcs) <- paste0("PC", 1:n_pcs)
-    exp_pcs <- t(exp_pcs)
+    if (n_pcs > 0) {
+        pc_obj <- prcomp(t(exp_mat), scale. = TRUE)
+        exp_pcs <- pc_obj\$x[, 1:n_pcs, drop = FALSE]
+        exp_pcs <- as.data.frame(exp_pcs)
+        colnames(exp_pcs) <- paste0("PC", 1:n_pcs)
+        exp_pcs <- t(exp_pcs)
+    } else {
+        # n_pcs = 0: emit an empty covariate matrix (0 rows) rather than the
+        # pre-fix behaviour, where R's `1:0 == c(1,0)` silently selected PC1.
+        exp_pcs <- matrix(nrow = 0, ncol = ncol(exp_mat), dimnames = list(NULL, colnames(exp_mat)))
+    }
 
     # Write the PC covariate matrix to a file
     write.table(exp_pcs, file=paste0("${celltype}_",n_pcs,"_pcs.txt"), quote=FALSE, sep="\t", col.names=TRUE, row.names=TRUE)
